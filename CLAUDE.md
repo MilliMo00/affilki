@@ -27,7 +27,7 @@
 
 - Код: `git@github.com:MilliMo00/affilki.git`, ветка `main`. Пуш в `main` = выкладка на живой сайт.
 - Сервер: Windows Server 2022, `31.76.118.135`, папка `C:\Users\Administrator\affilki`. Там же живут другие проекты владельца (Caddy на 80/443, pm2, порты 3000–3002) — их конфиги не трогаем.
-- Сайт: pm2-процесс `affilki` (`ecosystem.config.cjs` → `scripts/start.cjs`), порт 3010, пока без домена и HTTPS: `http://31.76.118.135:3010`.
+- Сайт: pm2-процесс `affilki` (`ecosystem.config.cjs` → `scripts/start.cjs`), порт 3010 (снаружи закрыт). Домен `https://affilki.com`, `www` редиректит на него; блок домена дописан в общий `C:\Users\Administrator\progrevsaas\Caddyfile` (этот файл отслеживается git-репозиторием progrevsaas — блок там лежит незакоммиченным изменением).
 - Автодеплой: задача планировщика «AFFILKI auto-deploy» раз в 2 минуты запускает `scripts/deploy.ps1` от SYSTEM. Лог — `logs/deploy.log` на сервере.
 - pm2 работает от `LOCAL SERVICE`; папке проекта выдан доступ Modify для этой учётки, иначе процесс не стартует.
 - Переменные окружения на сервере — в `.env.production.local` (в git не попадает).
