@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 200 200">
+  <rect x="-100" y="-100" width="200" height="200" rx="44" fill="#4A33C0"/>
+  <g transform="scale(0.82)">
+    <g fill="#fff">
+      <path id="p" d="M0,-6 C-13,-20 -38,-40 -38,-64 C-38,-88 -10,-90 0,-99 C10,-90 38,-88 38,-64 C38,-40 13,-20 0,-6 Z"/>
+      <use href="#p" transform="rotate(72)"/>
+      <use href="#p" transform="rotate(144)"/>
+      <use href="#p" transform="rotate(216)"/>
+      <use href="#p" transform="rotate(288)"/>
+    </g>
+    <circle r="13" fill="#4A33C0"/>
+    <circle r="6" fill="#fff"/>
+  </g>
+</svg>
