@@ -1,0 +1,55 @@
+# Автодеплой на сервере: подтягивает main с GitHub, пересобирает и перезапускает сайт.
+# Запускается планировщиком Windows каждые пару минут; если новых коммитов нет — сразу выходит.
+# Ручной запуск с пересборкой без новых коммитов: deploy.ps1 -Force
+param([switch]$Force)
+
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+$root = Split-Path $PSScriptRoot -Parent
+Set-Location $root
+
+$logDir = Join-Path $root 'logs'
+New-Item -ItemType Directory -Force $logDir | Out-Null
+$log = Join-Path $logDir 'deploy.log'
+function Log($msg) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Add-Content $log }
+
+# Не даём двум деплоям идти одновременно.
+$lock = Join-Path $logDir 'deploy.lock'
+if ((Test-Path $lock) -and ((Get-Item $lock).LastWriteTime -gt (Get-Date).AddMinutes(-20))) { exit 0 }
+Set-Content $lock $PID
+
+function Run($label, [scriptblock]$cmd) {
+  # git и npm пишут прогресс в stderr — при 'Stop' PowerShell 5.1 счёл бы это ошибкой.
+  $ErrorActionPreference = 'Continue'
+  & $cmd *>> $log
+  if ($LASTEXITCODE -ne 0) { throw "$label failed with exit code $LASTEXITCODE" }
+}
+
+try {
+  Run 'git fetch' { git fetch origin main --quiet }
+  $local = git rev-parse HEAD
+  $remote = git rev-parse origin/main
+  if ($local -eq $remote -and -not $Force) { return }
+
+  Log "deploy $local -> $remote"
+  Run 'git merge' { git merge --ff-only origin/main }
+  Run 'npm ci' { npm ci --no-audit --no-fund }
+  Run 'build' { npm run build }
+
+  $ErrorActionPreference = 'Continue'
+  pm2 describe affilki *> $null
+  $running = $LASTEXITCODE -eq 0
+  $ErrorActionPreference = 'Stop'
+  if ($running) {
+    Run 'pm2 restart' { pm2 restart affilki --update-env }
+  } else {
+    Run 'pm2 start' { pm2 start ecosystem.config.cjs }
+    Run 'pm2 save' { pm2 save }
+  }
+  Log "deployed $remote"
+} catch {
+  Log "ERROR: $_"
+  exit 1
+} finally {
+  Remove-Item $lock -ErrorAction SilentlyContinue
+}
