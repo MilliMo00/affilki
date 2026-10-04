@@ -3,9 +3,8 @@ module.exports = {
   apps: [
     {
       name: "affilki",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 3010",
-      env: { NODE_ENV: "production" },
+      script: "scripts/start.cjs",
+      env: { NODE_ENV: "production", PORT: "3010" },
     },
   ],
 };

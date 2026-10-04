@@ -11,7 +11,7 @@ Set-Location $root
 $logDir = Join-Path $root 'logs'
 New-Item -ItemType Directory -Force $logDir | Out-Null
 $log = Join-Path $logDir 'deploy.log'
-function Log($msg) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Add-Content $log }
+function Log($msg) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File $log -Append -Encoding utf8 }
 
 # Не даём двум деплоям идти одновременно.
 $lock = Join-Path $logDir 'deploy.lock'
@@ -21,7 +21,7 @@ Set-Content $lock $PID
 function Run($label, [scriptblock]$cmd) {
   # git и npm пишут прогресс в stderr — при 'Stop' PowerShell 5.1 счёл бы это ошибкой.
   $ErrorActionPreference = 'Continue'
-  & $cmd *>> $log
+  & $cmd 2>&1 | ForEach-Object { "$_" } | Out-File $log -Append -Encoding utf8
   if ($LASTEXITCODE -ne 0) { throw "$label failed with exit code $LASTEXITCODE" }
 }
 
@@ -41,11 +41,11 @@ try {
   $running = $LASTEXITCODE -eq 0
   $ErrorActionPreference = 'Stop'
   if ($running) {
-    Run 'pm2 restart' { pm2 restart affilki --update-env }
-  } else {
-    Run 'pm2 start' { pm2 start ecosystem.config.cjs }
-    Run 'pm2 save' { pm2 save }
+    # delete + start, а не restart: так подхватываются изменения в ecosystem.config.cjs.
+    Run 'pm2 delete' { pm2 delete affilki }
   }
+  Run 'pm2 start' { pm2 start ecosystem.config.cjs }
+  Run 'pm2 save' { pm2 save }
   Log "deployed $remote"
 } catch {
   Log "ERROR: $_"
