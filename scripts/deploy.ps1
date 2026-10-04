@@ -8,6 +8,12 @@ $ProgressPreference = 'SilentlyContinue'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
+# Планировщик запускает скрипт от SYSTEM, а папка принадлежит Administrator —
+# без этого git откажется работать с «чужим» репозиторием.
+$env:GIT_CONFIG_COUNT = '1'
+$env:GIT_CONFIG_KEY_0 = 'safe.directory'
+$env:GIT_CONFIG_VALUE_0 = '*'
+
 $logDir = Join-Path $root 'logs'
 New-Item -ItemType Directory -Force $logDir | Out-Null
 $log = Join-Path $logDir 'deploy.log'
