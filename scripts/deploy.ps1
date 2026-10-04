@@ -31,27 +31,40 @@ function Run($label, [scriptblock]$cmd) {
   if ($LASTEXITCODE -ne 0) { throw "$label failed with exit code $LASTEXITCODE" }
 }
 
+# Последний успешно выложенный коммит. Сравниваем с ним, а не с HEAD,
+# чтобы упавший деплой повторился при следующем запуске.
+$marker = Join-Path $logDir 'deployed-commit'
+
 try {
   Run 'git fetch' { git fetch origin main --quiet }
-  $local = git rev-parse HEAD
   $remote = git rev-parse origin/main
-  if ($local -eq $remote -and -not $Force) { return }
+  $deployed = if (Test-Path $marker) { (Get-Content $marker -Raw).Trim() } else { '' }
+  if ($deployed -eq $remote -and -not $Force) { return }
 
-  Log "deploy $local -> $remote"
+  Log "deploy $deployed -> $remote"
+  $lockBefore = (Get-FileHash package-lock.json).Hash
   Run 'git merge' { git merge --ff-only origin/main }
-  Run 'npm ci' { npm ci --no-audit --no-fund }
-  Run 'build' { npm run build }
 
   $ErrorActionPreference = 'Continue'
   pm2 describe affilki *> $null
   $running = $LASTEXITCODE -eq 0
   $ErrorActionPreference = 'Stop'
-  if ($running) {
-    # delete + start, а не restart: так подхватываются изменения в ecosystem.config.cjs.
-    Run 'pm2 delete' { pm2 delete affilki }
+
+  # Зависимости переставляем, только если они изменились: на Windows npm не может
+  # удалить файлы работающего процесса, поэтому на это время сайт останавливается.
+  $depsChanged = (Get-FileHash package-lock.json).Hash -ne $lockBefore
+  if ($depsChanged -or -not (Test-Path node_modules\next\package.json)) {
+    if ($running) { Run 'pm2 stop' { pm2 stop affilki } }
+    Run 'npm ci' { npm ci --no-audit --no-fund }
   }
+  Run 'build' { npm run build }
+
+  # delete + start, а не restart: так подхватываются изменения в ecosystem.config.cjs.
+  if ($running) { Run 'pm2 delete' { pm2 delete affilki } }
   Run 'pm2 start' { pm2 start ecosystem.config.cjs }
   Run 'pm2 save' { pm2 save }
+
+  Set-Content $marker $remote
   Log "deployed $remote"
 } catch {
   Log "ERROR: $_"
