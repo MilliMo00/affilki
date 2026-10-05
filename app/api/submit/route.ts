@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordServerEvent } from "@/lib/analytics/record";
 import { db } from "@/lib/db";
 import { rateLimiter } from "@/lib/ratelimit";
 import { clientIp, hashValue, isSameOrigin } from "@/lib/request";
@@ -31,5 +32,6 @@ export async function POST(request: Request) {
   await db.articleRequest.create({
     data: { name, tgContact: tg, category, title, description, draftUrl: draftUrl || null, ipHash },
   });
+  recordServerEvent(request, { type: "submit_request" });
   return NextResponse.json({ ok: true });
 }

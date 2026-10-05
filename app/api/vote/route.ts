@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { recordServerEvent } from "@/lib/analytics/record";
 import { rateLimiter } from "@/lib/ratelimit";
 import { clientIp, hashValue, isSameOrigin } from "@/lib/request";
 import { telegram, type TelegramApi } from "@/lib/telegram/client";
@@ -45,6 +46,17 @@ export async function POST(request: NextRequest) {
     },
     { tg: voteTelegram, verifyCaptcha: (token) => verifyTurnstile(token, ip) },
   );
+
+  // Воронка голосования: на каком шаге и почему люди отваливаются.
+  const entity = { entityType: "nominee", entityId: parsed.data.nomineeSlug };
+  if (result.ok) {
+    recordServerEvent(request, { type: "captcha_passed", ...entity });
+    recordServerEvent(request, { type: "vote_cast", ...entity });
+  } else if (result.error === "captcha") {
+    recordServerEvent(request, { type: "captcha_failed", ...entity });
+  } else {
+    recordServerEvent(request, { type: "vote_rejected", ...entity, meta: { reason: result.error } });
+  }
 
   if (!result.ok) {
     const status = result.error === "not_found" ? 404 : result.error === "already_voted" ? 409 : 403;

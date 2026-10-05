@@ -44,3 +44,6 @@ next-env.d.ts
 
 # server deploy logs
 /logs/
+
+# local data (GeoIP database)
+/data/

@@ -20,6 +20,8 @@ export function AdSlot({ slotKey, onBrand, className }: AdSlotProps) {
       href={ADS_CONTACT_URL}
       target="_blank"
       rel="noopener"
+      data-ad-slot={slotKey}
+      data-ad-sold="false"
       className={cn(
         "items-center justify-center gap-3 rounded-card border border-dashed px-4 text-center text-sm transition-colors",
         onBrand

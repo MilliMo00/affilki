@@ -11,13 +11,15 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "test": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/affilki_test} node --import tsx --test --test-concurrency=1 tests/*.test.ts"
+    "test": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/affilki_test} node --import tsx --test --test-concurrency=1 tests/*.test.ts",
+    "cron": "tsx scripts/cron.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "clsx": "^2.1.1",
     "framer-motion": "^14.0.0",
     "lucide-react": "^1.52.0",
+    "maxmind": "^5.0.7",
     "next": "16.3.8",
     "qrcode": "^1.5.4",
     "react": "19.2.8",

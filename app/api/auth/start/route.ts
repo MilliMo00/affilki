@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import QRCode from "qrcode";
+import { recordServerEvent } from "@/lib/analytics/record";
 import { rateLimiter } from "@/lib/ratelimit";
 import { clientIp, hashValue, isSameOrigin } from "@/lib/request";
 import { setLoginCookie } from "@/lib/voting/cookies";
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest) {
 
   const ua = request.headers.get("user-agent") ?? "";
   const { token, browserSecret, expiresAt } = await startLogin({ ipHash, uaHash: hashValue(ua), uaLabel: uaLabel(ua) });
+
+  recordServerEvent(request, { type: "login_start" });
 
   const url = `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=l_${token}`;
   const qr = await QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#120B3D", light: "#FFFFFF" } });

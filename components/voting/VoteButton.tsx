@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { RayBurst } from "@/components/awards/RayBurst";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { cn } from "@/lib/cn";
+import { track } from "@/lib/track";
 import { voter, useVoter, type VoteTarget } from "@/lib/voter-store";
 
 type VoteButtonProps = VoteTarget & {
@@ -43,7 +44,10 @@ export function VoteButton({ nominee, nomination, large, className }: VoteButton
         type="button"
         disabled={mine}
         aria-label={mine ? `Твой голос отдан за ${nominee.name}` : `Голосовать за ${nominee.name}`}
-        onClick={() => voter.open({ nominee, nomination })}
+        onClick={() => {
+          track("vote_click", { nominee: nominee.slug, nomination: nomination.slug });
+          voter.open({ nominee, nomination });
+        }}
         className={cn(
           "inline-flex w-full items-center justify-center gap-2 rounded-full font-semibold transition-colors",
           large ? "min-h-14 px-8 py-3 text-lg" : "h-11 px-5 text-base",

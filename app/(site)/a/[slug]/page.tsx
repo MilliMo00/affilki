@@ -48,7 +48,7 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <article>
+        <article data-article>
           <header className="max-w-prose">
             <Link href={`/articles/${article.category.slug}`} className="font-medium text-muted-bright hover:text-paper">
               {article.category.title}

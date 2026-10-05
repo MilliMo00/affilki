@@ -46,6 +46,14 @@
 - Клиент: общий стор `lib/live-store.ts`, компоненты в `components/live/`. Страницы: `/awards/live`, вкладка Live номинации, «Позиция в номинации» у участника, строка лидера на карточках, бегущая строка под шапкой.
 - Архива прошлых сезонов нет (решение владельца: прошлых сезонов не было). Страницу `/awards/archive/[year]` не делаем, пока не появится второй сезон.
 
+### Фаза E: аналитика
+
+- Сырые события — `AnalyticsEvent`, суточные агрегаты — `DailyStat`. Браузер шлёт пачки на `/api/t` (`lib/track.ts`, `components/analytics/Tracker.tsx`); шаги входа и голоса пишет сервер через `recordServerEvent`.
+- Типы событий: `page_view`, `ad_impression`, `ad_click`, `vote_click`, `share_click`, `article_read` (клиент); `login_start`, `bot_start`, `login_confirmed`, `login_rejected`, `captcha_passed`, `captcha_failed`, `vote_rejected` (с причиной), `vote_cast`, `submit_request` (сервер). Воронка v2 адаптирована под вход через бота.
+- IP не хранится: только хэш и страна из локальной базы DB-IP Lite (`data/geoip/country.mmdb`, в git не лежит; ссылка на DB-IP стоит на `/privacy`).
+- Боты (по User-Agent) и админы (cookie `aff_admin`) в статистику не попадают. Без согласия на аналитические cookie `visitorId` не создаётся.
+- Фоновые задачи: `npm run cron nightly` (агрегаты, удаление событий старше 180 дней, замена Telegram ID хэшем через 90 дней после сезона) и `npm run cron geoip` (обновление базы стран).
+
 ## Деплой
 
 - Код: `git@github.com:MilliMo00/affilki.git`, ветка `main`. Пуш в `main` = выкладка на живой сайт.

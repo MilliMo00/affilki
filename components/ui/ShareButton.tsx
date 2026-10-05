@@ -2,6 +2,7 @@
 
 import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
+import { track } from "@/lib/track";
 import { Button } from "./Button";
 
 type ShareButtonProps = {
@@ -20,6 +21,7 @@ export function ShareButton({ path, title, label = "Поделиться", copyO
 
   const share = async () => {
     const url = new URL(path, window.location.origin).toString();
+    track("share_click", { target: path.split("?")[0] });
     if (!copyOnly && navigator.share && window.matchMedia("(pointer: coarse)").matches) {
       try {
         await navigator.share({ title, url });

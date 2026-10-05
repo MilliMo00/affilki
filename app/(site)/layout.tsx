@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+import { CookieBanner } from "@/components/analytics/CookieBanner";
+import { Tracker } from "@/components/analytics/Tracker";
 import { VoteDialog } from "@/components/voting/VoteDialog";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -22,6 +25,11 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
         <Footer />
       </div>
       <VoteDialog channelUrl={TG_CHANNEL_URL} />
+      {/* useSearchParams внутри трекера требует Suspense, иначе страницы нельзя пререндерить. */}
+      <Suspense fallback={null}>
+        <Tracker />
+      </Suspense>
+      <CookieBanner />
     </>
   );
 }

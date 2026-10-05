@@ -248,3 +248,50 @@ model TgBan {
   createdBy String
   createdAt DateTime @default(now())
 }
+
+// ── Аналитика ──────────────────────────────────────────────────────────────
+
+/// Сырое событие. Хранится 180 дней; IP не хранится — только хэш с солью.
+model AnalyticsEvent {
+  id          BigInt   @id @default(autoincrement())
+  type        String
+  ts          DateTime @default(now())
+  /// Анонимный идентификатор вкладки/визита.
+  sessionId   String?
+  /// Анонимный идентификатор посетителя; есть только при согласии на аналитические cookie.
+  visitorId   String?
+  path        String?
+  entityType  String?
+  entityId    String?
+  ipHash      String?
+  device      String?
+  browser     String?
+  os          String?
+  country     String?
+  /// Только домен источника перехода.
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  meta        Json?
+
+  @@index([type, ts])
+  @@index([entityType, entityId, ts])
+  @@index([ts])
+}
+
+/// Суточный агрегат для дашбордов. Пустая строка вместо NULL — чтобы работал уникальный индекс.
+model DailyStat {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  type       String
+  entityType String   @default("")
+  entityId   String   @default("")
+  source     String   @default("")
+  device     String   @default("")
+  count      Int
+  uniques    Int
+
+  @@unique([date, type, entityType, entityId, source, device])
+  @@index([type, date])
+}
