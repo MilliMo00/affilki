@@ -5,6 +5,10 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
 import { NominationCover } from "@/components/awards/NominationCover";
 import { NomineeCard } from "@/components/awards/NomineeCard";
+import { LiveBoard } from "@/components/live/LiveBoard";
+import { cn } from "@/lib/cn";
+import { getLiveSnapshot } from "@/lib/live/snapshot";
+import type { LiveNomination } from "@/lib/live/types";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { Tabs } from "@/components/ui/Tabs";
@@ -81,12 +85,44 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
   );
 }
 
-function Nominees({ nomination, votingOpen }: { nomination: Nomination; votingOpen: boolean }) {
+type NomineesProps = {
+  nomination: Nomination;
+  votingOpen: boolean;
+  /** Открытое табло номинации — тогда доступна сортировка по голосам. */
+  board: LiveNomination | null;
+  byVotes: boolean;
+};
+
+function Nominees({ nomination, votingOpen, board, byVotes }: NomineesProps) {
   if (nomination.nominees.length === 0) {
     return <p className="rounded-card border border-petal px-6 py-12 text-center text-lg">Участников пока нет — шорт-лист ещё собирается.</p>;
   }
+  // По умолчанию — по алфавиту, чтобы не давать преимущества лидеру.
+  const place = new Map(board?.rows.map((row) => [row.slug, row.place]));
+  const nominees =
+    byVotes && board
+      ? [...nomination.nominees].sort((a, b) => (place.get(a.slug) ?? 99) - (place.get(b.slug) ?? 99))
+      : nomination.nominees;
+  const path = `/awards/${nomination.slug}?tab=nominees`;
+  const chip = (active: boolean) =>
+    cn(
+      "flex h-9 items-center rounded-full border px-4 text-sm font-medium",
+      active ? "border-paper bg-paper text-deep" : "border-muted-bright/60 text-paper hover:border-paper",
+    );
+
   return (
     <>
+      {board && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-bright">Сортировка:</span>
+          <Link href={path} scroll={false} aria-current={!byVotes ? "true" : undefined} className={chip(!byVotes)}>
+            По алфавиту
+          </Link>
+          <Link href={`${path}&sort=votes`} scroll={false} aria-current={byVotes ? "true" : undefined} className={chip(byVotes)}>
+            По голосам
+          </Link>
+        </div>
+      )}
       {nomination.isEvents && (
         <p className="mb-8 rounded-card border border-petal bg-deep/50 p-5 text-paper">
           Мы фиксируем события, которые обсуждал рынок. Если вы упомянуты и хотите дать комментарий — напишите{" "}
@@ -97,7 +133,7 @@ function Nominees({ nomination, votingOpen }: { nomination: Nomination; votingOp
         </p>
       )}
       <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-        {nomination.nominees.map((nominee) => (
+        {nominees.map((nominee) => (
           <li key={nominee.slug}>
             <NomineeCard nominee={nominee} nomination={{ slug: nomination.slug, title: nomination.title }} votingOpen={votingOpen} />
           </li>
@@ -112,7 +148,11 @@ export default async function NominationPage({ params, searchParams }: Props) {
   if (!data) notFound();
 
   const { season, nomination, prev, next } = data;
-  const requested = (await searchParams).tab;
+  const query = await searchParams;
+  const requested = query.tab;
+  const live = await getLiveSnapshot();
+  const liveNomination = live?.nominations.find((n) => n.slug === nomination.slug);
+  const board = liveNomination?.state === "live" ? liveNomination : null;
   const tab = TABS.find((t) => t.key === requested)?.key ?? "about";
   const path = `/awards/${nomination.slug}`;
   const count = nomination.nominees.length;
@@ -148,12 +188,10 @@ export default async function NominationPage({ params, searchParams }: Props) {
 
         <div className="mt-8">
           {tab === "about" && <About season={season} nomination={nomination} />}
-          {tab === "nominees" && <Nominees nomination={nomination} votingOpen={isVotingOpen(season)} />}
-          {tab === "live" && (
-            <p className="rounded-card border border-petal px-6 py-12 text-center text-lg">
-              Live-табло заработает с началом голосования — {formatDate(season.votingStartsAt)}.
-            </p>
+          {tab === "nominees" && (
+            <Nominees nomination={nomination} votingOpen={isVotingOpen(season)} board={board} byVotes={query.sort === "votes"} />
           )}
+          {tab === "live" && <LiveBoard nominationSlug={nomination.slug} initial={live} />}
         </div>
 
         <nav aria-label="Соседние номинации" className="mt-14 grid gap-4 border-t border-petal pt-6 sm:grid-cols-2">

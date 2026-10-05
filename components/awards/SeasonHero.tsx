@@ -1,7 +1,9 @@
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/format";
+import { LiveTotal } from "@/components/live/LiveBits";
 import type { Season } from "@/lib/data";
+import type { LiveSnapshot } from "@/lib/live/types";
 import { Countdown } from "./Countdown";
 import { StageIndicator } from "./StageIndicator";
 
@@ -9,9 +11,11 @@ type SeasonHeroProps = {
   season: Season;
   /** Главная кнопка; без неё кнопка не показывается. */
   cta?: { href: string; label: string };
+  /** Снимок live — для общего счётчика голосов. */
+  live?: LiveSnapshot | null;
 };
 
-export function SeasonHero({ season, cta }: SeasonHeroProps) {
+export function SeasonHero({ season, cta, live }: SeasonHeroProps) {
   const now = new Date();
   const notStarted = now < season.votingStartsAt;
   const ended = now > season.votingEndsAt;
@@ -42,6 +46,15 @@ export function SeasonHero({ season, cta }: SeasonHeroProps) {
             />
           )}
         </div>
+
+        {live && live.totalVotes > 0 && (
+          <p className="text-lg text-paper">
+            Голосов отдано:{" "}
+            <span className="font-display font-bold tabular-nums">
+              <LiveTotal initial={live} />
+            </span>
+          </p>
+        )}
 
         {cta && (
           <Button href={cta.href} size="lg">

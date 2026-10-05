@@ -7,6 +7,7 @@ import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { toHubNomination } from "@/lib/awards";
 import { getCurrentSeason } from "@/lib/data";
+import { getLiveSnapshot } from "@/lib/live/snapshot";
 import { TG_CHANNEL_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AwardsPage() {
-  const season = await getCurrentSeason();
+  const [season, live] = await Promise.all([getCurrentSeason(), getLiveSnapshot()]);
+  const boardOpen = live?.status === "live" || live?.status === "frozen" || live?.status === "final";
 
   if (!season) {
     return (
@@ -37,14 +39,18 @@ export default async function AwardsPage() {
 
   return (
     <div className="bg-indigo">
-      <SeasonHero season={season} cta={{ href: "#nominations", label: "Смотреть номинации" }} />
+      <SeasonHero
+        season={season}
+        live={live}
+        cta={boardOpen ? { href: "/awards/live", label: "Смотреть live-табло" } : { href: "#nominations", label: "Смотреть номинации" }}
+      />
 
       <section id="nominations" aria-labelledby="nominations-title" className="container-page scroll-mt-20 pb-6 pt-10">
         <AdSlot slotKey="awards_top" onBrand className="mb-10" />
         <h2 id="nominations-title" className="mb-6 text-2xl">
           Номинации
         </h2>
-        <NominationHub nominations={season.nominations.map(toHubNomination)} />
+        <NominationHub nominations={season.nominations.map(toHubNomination)} live={live} />
       </section>
 
       <HowWeVote />

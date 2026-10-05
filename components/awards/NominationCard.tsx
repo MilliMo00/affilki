@@ -1,6 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { CardLeader } from "@/components/live/LiveBits";
 import { plural } from "@/lib/format";
+import type { LiveSnapshot } from "@/lib/live/types";
 import { NominationCover } from "./NominationCover";
 import { PetalCard } from "./PetalCard";
 
@@ -14,7 +16,7 @@ export type NominationCardData = {
   isEvents: boolean;
 };
 
-export function NominationCard({ nomination }: { nomination: NominationCardData }) {
+export function NominationCard({ nomination, live }: { nomination: NominationCardData; live: LiveSnapshot | null }) {
   const count = nomination.nomineeCount;
   const noun = nomination.isEvents ? (["событие", "события", "событий"] as const) : (["участник", "участника", "участников"] as const);
 
@@ -31,6 +33,7 @@ export function NominationCard({ nomination }: { nomination: NominationCardData 
         </Link>
       </h3>
       <p className="text-muted-bright">{nomination.shortDesc}</p>
+      <CardLeader slug={nomination.slug} initial={live} />
       <div className="mt-auto flex items-center justify-between gap-3 pt-2">
         <span className="text-sm text-muted-bright">
           {count} {plural(count, [...noun])}

@@ -8,15 +8,18 @@ import { SeasonHero } from "@/components/awards/SeasonHero";
 import { StatsRow } from "@/components/awards/StatsRow";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
+import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { toHubNomination } from "@/lib/awards";
+import { getLiveSnapshot } from "@/lib/live/snapshot";
 import { getArticles, getChannelInfo, getCurrentSeason, getPopularArticles, seasonStats } from "@/lib/data";
 
 // Этап, таймер и «дней до финала» зависят от текущего времени — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [season, feed, popular, channel] = await Promise.all([
+  const [season, live, feed, popular, channel] = await Promise.all([
     getCurrentSeason(),
+    getLiveSnapshot(),
     getArticles({ perPage: 8 }),
     getPopularArticles(5),
     getChannelInfo(),
@@ -24,9 +27,10 @@ export default async function Home() {
 
   return (
     <>
+      <LiveTickerSlot />
       {season ? (
         <>
-          <SeasonHero season={season} cta={{ href: "/awards", label: "К номинациям" }} />
+          <SeasonHero season={season} live={live} cta={{ href: "/awards", label: "К номинациям" }} />
           <StatsRow stats={await seasonStats(season)} />
         </>
       ) : (
@@ -59,7 +63,7 @@ export default async function Home() {
                 Вся премия
               </Link>
             </div>
-            <NominationHub nominations={season.nominations.map(toHubNomination)} filters={false} />
+            <NominationHub nominations={season.nominations.map(toHubNomination)} filters={false} live={live} />
           </div>
         </section>
       )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { NomGroup } from "@/lib/data/types";
+import type { LiveSnapshot } from "@/lib/live/types";
 import { NominationCard, type NominationCardData } from "./NominationCard";
 
 type HubNomination = NominationCardData & { group: NomGroup };
@@ -14,10 +15,10 @@ const FILTERS: { key: NomGroup | "ALL"; label: string }[] = [
   { key: "MARKET", label: "Рынок" },
 ];
 
-type NominationHubProps = { nominations: HubNomination[]; filters?: boolean };
+type NominationHubProps = { nominations: HubNomination[]; filters?: boolean; live: LiveSnapshot | null };
 
 /** Сетка номинаций; чипсы фильтруют её без перезагрузки. */
-export function NominationHub({ nominations, filters = true }: NominationHubProps) {
+export function NominationHub({ nominations, filters = true, live }: NominationHubProps) {
   const [active, setActive] = useState<NomGroup | "ALL">("ALL");
   const visible = active === "ALL" ? nominations : nominations.filter((n) => n.group === active);
 
@@ -48,7 +49,7 @@ export function NominationHub({ nominations, filters = true }: NominationHubProp
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">
         {visible.map((nomination) => (
           <li key={nomination.slug}>
-            <NominationCard nomination={nomination} />
+            <NominationCard nomination={nomination} live={live} />
           </li>
         ))}
       </ul>

@@ -5,6 +5,9 @@ import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
 import { NomineeCard, NomineeLinks, RightOfReply } from "@/components/awards/NomineeCard";
 import { PetalCard } from "@/components/awards/PetalCard";
 import { Watermark } from "@/components/brand/Watermark";
+import { LiveBoard } from "@/components/live/LiveBoard";
+import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
+import { getLiveSnapshot } from "@/lib/live/snapshot";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { VoteButton } from "@/components/voting/VoteButton";
 import { getNominee, isVotingOpen } from "@/lib/data";
@@ -26,10 +29,12 @@ export default async function NomineePage({ params }: Props) {
   const { season, nomination, nominee } = data;
   const open = isVotingOpen(season);
   const others = nomination.nominees.filter((n) => n.slug !== nominee.slug);
+  const live = await getLiveSnapshot();
   const voteLink = `/n/${nominee.slug}?utm_source=share&utm_medium=nominee&utm_campaign=awards${season.year}`;
 
   return (
     <div className="bg-indigo">
+      <LiveTickerSlot />
       <section className="grain relative overflow-hidden bg-hero">
         <Watermark />
         <div className="container-page relative py-10 sm:py-14">
@@ -87,6 +92,10 @@ export default async function NomineePage({ params }: Props) {
           </PetalCard>
         </div>
       </section>
+
+      <div className="container-page empty:hidden [&:not(:empty)]:pt-12">
+        <LiveBoard nominationSlug={nomination.slug} initial={live} highlight={nominee.slug} quiet title="Позиция в номинации" />
+      </div>
 
       {others.length > 0 && (
         <section aria-labelledby="others-title" className="container-page py-12">
