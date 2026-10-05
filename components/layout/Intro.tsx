@@ -41,9 +41,6 @@ export function Intro() {
     const overlay = overlayRef.current;
     if (!overlay) return;
 
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && finish();
-    document.addEventListener("keydown", onKey);
-
     // 1.4–1.8s: композиция улетает на место логотипа в шапке, фон растворяется.
     const timer = window.setTimeout(() => {
       const comp = overlay.querySelector<HTMLElement>("[data-intro-comp]");
@@ -68,17 +65,14 @@ export function Intro() {
       ).then(finish);
     }, FLY_AT_MS);
 
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      window.clearTimeout(timer);
-    };
+    return () => window.clearTimeout(timer);
   }, [requested, done, finish]);
 
   return (
     <>
       <InlineScript html={BOOT_SCRIPT} />
       {requested && !done && (
-        <div ref={overlayRef} className="intro-overlay" onClick={finish}>
+        <div ref={overlayRef} className="intro-overlay">
           <div data-intro-bg className="absolute inset-0 bg-deep">
             {/* 0–0.2s: разгорается радиальное свечение */}
             <motion.div
@@ -161,14 +155,6 @@ export function Intro() {
             </div>
           </div>
 
-          <button
-            type="button"
-            data-intro-fade
-            onClick={finish}
-            className="absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-medium text-muted-bright hover:bg-paper/10 hover:text-paper"
-          >
-            Пропустить
-          </button>
         </div>
       )}
     </>
