@@ -83,6 +83,7 @@ export function track(type: string, meta?: Meta) {
   // Источник перехода и UTM запоминаем сразу: к моменту отправки человек может уйти на другую страницу.
   sessionInfo();
   queue.push({ type, path: location.pathname + location.search, ts: Date.now(), meta });
-  if (queue.length >= 10) return flush();
-  timer ??= window.setTimeout(() => flush(), 4000);
+  // После клика человек, скорее всего, уйдёт со страницы — отправляем сразу, не дожидаясь таймера.
+  if (queue.length >= 10 || type.endsWith("_click")) return flush();
+  timer ??= window.setTimeout(() => flush(), 2000);
 }

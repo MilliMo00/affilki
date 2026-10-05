@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Badge, PageTitle, Table } from "@/components/admin/ui";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
@@ -17,6 +18,8 @@ const timeFmt = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-dig
 export default async function SubmissionsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { admin } = await requirePermission();
   const kinds = [...(can(admin.role, "awards") ? (["NOMINEE"] as const) : []), ...(can(admin.role, "content") ? (["ARTICLE"] as const) : [])];
+  // Ни премии, ни контента в правах — раздела для этого админа нет.
+  if (kinds.length === 0) notFound();
   const requested = (await searchParams).status;
   const status = TABS.find((tab) => tab.key === requested)?.key ?? "PENDING";
 

@@ -8,10 +8,13 @@ import { logout } from "./actions";
 const NAV: { href: string; label: string; permission?: Permission }[] = [
   { href: "", label: "Обзор" },
   { href: "/submissions", label: "Заявки", permission: "content" },
+  { href: "/articles", label: "Статьи и рубрики", permission: "content" },
+  { href: "/ads", label: "Реклама", permission: "ads" },
   { href: "/season", label: "Сезон и защита", permission: "season" },
   { href: "/nominations", label: "Номинации и участники", permission: "awards" },
   { href: "/votes", label: "Голоса", permission: "votes" },
   { href: "/winners", label: "Победители", permission: "votes" },
+  { href: "/stats", label: "Статистика", permission: "stats" },
   { href: "/security", label: "Безопасность", permission: "security" },
 ];
 

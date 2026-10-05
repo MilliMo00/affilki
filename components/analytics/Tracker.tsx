@@ -6,6 +6,13 @@ import { flush, track } from "@/lib/track";
 
 const DEPTHS = [25, 50, 75, 100];
 
+/** Что за слот и какая кампания в нём сейчас — чтобы статистика считалась по рекламодателю. */
+const adMeta = (slot: HTMLElement) => ({
+  slot: slot.dataset.adSlot ?? "",
+  sold: slot.dataset.adSold === "true",
+  ...(slot.dataset.adCampaign && { campaign: slot.dataset.adCampaign }),
+});
+
 /** Автоматические события: просмотры страниц, показы и клики рекламных слотов, глубина чтения статей. */
 export function Tracker() {
   const pathname = usePathname();
@@ -27,7 +34,7 @@ export function Tracker() {
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const slot = (e.target as Element | null)?.closest<HTMLElement>("[data-ad-slot]");
-      if (slot) track("ad_click", { slot: slot.dataset.adSlot ?? "", sold: slot.dataset.adSold === "true" });
+      if (slot) track("ad_click", adMeta(slot));
     };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
@@ -47,7 +54,7 @@ export function Tracker() {
             timers.set(
               slot,
               window.setTimeout(() => {
-                track("ad_impression", { slot: slot.dataset.adSlot ?? "", sold: slot.dataset.adSold === "true" });
+                track("ad_impression", adMeta(slot));
                 observer.unobserve(slot);
               }, 1000),
             );
