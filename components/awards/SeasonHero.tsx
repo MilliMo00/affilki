@@ -23,7 +23,7 @@ export function SeasonHero({ season, cta }: SeasonHeroProps) {
         <div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl">{season.title}</h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-paper">
-            Народная премия арбитражного рынка. Победителей выбирает комьюнити и жюри.
+            Народная премия арбитражного рынка. Победителей выбирает комьюнити.
           </p>
         </div>
 

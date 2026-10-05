@@ -77,8 +77,9 @@ model Season {
   /// Дата начала следующего этапа — для индикатора-цветка.
   nextStageAt      DateTime?
   resultsPublished Boolean  @default(false)
-  communityWeight  Float    @default(0.5)
-  juryWeight       Float    @default(0.5)
+  /// По умолчанию побеждает тот, за кого больше голосов; жюри включается весом > 0.
+  communityWeight  Float    @default(1)
+  juryWeight       Float    @default(0)
 
   // Пороги защиты (ТЗ v2, 4.3)
   requireChannel  Boolean @default(true)

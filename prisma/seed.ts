@@ -24,15 +24,16 @@ async function seedContent() {
 async function seedAwards() {
   if (await db.season.findUnique({ where: { year: 2026 } })) return console.log("awards: сезон 2026 уже есть, пропускаю");
 
-  // Даты условные: настоящие задаются в админке.
+  // Приём команд с 1 ноября, финал и итоги 30 декабря (даты владельца).
+  // Старт голосования — условный, уточняется: задаётся в админке.
   const season = await db.season.create({
     data: {
       year: 2026,
       title: "AFFILKI Awards 2026",
-      stage: "SHORTLIST",
-      votingStartsAt: new Date("2026-11-01T09:00:00Z"),
-      votingEndsAt: new Date("2026-11-30T20:59:00Z"),
-      nextStageAt: new Date("2026-11-01T09:00:00Z"),
+      stage: "APPLICATIONS",
+      votingStartsAt: new Date("2026-12-01T09:00:00Z"),
+      votingEndsAt: new Date("2026-12-30T20:59:00Z"),
+      nextStageAt: null,
     },
   });
 

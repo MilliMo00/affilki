@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
-import { NominationIcon } from "@/components/awards/NominationIcon";
+import { NominationCover } from "@/components/awards/NominationCover";
 import { NomineeCard } from "@/components/awards/NomineeCard";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
@@ -37,12 +37,14 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
       title: "Как считается итог",
       body: (
         <p>
-          {percent(season.communityWeight)} — голоса комьюнити, {percent(season.juryWeight)} — оценка жюри. Один
-          Telegram-аккаунт — один голос в номинации, изменить его нельзя.
+          {season.juryWeight > 0
+            ? `${percent(season.communityWeight)} — голоса комьюнити, ${percent(season.juryWeight)} — оценка жюри. `
+            : "Побеждает тот, за кого отдано больше голосов. Жюри нет — решает только комьюнити. "}
+          Один Telegram-аккаунт — один голос в номинации, изменить его нельзя.
         </p>
       ),
     },
-    ...(nomination.jury ? [{ title: "Жюри", body: <p>{nomination.jury}</p> }] : []),
+    ...(nomination.jury && season.juryWeight > 0 ? [{ title: "Жюри", body: <p>{nomination.jury}</p> }] : []),
     {
       title: "Даты",
       body: (
@@ -123,17 +125,14 @@ export default async function NominationPage({ params, searchParams }: Props) {
       <div className="container-page py-10 sm:py-14">
         <Breadcrumbs items={[{ href: "/awards", label: season.title }]} />
 
-        <header className="mt-4 flex flex-wrap items-start justify-between gap-6">
-          <div className="flex min-w-0 items-start gap-4">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-deep text-paper">
-              <NominationIcon name={nomination.icon} size={28} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-muted-bright">
-                Номинация {nomination.number} из {season.nominations.length} · {count} {plural(count, noun)}
-              </p>
-              <h1 className="mt-1 hyphens-auto text-xl sm:hyphens-none sm:text-3xl lg:text-4xl">{nomination.title}</h1>
-            </div>
+        <NominationCover number={nomination.number} icon={nomination.icon} large className="mt-4 h-40 rounded-petal sm:h-52" />
+
+        <header className="mt-6 flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-muted-bright">
+              Номинация {nomination.number} из {season.nominations.length} · {count} {plural(count, noun)}
+            </p>
+            <h1 className="mt-1 hyphens-auto text-xl sm:hyphens-none sm:text-3xl lg:text-4xl">{nomination.title}</h1>
           </div>
           <ShareButton path={path} title={`${nomination.title} — ${season.title}`} label="Поделиться номинацией" />
         </header>

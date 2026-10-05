@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { plural } from "@/lib/format";
-import { NominationIcon } from "./NominationIcon";
+import { NominationCover } from "./NominationCover";
 import { PetalCard } from "./PetalCard";
 
 export type NominationCardData = {
@@ -19,15 +19,12 @@ export function NominationCard({ nomination }: { nomination: NominationCardData 
   const noun = nomination.isEvents ? (["событие", "события", "событий"] as const) : (["участник", "участника", "участников"] as const);
 
   return (
-    <PetalCard className="flex h-full flex-col gap-4 transition-colors focus-within:border-glow hover:border-glow">
-      <div className="flex items-center justify-between">
-        <span className="flex size-12 items-center justify-center rounded-full bg-ink/40 text-paper">
-          <NominationIcon name={nomination.icon} />
-        </span>
-        <span className="font-display text-2xl font-bold tabular-nums text-paper/40" aria-hidden>
-          {String(nomination.number).padStart(2, "0")}
-        </span>
-      </div>
+    <PetalCard className="flex h-full flex-col gap-4 overflow-hidden transition-colors focus-within:border-glow hover:border-glow">
+      <NominationCover
+        number={nomination.number}
+        icon={nomination.icon}
+        className="-mx-5 -mt-5 h-36 rounded-[27px_5px_0_0] sm:-mx-6 sm:-mt-6"
+      />
       <h3 className="text-xl">
         <Link href={`/awards/${nomination.slug}`} className="after:absolute after:inset-0 after:rounded-petal">
           {nomination.title}
