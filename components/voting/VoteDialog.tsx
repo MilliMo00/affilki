@@ -67,8 +67,8 @@ function LoginStep() {
     <div className="flex flex-col items-center gap-4 text-center">
       <h2 className="text-xl">Подтверди вход в Telegram</h2>
       <p className="text-muted-bright">
-        Голос привязан к Telegram-аккаунту: один аккаунт — один голос в номинации. Вход нужен один раз, дальше голосуешь
-        прямо на сайте.
+        Голос привязан к Telegram-аккаунту: один аккаунт — один голос в номинации. Регистрация нужна один раз — дальше голосуешь
+        прямо на сайте, в каждой номинации.
       </p>
       {link ? (
         <>

@@ -4,7 +4,8 @@ import { CHECK_MESSAGES, checkAccount } from "./checks";
 import { randomToken, sha256 } from "./tokens";
 
 export const LOGIN_TTL_MS = 10 * 60 * 1000;
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// Вход бессрочный: сессия в базе живёт 10 лет, пока её не отозвали (выход или бан).
+export const SESSION_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://affilki.com";
 const CHANNEL_URL = process.env.TG_CHANNEL_URL ?? "https://t.me/affilki_cpa";
