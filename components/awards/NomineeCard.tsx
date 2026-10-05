@@ -2,6 +2,7 @@ import { Globe, Send } from "lucide-react";
 import Link from "next/link";
 import type { Nominee } from "@/lib/data";
 import { NomineeAvatar } from "./NomineeAvatar";
+import { VoteButton } from "@/components/voting/VoteButton";
 import { PetalCard } from "./PetalCard";
 
 export function NomineeLinks({ nominee }: { nominee: Nominee }) {
@@ -39,7 +40,13 @@ export function RightOfReply({ text }: { text: string }) {
   );
 }
 
-export function NomineeCard({ nominee }: { nominee: Nominee }) {
+type NomineeCardProps = {
+  nominee: Nominee;
+  nomination: { slug: string; title: string };
+  votingOpen: boolean;
+};
+
+export function NomineeCard({ nominee, nomination, votingOpen }: NomineeCardProps) {
   return (
     <PetalCard className="flex h-full flex-col gap-4">
       <div className="flex items-start gap-4">
@@ -56,15 +63,22 @@ export function NomineeCard({ nominee }: { nominee: Nominee }) {
 
       {nominee.rightOfReply && <RightOfReply text={nominee.rightOfReply} />}
 
-      {/* Кнопка «Голосовать» появится здесь вместе с голосованием (Фаза C). */}
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
         <NomineeLinks nominee={nominee} />
-        <Link
-          href={`/n/${nominee.slug}`}
-          className="ml-auto flex h-11 items-center rounded-full border border-petal px-5 font-semibold text-paper hover:border-glow hover:bg-glow/20"
-        >
-          Подробнее
-        </Link>
+        {votingOpen ? (
+          <VoteButton
+            nominee={{ slug: nominee.slug, name: nominee.name }}
+            nomination={nomination}
+            className="ml-auto"
+          />
+        ) : (
+          <Link
+            href={`/n/${nominee.slug}`}
+            className="ml-auto flex h-11 items-center rounded-full border border-petal px-5 font-semibold text-paper hover:border-glow hover:bg-glow/20"
+          >
+            Подробнее
+          </Link>
+        )}
       </div>
     </PetalCard>
   );

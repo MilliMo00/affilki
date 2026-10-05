@@ -42,9 +42,6 @@ try {
   if ($deployed -eq $remote -and -not $Force) { return }
 
   Log "deploy $deployed -> $remote"
-  $lockBefore = (Get-FileHash package-lock.json).Hash
-  $schemaPath = 'prisma\schema.prisma'
-  $schemaBefore = if (Test-Path $schemaPath) { (Get-FileHash $schemaPath).Hash } else { '' }
   Run 'git merge' { git merge --ff-only origin/main }
 
   $ErrorActionPreference = 'Continue'
@@ -52,17 +49,26 @@ try {
   $running = $LASTEXITCODE -eq 0
   $ErrorActionPreference = 'Stop'
 
+  # Что установлено сейчас, помним по хэшам в logs/: так переустановка случится и после
+  # упавшего деплоя, и если код подтянули вручную.
+  $depsMarker = Join-Path $logDir 'installed-deps'
+  $schemaMarker = Join-Path $logDir 'generated-schema'
+  $depsHash = (Get-FileHash package-lock.json).Hash
+  $schemaHash = if (Test-Path prisma\schema.prisma) { (Get-FileHash prisma\schema.prisma).Hash } else { '' }
+  $depsChanged = -not (Test-Path $depsMarker) -or (Get-Content $depsMarker -Raw).Trim() -ne $depsHash
+  $schemaChanged = -not (Test-Path $schemaMarker) -or (Get-Content $schemaMarker -Raw).Trim() -ne $schemaHash
+
   # На Windows нельзя перезаписать файлы работающего процесса (пакеты npm, движок Prisma),
   # поэтому при смене зависимостей или схемы базы сайт на это время останавливается.
-  $depsChanged = (Get-FileHash package-lock.json).Hash -ne $lockBefore -or -not (Test-Path node_modules\next\package.json)
-  $schemaAfter = if (Test-Path $schemaPath) { (Get-FileHash $schemaPath).Hash } else { '' }
-  $schemaChanged = $schemaAfter -ne $schemaBefore -or -not (Test-Path node_modules\.prisma\client\index.js)
   if (($depsChanged -or $schemaChanged) -and $running) { Run 'pm2 stop' { pm2 stop affilki } }
   # npm ci сам запускает prisma generate (postinstall).
   if ($depsChanged) { Run 'npm ci' { npm ci --no-audit --no-fund } }
-  elseif ($schemaChanged) { Run 'prisma generate' { npx prisma generate } }
+  elseif ($schemaChanged) { Run 'prisma generate' { npx --no-install prisma generate } }
+  Set-Content $depsMarker $depsHash
+  Set-Content $schemaMarker $schemaHash
   # Миграции применяются до сборки; команда ничего не делает, если новых нет.
-  Run 'prisma migrate' { npx prisma migrate deploy }
+  # --no-install: только Prisma из проекта, никогда не «свежая» из сети.
+  Run 'prisma migrate' { npx --no-install prisma migrate deploy }
   Run 'build' { npm run build }
 
   # delete + start, а не restart: так подхватываются изменения в ecosystem.config.cjs.

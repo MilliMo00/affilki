@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { TG_CHANNEL_URL } from "@/lib/env";
+import { telegram } from "@/lib/telegram/client";
 import type { Article, Category, ChannelInfo, Nomination, Nominee, NomineeLinks, Season } from "./types";
 
 export type * from "./types";
@@ -167,11 +168,17 @@ export async function getNominee(
   return null;
 }
 
-export function seasonStats(season: Season, now = new Date()) {
+export async function seasonStats(season: Season, now = new Date()) {
   const msLeft = season.votingEndsAt.getTime() - now.getTime();
   return {
-    // Голоса появятся вместе с голосованием (Фаза C).
-    votes: 0,
+    // Только общее число: аннулированные голоса и голоса забаненных не считаются.
+    votes: await db.vote.count({
+      where: {
+        voidedAt: null,
+        nomination: { season: { year: season.year } },
+        tgUserId: { notIn: (await db.tgBan.findMany({ select: { tgUserId: true } })).map((b) => b.tgUserId) },
+      },
+    }),
     nominees: season.nominations.reduce((sum, n) => sum + n.nominees.length, 0),
     nominations: season.nominations.length,
     daysLeft: Math.max(0, Math.ceil(msLeft / 86_400_000)),
@@ -182,12 +189,17 @@ export function isVotingOpen(season: Season, now = new Date()) {
   return now >= season.votingStartsAt && now <= season.votingEndsAt;
 }
 
+let memberCount: { value: number | null; at: number } | null = null;
+
 export async function getChannelInfo(): Promise<ChannelInfo> {
+  // Число подписчиков спрашиваем у Telegram не чаще раза в час.
+  if (!memberCount || Date.now() - memberCount.at > 3_600_000) {
+    memberCount = { value: await telegram.channelMemberCount(), at: Date.now() };
+  }
   return {
     title: "AFFILKI",
     handle: `@${TG_CHANNEL_URL.split("/").pop()}`,
     url: TG_CHANNEL_URL,
-    // Число подписчиков берётся у Telegram Bot API, когда подключён бот (Фаза C).
-    subscribers: null,
+    subscribers: memberCount.value,
   };
 }

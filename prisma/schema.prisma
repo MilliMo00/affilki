@@ -135,6 +135,7 @@ model Nomination {
   requiresLegalReview Boolean  @default(false)
   acceptingEntries    Boolean  @default(true)
   nominees            Nominee[]
+  votes               Vote[]
 
   @@unique([seasonId, slug])
 }
@@ -164,6 +165,86 @@ model Nominee {
   legalChecked Boolean    @default(false)
   published    Boolean    @default(false)
   createdAt    DateTime   @default(now())
+  votes        Vote[]
 
   @@index([nominationId])
+}
+
+// ── Вход и голосование ─────────────────────────────────────────────────────
+// Схема: один раз подтверждаем себя в Telegram-боте, дальше голосуем на сайте.
+
+/// Одноразовая ссылка входа: сайт создаёт, бот привязывает к Telegram-аккаунту.
+model LoginIntent {
+  id            String       @id @default(cuid())
+  /// Параметр /start у бота. Знать его мало: сессию получает только браузер с секретом.
+  token         String       @unique
+  /// Хэш секрета из cookie браузера, который начал вход.
+  browserHash   String
+  status        IntentStatus @default(PENDING)
+  tgUserId      BigInt?
+  tgUsername    String?
+  tgFirstName   String?
+  hasAvatar     Boolean      @default(false)
+  ipHash        String
+  uaHash        String
+  /// «Chrome, macOS» — показываем в боте, чтобы человек узнал свой браузер.
+  uaLabel       String
+  createdAt     DateTime     @default(now())
+  expiresAt     DateTime
+
+  @@index([ipHash, createdAt])
+}
+
+enum IntentStatus {
+  PENDING
+  BOUND
+  CONFIRMED
+  USED
+  REJECTED
+}
+
+model VoterSession {
+  /// SHA-256 от токена из cookie: сам токен в базе не хранится.
+  id          String    @id
+  tgUserId    BigInt
+  tgUsername  String?
+  tgFirstName String?
+  hasAvatar   Boolean   @default(false)
+  ipHash      String
+  uaHash      String
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([tgUserId])
+}
+
+model Vote {
+  id           String     @id @default(cuid())
+  tgUserId     BigInt
+  tgUsername   String?
+  hasAvatar    Boolean
+  nominationId String
+  nomination   Nomination @relation(fields: [nominationId], references: [id])
+  nomineeId    String
+  nominee      Nominee    @relation(fields: [nomineeId], references: [id])
+  ipHash       String
+  uaHash       String
+  captchaKind  String     @default("turnstile")
+  voidedAt     DateTime?
+  voidReason   String?
+  voidedBy     String?
+  createdAt    DateTime   @default(now())
+
+  /// Один Telegram-аккаунт — один голос в номинации: гарантия на уровне базы.
+  @@unique([tgUserId, nominationId])
+  @@index([nomineeId, createdAt])
+}
+
+model TgBan {
+  tgUserId  BigInt   @id
+  reason    String
+  createdBy String
+  createdAt DateTime @default(now())
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { VoterBadge } from "@/components/voting/VoterBadge";
 import { cn } from "@/lib/cn";
 import { MAIN_NAV } from "@/lib/nav";
 import { MobileMenu } from "./MobileMenu";
@@ -62,6 +63,7 @@ export function Header({ channelUrl }: { channelUrl: string }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <VoterBadge />
           <a
             href={channelUrl}
             target="_blank"

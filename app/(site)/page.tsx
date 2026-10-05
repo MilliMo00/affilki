@@ -27,7 +27,7 @@ export default async function Home() {
       {season ? (
         <>
           <SeasonHero season={season} cta={{ href: "/awards", label: "К номинациям" }} />
-          <StatsRow stats={seasonStats(season)} />
+          <StatsRow stats={await seasonStats(season)} />
         </>
       ) : (
         <section className="grain relative overflow-hidden bg-hero">

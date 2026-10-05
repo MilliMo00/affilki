@@ -8,7 +8,7 @@ import { NomineeCard } from "@/components/awards/NomineeCard";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { Tabs } from "@/components/ui/Tabs";
-import { getNomination, type Nomination, type Season } from "@/lib/data";
+import { getNomination, isVotingOpen, type Nomination, type Season } from "@/lib/data";
 import { ADS_CONTACT_URL } from "@/lib/env";
 import { formatDate, plural } from "@/lib/format";
 
@@ -81,7 +81,7 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
   );
 }
 
-function Nominees({ nomination }: { nomination: Nomination }) {
+function Nominees({ nomination, votingOpen }: { nomination: Nomination; votingOpen: boolean }) {
   if (nomination.nominees.length === 0) {
     return <p className="rounded-card border border-petal px-6 py-12 text-center text-lg">Участников пока нет — шорт-лист ещё собирается.</p>;
   }
@@ -99,7 +99,7 @@ function Nominees({ nomination }: { nomination: Nomination }) {
       <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
         {nomination.nominees.map((nominee) => (
           <li key={nominee.slug}>
-            <NomineeCard nominee={nominee} />
+            <NomineeCard nominee={nominee} nomination={{ slug: nomination.slug, title: nomination.title }} votingOpen={votingOpen} />
           </li>
         ))}
       </ul>
@@ -148,7 +148,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
 
         <div className="mt-8">
           {tab === "about" && <About season={season} nomination={nomination} />}
-          {tab === "nominees" && <Nominees nomination={nomination} />}
+          {tab === "nominees" && <Nominees nomination={nomination} votingOpen={isVotingOpen(season)} />}
           {tab === "live" && (
             <p className="rounded-card border border-petal px-6 py-12 text-center text-lg">
               Live-табло заработает с началом голосования — {formatDate(season.votingStartsAt)}.

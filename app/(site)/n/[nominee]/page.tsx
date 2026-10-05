@@ -6,6 +6,7 @@ import { NomineeCard, NomineeLinks, RightOfReply } from "@/components/awards/Nom
 import { PetalCard } from "@/components/awards/PetalCard";
 import { Watermark } from "@/components/brand/Watermark";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { VoteButton } from "@/components/voting/VoteButton";
 import { getNominee, isVotingOpen } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 
@@ -68,14 +69,19 @@ export default async function NomineePage({ params }: Props) {
               </div>
             )}
 
-            {/* Кнопка «Голосовать» подключается вместе с ботом (Фаза C). */}
-            <p className="text-muted-bright">
-              {open
-                ? "Голосование открыто"
-                : new Date() < season.votingStartsAt
+            {open ? (
+              <VoteButton
+                nominee={{ slug: nominee.slug, name: nominee.name }}
+                nomination={{ slug: nomination.slug, title: nomination.title }}
+                large
+              />
+            ) : (
+              <p className="text-muted-bright">
+                {new Date() < season.votingStartsAt
                   ? `Голосование начнётся ${formatDate(season.votingStartsAt)}`
                   : `Голосование закончилось ${formatDate(season.votingEndsAt)}`}
-            </p>
+              </p>
+            )}
 
             <ShareButton path={voteLink} title={`${nominee.name} — ${season.title}`} label="Скопировать ссылку для голосования" copyOnly />
           </PetalCard>
@@ -90,7 +96,7 @@ export default async function NomineePage({ params }: Props) {
           <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((other) => (
               <li key={other.slug}>
-                <NomineeCard nominee={other} />
+                <NomineeCard nominee={other} nomination={{ slug: nomination.slug, title: nomination.title }} votingOpen={open} />
               </li>
             ))}
           </ul>

@@ -31,6 +31,13 @@
 - `/privacy` — черновик: нужны реквизиты оператора и проверка юристом.
 - Доступ к серверу — по SSH-ключу этой машины (`ssh 31.76.118.135`), пароль не использовать.
 
+### Фаза C: что где
+
+- Вход: `lib/voting/login.ts` (ссылка → бот → подтверждение → сессия), cookie в `lib/voting/cookies.ts`. Голос: `lib/voting/vote.ts`, проверки аккаунта — `lib/voting/checks.ts`. Бот: `lib/telegram/bot.ts`, webhook `/api/tg/webhook`.
+- Бот `@affilki_bot`, канал `@affilki_cpa` (id -1001662295119), бот там администратор. Владелец: Telegram ID 7609412955.
+- Локально webhook недоступен: при `DEV_FAKE_BOT=true` в диалоге есть кнопка «Dev: пройти бота» (`/api/dev/bot`, в проде 404). Локально стоят тестовые ключи Turnstile, боевые — только в `.env` на сервере.
+- Тесты: `npm test` (нужна база `affilki_test` с применёнными миграциями).
+
 ## Деплой
 
 - Код: `git@github.com:MilliMo00/affilki.git`, ветка `main`. Пуш в `main` = выкладка на живой сайт.
@@ -38,4 +45,5 @@
 - Сайт: pm2-процесс `affilki` (`ecosystem.config.cjs` → `scripts/start.cjs`), порт 3010 (снаружи закрыт). Домен `https://affilki.com`, `www` редиректит на него; блок домена дописан в общий `C:\Users\Administrator\progrevsaas\Caddyfile` (этот файл отслеживается git-репозиторием progrevsaas — блок там лежит незакоммиченным изменением).
 - Автодеплой: задача планировщика «AFFILKI auto-deploy» раз в 2 минуты запускает `scripts/deploy.ps1` от SYSTEM. Лог — `logs/deploy.log` на сервере.
 - pm2 работает от `LOCAL SERVICE`; папке проекта выдан доступ Modify для этой учётки, иначе процесс не стартует.
-- Переменные окружения на сервере — в `.env.production.local` (в git не попадает).
+- Переменные окружения на сервере — в `.env` (в git не попадает).
+- База на сервере: отдельный экземпляр Postgres 15, служба `postgresql-affilki`, порт 5433, данные в `C:\ProgramData\affilki-pg`. Основной Postgres владельца (5432) не используем и не трогаем.
