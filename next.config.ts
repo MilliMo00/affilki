@@ -11,8 +11,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // Формы админки с логотипом (до 2 МБ) не помещаются в лимит по умолчанию 1 МБ.
-  experimental: { serverActions: { bodySizeLimit: "3mb" } },
+  // Картинки до 10 МБ, в форме рекламы их две: поднимаем лимиты тела запроса
+  // и для серверных действий (по умолчанию 1 МБ), и для прокси (по умолчанию 10 МБ).
+  experimental: { serverActions: { bodySizeLimit: "25mb" }, proxyClientMaxBodySize: "25mb" },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

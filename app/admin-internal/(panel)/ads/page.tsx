@@ -79,7 +79,7 @@ export default async function AdsAdminPage() {
             <input name="targetUrl" type="url" placeholder="https://" required className={adminInput} />
           </Label>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Label title="Картинка или гифка" hint="До 2 МБ, под размер слота">
+            <Label title="Картинка или гифка" hint="До 10 МБ, под размер слота. Тяжёлая гифка будет долго грузиться у посетителей.">
               <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required className="block text-text" />
             </Label>
             <Label title="Версия для телефона" hint="Необязательно">

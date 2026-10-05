@@ -75,7 +75,7 @@ export default async function ArticleEditPage({ params }: { params: Promise<{ id
           <Label title="Анонс" hint="Пусто — возьмём начало текста">
             <input name="excerpt" defaultValue={article?.excerpt} maxLength={300} className={adminInput} />
           </Label>
-          <Label title="Обложка" hint="16:9, PNG, JPG, GIF или WebP до 2 МБ. Пусто — оставить текущую.">
+          <Label title="Обложка" hint="16:9, PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущую.">
             {article?.coverUrl && (
               <span className="relative mb-3 block aspect-video w-72 overflow-hidden rounded-card border border-petal/60">
                 <Image src={article.coverUrl} alt="Текущая обложка" fill sizes="288px" className="object-cover" />

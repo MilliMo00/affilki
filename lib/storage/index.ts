@@ -6,7 +6,8 @@ import { join } from "node:path";
 // за этим интерфейсом её можно заменить на S3-совместимое хранилище.
 // turbopackIgnore: папка с загрузками — данные, а не часть сборки.
 const DIR = process.env.UPLOADS_DIR ?? join(/* turbopackIgnore: true */ process.cwd(), "data", "uploads");
-const MAX_BYTES = 2 * 1024 * 1024;
+export const MAX_UPLOAD_MB = 10;
+const MAX_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 // Тип определяется по сигнатуре файла, а не по расширению или заголовку. SVG запрещён: в нём можно спрятать скрипт.
 const SIGNATURES: { ext: string; mime: string; test: (b: Buffer) => boolean }[] = [
@@ -23,7 +24,7 @@ export function sniffImage(bytes: Buffer) {
 /** Сохраняет картинку под случайным именем. Возвращает публичный URL или текст ошибки. */
 export async function saveImage(file: File): Promise<{ url: string } | { error: string }> {
   if (file.size === 0) return { error: "Файл пустой." };
-  if (file.size > MAX_BYTES) return { error: "Файл больше 2 МБ." };
+  if (file.size > MAX_BYTES) return { error: `Файл больше ${MAX_UPLOAD_MB} МБ.` };
   const bytes = Buffer.from(await file.arrayBuffer());
   const kind = sniffImage(bytes);
   if (!kind) return { error: "Подходят только PNG, JPG, GIF и WebP." };

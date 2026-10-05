@@ -59,7 +59,7 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
               <input name="tg" type="url" defaultValue={links.tg ?? ""} placeholder="https://t.me/" className={adminInput} />
             </Label>
           </div>
-          <Label title="Логотип" hint="PNG, JPG, GIF или WebP до 2 МБ. Пусто — оставить текущий.">
+          <Label title="Логотип" hint="PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущий.">
             <input type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/webp" className="block text-text" />
           </Label>
           <Label title="Источники" hint={events ? "По одной ссылке в строке. Обязательно хотя бы одна." : "По одной ссылке в строке. Необязательно."}>

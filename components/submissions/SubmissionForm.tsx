@@ -185,7 +185,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
         id="image"
         label={nominee ? "Логотип или фото" : "Обложка"}
         optional
-        hint={draft?.imageUrl ? "PNG, JPG, GIF или WebP до 2 МБ. Пусто — оставить текущую." : "PNG, JPG, GIF или WebP до 2 МБ"}
+        hint={draft?.imageUrl ? "PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущую." : "PNG, JPG, GIF или WebP до 10 МБ"}
         error={errors.image}
       >
         {draft?.imageUrl && (
