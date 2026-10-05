@@ -5,40 +5,50 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClass } from "@/components/ui/Field";
-import type { Category } from "@/lib/data";
+import type { Category } from "@/lib/data/types";
+import { fieldErrors, submitSchema, type SubmitErrors } from "@/lib/validation/submit";
 
-type Errors = Partial<Record<"name" | "tg" | "title" | "description" | "draftUrl" | "consent", string>>;
-
-function validate(data: FormData): Errors {
-  const errors: Errors = {};
-  const text = (key: string) => String(data.get(key) ?? "").trim();
-
-  if (!text("name")) errors.name = "Укажи имя или название команды";
-  if (!/^(@|https:\/\/t\.me\/)?[a-zA-Z0-9_]{4,32}$/.test(text("tg"))) errors.tg = "Нужен ник в Telegram, например @username";
-  if (text("title").length < 5) errors.title = "Заголовок слишком короткий";
-  if (text("description").length < 20) errors.description = "Опиши тему хотя бы в паре предложений";
-  if (text("draftUrl") && !/^https:\/\/\S+$/.test(text("draftUrl"))) errors.draftUrl = "Ссылка должна начинаться с https://";
-  if (!data.get("consent")) errors.consent = "Без согласия заявку отправить нельзя";
-  return errors;
-}
+type Errors = SubmitErrors & { form?: string };
 
 export function SubmitForm({ categories }: { categories: Category[] }) {
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    const found = validate(data);
-    setErrors(found);
-    const first = Object.keys(found)[0];
-    if (first) {
-      e.currentTarget.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
-      return;
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const input = { ...Object.fromEntries(data), consent: data.get("consent") === "on" };
+
+    const showErrors = (found: Errors) => {
+      setErrors(found);
+      const first = Object.keys(found).find((key) => key !== "form");
+      if (first) form.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+    };
+
+    const parsed = submitSchema.safeParse(input);
+    if (!parsed.success) return showErrors(fieldErrors(parsed.error));
+
+    setPending(true);
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (res.ok) {
+        setErrors({});
+        setSent(true);
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      showErrors(body.errors ?? { form: body.error ?? "Не получилось отправить. Попробуй ещё раз." });
+    } catch {
+      showErrors({ form: "Нет связи с сервером. Проверь интернет и попробуй ещё раз." });
+    } finally {
+      setPending(false);
     }
-    // TODO(Фаза 3): отправка на /api/submit — honeypot, rate limit, запись в БД.
-    // Сейчас форма ничего никуда не отправляет.
-    setSent(true);
   };
 
   if (sent) {
@@ -56,7 +66,7 @@ export function SubmitForm({ categories }: { categories: Category[] }) {
     );
   }
 
-  const aria = (key: keyof Errors, hint?: boolean) => ({
+  const aria = (key: keyof SubmitErrors, hint?: boolean) => ({
     "aria-invalid": errors[key] ? true : undefined,
     "aria-describedby": errors[key] ? `${key}-error` : hint ? `${key}-hint` : undefined,
   });
@@ -136,8 +146,14 @@ export function SubmitForm({ categories }: { categories: Category[] }) {
         )}
       </div>
 
-      <Button type="submit" size="lg" className="w-full sm:w-auto">
-        Отправить заявку
+      {errors.form && (
+        <p role="alert" className="text-danger">
+          {errors.form}
+        </p>
+      )}
+
+      <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={pending}>
+        {pending ? "Отправляем…" : "Отправить заявку"}
       </Button>
     </form>
   );

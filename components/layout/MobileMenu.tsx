@@ -9,7 +9,6 @@ import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { MAIN_NAV } from "@/lib/nav";
-import { sessionActions, useSession } from "@/lib/session-store";
 
 type MobileMenuProps = {
   open: boolean;
@@ -20,7 +19,6 @@ type MobileMenuProps = {
 
 export function MobileMenu({ open, onClose, channelUrl, pathname }: MobileMenuProps) {
   const reduced = useReducedMotion();
-  const { user } = useSession();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -105,26 +103,6 @@ export function MobileMenu({ open, onClose, channelUrl, pathname }: MobileMenuPr
           </nav>
 
           <div className="container-page relative flex shrink-0 flex-col gap-3 pb-8">
-            {user ? (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  sessionActions.logout();
-                  onClose();
-                }}
-              >
-                Выйти (@{user.username})
-              </Button>
-            ) : (
-              <Button
-                onClick={() => {
-                  onClose();
-                  sessionActions.openLogin();
-                }}
-              >
-                Войти через Telegram
-              </Button>
-            )}
             <Button href={channelUrl} variant="secondary">
               <Send size={18} strokeWidth={1.75} aria-hidden />
               Канал AFFILKI

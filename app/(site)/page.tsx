@@ -3,41 +3,30 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import { ArticleFeed } from "@/components/articles/ArticleFeed";
 import { PopularList } from "@/components/articles/PopularList";
 import { TgChannelWidget } from "@/components/articles/TgChannelWidget";
-import { NominationGrid } from "@/components/awards/NominationGrid";
-import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
-import { PetalCard } from "@/components/awards/PetalCard";
+import { NominationHub } from "@/components/awards/NominationHub";
 import { SeasonHero } from "@/components/awards/SeasonHero";
 import { StatsRow } from "@/components/awards/StatsRow";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
-import { getArticles, getChannelInfo, getCurrentSeason, getPopularArticles, getSeasons, seasonStats } from "@/lib/data";
+import { toHubNomination } from "@/lib/awards";
+import { getArticles, getChannelInfo, getCurrentSeason, getPopularArticles, seasonStats } from "@/lib/data";
 
 // Этап, таймер и «дней до финала» зависят от текущего времени — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [season, seasons, feed, popular, channel] = await Promise.all([
+  const [season, feed, popular, channel] = await Promise.all([
     getCurrentSeason(),
-    getSeasons(),
     getArticles({ perPage: 8 }),
     getPopularArticles(5),
     getChannelInfo(),
   ]);
 
-  // Прошлые победители — из сезонов с опубликованными итогами.
-  const winners = seasons
-    .filter((s) => s.resultsPublished)
-    .flatMap((s) =>
-      s.nominations.flatMap((nomination) =>
-        nomination.nominees.filter((n) => n.result?.place === 1).map((nominee) => ({ season: s, nomination, nominee })),
-      ),
-    );
-
   return (
     <>
       {season ? (
         <>
-          <SeasonHero season={season} ctaHref="/awards" />
+          <SeasonHero season={season} cta={{ href: "/awards", label: "К номинациям" }} />
           <StatsRow stats={seasonStats(season)} />
         </>
       ) : (
@@ -70,7 +59,7 @@ export default async function Home() {
                 Вся премия
               </Link>
             </div>
-            <NominationGrid season={season} />
+            <NominationHub nominations={season.nominations.map(toHubNomination)} filters={false} />
           </div>
         </section>
       )}
@@ -94,34 +83,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {winners.length > 0 && (
-        <section aria-labelledby="home-winners" className="bg-indigo">
-          <div className="container-page py-12">
-            <h2 id="home-winners" className="mb-8 text-2xl">
-              Прошлые победители
-            </h2>
-            <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-              {winners.map(({ season: s, nomination, nominee }) => (
-                <li key={nominee.slug}>
-                  <PetalCard tone="winner" className="flex h-full items-center gap-4">
-                    <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} />
-                    <div className="min-w-0">
-                      <h3 className="text-xl">
-                        <Link href={`/n/${nominee.slug}`} className="after:absolute after:inset-0 after:rounded-petal hover:underline">
-                          {nominee.name}
-                        </Link>
-                      </h3>
-                      <p className="mt-1 text-muted-bright">
-                        {nomination.title} · {s.year}
-                      </p>
-                    </div>
-                  </PetalCard>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
     </>
   );
 }

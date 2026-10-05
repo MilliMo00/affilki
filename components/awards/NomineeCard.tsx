@@ -3,20 +3,13 @@ import Link from "next/link";
 import type { Nominee } from "@/lib/data";
 import { NomineeAvatar } from "./NomineeAvatar";
 import { PetalCard } from "./PetalCard";
-import { VoteButton } from "./VoteButton";
-import { WinnerBurst } from "./WinnerBurst";
-
-type NomineeCardProps = {
-  nominee: Nominee;
-  nominationId: string;
-  votingOpen: boolean;
-};
 
 export function NomineeLinks({ nominee }: { nominee: Nominee }) {
   const links = [
-    { href: nominee.links.site, label: `Сайт ${nominee.name}`, Icon: Globe },
-    { href: nominee.links.tg, label: `Telegram ${nominee.name}`, Icon: Send },
+    { href: nominee.links.site, label: `Сайт: ${nominee.name}`, Icon: Globe },
+    { href: nominee.links.tg, label: `Telegram: ${nominee.name}`, Icon: Send },
   ].filter((link) => link.href);
+  if (links.length === 0) return null;
 
   return (
     <div className="relative z-10 flex gap-1">
@@ -36,17 +29,23 @@ export function NomineeLinks({ nominee }: { nominee: Nominee }) {
   );
 }
 
-export function NomineeCard({ nominee, nominationId, votingOpen }: NomineeCardProps) {
-  const { result } = nominee;
-  const tone = result ? (result.place === 1 ? "winner" : "finalist") : "default";
-
+/** Комментарий упомянутой стороны — выводится, если он есть. */
+export function RightOfReply({ text }: { text: string }) {
   return (
-    <PetalCard tone={tone} className="flex h-full flex-col gap-4">
-      {result?.place === 1 && <WinnerBurst id={`${nominationId}:${nominee.slug}`} />}
+    <div className="rounded-card border border-petal bg-ink/30 p-4">
+      <p className="text-sm font-semibold text-paper">Комментарий стороны</p>
+      <p className="mt-1 text-muted-bright">{text}</p>
+    </div>
+  );
+}
+
+export function NomineeCard({ nominee }: { nominee: Nominee }) {
+  return (
+    <PetalCard className="flex h-full flex-col gap-4">
       <div className="flex items-start gap-4">
         <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} />
         <div className="min-w-0 flex-1">
-          <h3 className="text-xl">
+          <h3 className="font-sans text-lg font-semibold leading-snug text-paper">
             <Link href={`/n/${nominee.slug}`} className="hover:underline">
               {nominee.name}
             </Link>
@@ -55,26 +54,17 @@ export function NomineeCard({ nominee, nominationId, votingOpen }: NomineeCardPr
         </div>
       </div>
 
-      {result && (
-        <div>
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-muted-bright">{result.place} место</span>
-            <span className="font-display text-xl font-bold tabular-nums text-paper">{result.percent}%</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/50">
-            <div
-              className={result.place === 1 ? "h-full rounded-full bg-pollen" : "h-full rounded-full bg-paper"}
-              style={{ width: `${result.percent}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {nominee.rightOfReply && <RightOfReply text={nominee.rightOfReply} />}
 
+      {/* Кнопка «Голосовать» появится здесь вместе с голосованием (Фаза C). */}
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
         <NomineeLinks nominee={nominee} />
-        {votingOpen && (
-          <VoteButton nominationId={nominationId} nomineeSlug={nominee.slug} nomineeName={nominee.name} />
-        )}
+        <Link
+          href={`/n/${nominee.slug}`}
+          className="ml-auto flex h-11 items-center rounded-full border border-petal px-5 font-semibold text-paper hover:border-glow hover:bg-glow/20"
+        >
+          Подробнее
+        </Link>
       </div>
     </PetalCard>
   );

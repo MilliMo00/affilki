@@ -22,16 +22,30 @@ export type Nominee = {
   name: string;
   logoUrl: string | null;
   tagline: string;
+  description: string | null;
   links: NomineeLinks;
-  /** Заполнено, только когда итоги сезона опубликованы. До этого счётчики наружу не отдаются. */
-  result?: { place: number; percent: number };
+  /** Публичные источники — для номинации-событий. */
+  sources: string[];
+  /** Комментарий упомянутой стороны. */
+  rightOfReply: string | null;
 };
+
+export type NomGroup = "TEAMS" | "MEDIA" | "MARKET";
 
 export type Nomination = {
   slug: string;
+  /** Порядковый номер 1–9. */
+  number: number;
   title: string;
+  shortDesc: string;
   description: string;
-  criteria: string;
+  criteria: string[];
+  eligibility: string;
+  icon: string;
+  group: NomGroup;
+  jury: string | null;
+  /** Номинация-события («Скандал года»): нейтральные формулировки, источники, право на ответ. */
+  isEvents: boolean;
   nominees: Nominee[];
 };
 
@@ -41,11 +55,11 @@ export type Season = {
   stage: Stage;
   votingStartsAt: Date;
   votingEndsAt: Date;
-  /** Дата начала следующего этапа — для индикатора. */
-  nextStageAt?: Date;
+  nextStageAt: Date | null;
   resultsPublished: boolean;
-  totalVotes: number;
+  communityWeight: number;
+  juryWeight: number;
   nominations: Nomination[];
 };
 
-export type ChannelInfo = { title: string; handle: string; url: string; subscribers: number };
+export type ChannelInfo = { title: string; handle: string; url: string; subscribers: number | null };

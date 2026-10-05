@@ -13,7 +13,9 @@ export function TgChannelWidget({ channel }: { channel: ChannelInfo }) {
         </span>
         <div className="min-w-0">
           <p className="truncate font-semibold text-paper">{channel.title}</p>
-          <p className="text-sm text-muted">{formatCount(channel.subscribers)} подписчиков</p>
+          <p className="text-sm text-muted">
+            {channel.subscribers === null ? channel.handle : `${formatCount(channel.subscribers)} подписчиков`}
+          </p>
         </div>
       </div>
       <p className="mt-4 text-text">Новости рынка, кейсы и всё про премию — раньше, чем на сайте.</p>

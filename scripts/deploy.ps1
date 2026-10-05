@@ -43,6 +43,8 @@ try {
 
   Log "deploy $deployed -> $remote"
   $lockBefore = (Get-FileHash package-lock.json).Hash
+  $schemaPath = 'prisma\schema.prisma'
+  $schemaBefore = if (Test-Path $schemaPath) { (Get-FileHash $schemaPath).Hash } else { '' }
   Run 'git merge' { git merge --ff-only origin/main }
 
   $ErrorActionPreference = 'Continue'
@@ -50,13 +52,17 @@ try {
   $running = $LASTEXITCODE -eq 0
   $ErrorActionPreference = 'Stop'
 
-  # Зависимости переставляем, только если они изменились: на Windows npm не может
-  # удалить файлы работающего процесса, поэтому на это время сайт останавливается.
-  $depsChanged = (Get-FileHash package-lock.json).Hash -ne $lockBefore
-  if ($depsChanged -or -not (Test-Path node_modules\next\package.json)) {
-    if ($running) { Run 'pm2 stop' { pm2 stop affilki } }
-    Run 'npm ci' { npm ci --no-audit --no-fund }
-  }
+  # На Windows нельзя перезаписать файлы работающего процесса (пакеты npm, движок Prisma),
+  # поэтому при смене зависимостей или схемы базы сайт на это время останавливается.
+  $depsChanged = (Get-FileHash package-lock.json).Hash -ne $lockBefore -or -not (Test-Path node_modules\next\package.json)
+  $schemaAfter = if (Test-Path $schemaPath) { (Get-FileHash $schemaPath).Hash } else { '' }
+  $schemaChanged = $schemaAfter -ne $schemaBefore -or -not (Test-Path node_modules\.prisma\client\index.js)
+  if (($depsChanged -or $schemaChanged) -and $running) { Run 'pm2 stop' { pm2 stop affilki } }
+  # npm ci сам запускает prisma generate (postinstall).
+  if ($depsChanged) { Run 'npm ci' { npm ci --no-audit --no-fund } }
+  elseif ($schemaChanged) { Run 'prisma generate' { npx prisma generate } }
+  # Миграции применяются до сборки; команда ничего не делает, если новых нет.
+  Run 'prisma migrate' { npx prisma migrate deploy }
   Run 'build' { npm run build }
 
   # delete + start, а не restart: так подхватываются изменения в ecosystem.config.cjs.

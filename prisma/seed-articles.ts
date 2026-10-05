@@ -1,7 +1,4 @@
-import { DEFAULT_CATEGORIES } from "@/lib/nav";
-import type { Article } from "./types";
-
-// Демо-статьи до подключения базы. Цифры и названия выдуманы.
+// Стартовые статьи-заглушки для сидов. Цифры и названия выдуманы.
 const BODY = `
 <p>Короткая вводная: что лили, куда и зачем. В этом материале — расклад по связке, без воды и без «секретных» подходов, которые перестали работать ещё в прошлом году.</p>
 <p>Тест начали с трёх гео и бюджета 1 500 $. На первой неделе в плюс вышло одно, остальные два отключили на третий день: апрув не дотягивал до 30%.</p>
@@ -56,16 +53,12 @@ const SEEDS: Seed[] = [
   ["karty-limity", "news", "Платёжки ввели новые лимиты на рекламные карты", "Что делать тем, кто льёт на объёмах.", 2, 2190, "2026-09-01"],
 ];
 
-const categoryBySlug = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.slug, c]));
-
-export const ARTICLES: Article[] = SEEDS.map(([slug, cat, title, excerpt, readingMin, views, date]) => ({
+export const ARTICLE_SEEDS = SEEDS.map(([slug, category, title, excerpt, readingMin, views, date]) => ({
   slug,
+  category,
   title,
   excerpt,
   contentHtml: BODY,
-  coverUrl: null,
-  category: categoryBySlug[cat],
-  authorName: "AFFILKI",
   readingMin,
   views,
   publishedAt: new Date(`${date}T10:00:00Z`),

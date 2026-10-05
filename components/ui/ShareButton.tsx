@@ -9,16 +9,18 @@ type ShareButtonProps = {
   path: string;
   title: string;
   label?: string;
+  /** Всегда копировать ссылку, без нативного share. */
+  copyOnly?: boolean;
   className?: string;
 };
 
 /** Нативный share на мобиле, иначе копирует ссылку. */
-export function ShareButton({ path, title, label = "Поделиться", className }: ShareButtonProps) {
+export function ShareButton({ path, title, label = "Поделиться", copyOnly, className }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
     const url = new URL(path, window.location.origin).toString();
-    if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+    if (!copyOnly && navigator.share && window.matchMedia("(pointer: coarse)").matches) {
       try {
         await navigator.share({ title, url });
       } catch {}

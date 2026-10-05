@@ -10,7 +10,6 @@ const COLUMNS = [
     title: "Премия",
     links: [
       { href: "/awards", label: "Текущий сезон" },
-      { href: "/awards#archive", label: "Архив" },
       { href: "/rules", label: "Правила голосования" },
     ],
   },

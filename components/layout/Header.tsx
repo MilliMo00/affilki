@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { UserMenu } from "@/components/auth/UserMenu";
 import { cn } from "@/lib/cn";
 import { MAIN_NAV } from "@/lib/nav";
 import { MobileMenu } from "./MobileMenu";
@@ -72,7 +71,6 @@ export function Header({ channelUrl }: { channelUrl: string }) {
           >
             <Send size={20} strokeWidth={1.75} aria-hidden />
           </a>
-          <UserMenu className="max-lg:hidden" />
           <button
             ref={burgerRef}
             type="button"

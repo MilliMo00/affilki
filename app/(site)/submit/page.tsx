@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Есть кейс, разбор или новость для арбитражного комьюнити? Отправь заявку — редакция ответит в Telegram.",
 };
 
+// Рубрики читаются из базы — страницу нельзя замораживать при сборке.
+export const dynamic = "force-dynamic";
+
 export default async function SubmitPage() {
   const categories = await getCategories();
 

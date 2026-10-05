@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { SeasonView } from "@/components/awards/SeasonView";
+import { AdSlot } from "@/components/ads/AdSlot";
+import { HowWeVote } from "@/components/awards/HowWeVote";
+import { NominationHub } from "@/components/awards/NominationHub";
+import { SeasonHero } from "@/components/awards/SeasonHero";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
-import { getCurrentSeason, getSeasons } from "@/lib/data";
+import { toHubNomination } from "@/lib/awards";
+import { getCurrentSeason } from "@/lib/data";
 import { TG_CHANNEL_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -10,11 +14,11 @@ export const metadata: Metadata = {
   description: "AFFILKI Awards — народная премия арбитражного рынка. Номинации, участники и честное голосование.",
 };
 
-// Этап, таймер и «дней до финала» зависят от текущего времени — страницу нельзя замораживать при сборке.
+// Этап и таймер зависят от текущего времени — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function AwardsPage() {
-  const [season, seasons] = await Promise.all([getCurrentSeason(), getSeasons()]);
+  const season = await getCurrentSeason();
 
   if (!season) {
     return (
@@ -31,5 +35,19 @@ export default async function AwardsPage() {
     );
   }
 
-  return <SeasonView season={season} otherSeasons={seasons.filter((s) => s.year !== season.year)} />;
+  return (
+    <div className="bg-indigo">
+      <SeasonHero season={season} cta={{ href: "#nominations", label: "Смотреть номинации" }} />
+
+      <section id="nominations" aria-labelledby="nominations-title" className="container-page scroll-mt-20 pb-6 pt-10">
+        <AdSlot slotKey="awards_top" onBrand className="mb-10" />
+        <h2 id="nominations-title" className="mb-6 text-2xl">
+          Номинации
+        </h2>
+        <NominationHub nominations={season.nominations.map(toHubNomination)} />
+      </section>
+
+      <HowWeVote />
+    </div>
+  );
 }

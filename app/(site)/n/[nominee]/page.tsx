@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
 import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
-import { NomineeCard, NomineeLinks } from "@/components/awards/NomineeCard";
+import { NomineeCard, NomineeLinks, RightOfReply } from "@/components/awards/NomineeCard";
 import { PetalCard } from "@/components/awards/PetalCard";
-import { VoteButton } from "@/components/awards/VoteButton";
-import { VoteStatus } from "@/components/awards/VoteStatus";
-import { WinnerBurst } from "@/components/awards/WinnerBurst";
 import { Watermark } from "@/components/brand/Watermark";
 import { ShareButton } from "@/components/ui/ShareButton";
-import { getNominee, isVotingOpen, nominationId } from "@/lib/data";
+import { getNominee, isVotingOpen } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 
 type Props = PageProps<"/n/[nominee]">;
@@ -18,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getNominee((await params).nominee);
   if (!data) return {};
   const title = `${data.nominee.name} в номинации «${data.nomination.title}» — ${data.season.title}`;
-  return { title: { absolute: title }, description: `${data.nominee.tagline}. Поддержи голосом на AFFILKI Awards.` };
+  return { title: { absolute: title }, description: data.nominee.tagline };
 }
 
 export default async function NomineePage({ params }: Props) {
@@ -27,10 +24,8 @@ export default async function NomineePage({ params }: Props) {
 
   const { season, nomination, nominee } = data;
   const open = isVotingOpen(season);
-  const id = nominationId(season, nomination);
-  const { result } = nominee;
   const others = nomination.nominees.filter((n) => n.slug !== nominee.slug);
-  const names = Object.fromEntries(nomination.nominees.map((n) => [n.slug, n.name]));
+  const voteLink = `/n/${nominee.slug}?utm_source=share&utm_medium=nominee&utm_campaign=awards${season.year}`;
 
   return (
     <div className="bg-indigo">
@@ -39,41 +34,50 @@ export default async function NomineePage({ params }: Props) {
         <div className="container-page relative py-10 sm:py-14">
           <Breadcrumbs
             items={[
-              { href: `/awards/${season.year}`, label: season.title },
-              { href: `/awards/${season.year}/${nomination.slug}`, label: nomination.title },
+              { href: "/awards", label: season.title },
+              { href: `/awards/${nomination.slug}?tab=nominees`, label: nomination.title },
             ]}
           />
 
-          <PetalCard
-            tone={result ? (result.place === 1 ? "winner" : "finalist") : "default"}
-            className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-5 !bg-deep/80 text-center backdrop-blur-sm sm:!p-10"
-          >
-            {result?.place === 1 && <WinnerBurst id={`${id}:${nominee.slug}`} />}
+          <PetalCard className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-5 !bg-deep/80 text-center backdrop-blur-sm sm:!p-10">
             <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} size={96} />
             <div>
-              <h1 className="text-3xl sm:text-4xl">{nominee.name}</h1>
+              <h1 className="text-2xl sm:text-3xl">{nominee.name}</h1>
               <p className="mt-3 text-lg text-paper">{nominee.tagline}</p>
             </div>
+            {nominee.description && <p className="text-muted-bright">{nominee.description}</p>}
             <NomineeLinks nominee={nominee} />
 
-            {result ? (
-              <p className="font-display text-xl font-bold text-paper">
-                {result.place} место · {result.percent}%
-              </p>
-            ) : open ? (
-              <>
-                <VoteButton nominationId={id} nomineeSlug={nominee.slug} nomineeName={nominee.name} large />
-                <VoteStatus nominationId={id} nomineeSlug={nominee.slug} names={names} />
-              </>
-            ) : (
-              <p className="text-muted-bright">
-                {new Date() < season.votingStartsAt
-                  ? `Голосование начнётся ${formatDate(season.votingStartsAt)}`
-                  : `Голосование закончилось ${formatDate(season.votingEndsAt)}`}
-              </p>
+            {nominee.sources.length > 0 && (
+              <div className="w-full text-left">
+                <p className="text-sm font-semibold text-paper">Источники</p>
+                <ul className="mt-1 space-y-1">
+                  {nominee.sources.map((source) => (
+                    <li key={source}>
+                      <a href={source} target="_blank" rel="noopener nofollow" className="break-all text-muted-bright underline underline-offset-4 hover:text-paper">
+                        {source}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {nominee.rightOfReply && (
+              <div className="w-full text-left">
+                <RightOfReply text={nominee.rightOfReply} />
+              </div>
             )}
 
-            <ShareButton path={`/n/${nominee.slug}`} title={`${nominee.name} — ${season.title}`} />
+            {/* Кнопка «Голосовать» подключается вместе с ботом (Фаза C). */}
+            <p className="text-muted-bright">
+              {open
+                ? "Голосование открыто"
+                : new Date() < season.votingStartsAt
+                  ? `Голосование начнётся ${formatDate(season.votingStartsAt)}`
+                  : `Голосование закончилось ${formatDate(season.votingEndsAt)}`}
+            </p>
+
+            <ShareButton path={voteLink} title={`${nominee.name} — ${season.title}`} label="Скопировать ссылку для голосования" copyOnly />
           </PetalCard>
         </div>
       </section>
@@ -81,12 +85,12 @@ export default async function NomineePage({ params }: Props) {
       {others.length > 0 && (
         <section aria-labelledby="others-title" className="container-page py-12">
           <h2 id="others-title" className="mb-6 text-2xl">
-            Другие участники номинации
+            {nomination.isEvents ? "Другие события номинации" : "Другие участники номинации"}
           </h2>
-          <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((other) => (
               <li key={other.slug}>
-                <NomineeCard nominee={other} nominationId={id} votingOpen={open} />
+                <NomineeCard nominee={other} />
               </li>
             ))}
           </ul>

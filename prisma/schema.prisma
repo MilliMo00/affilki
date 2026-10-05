@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Контент ────────────────────────────────────────────────────────────────
+
+model Category {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  title    String
+  order    Int       @default(0)
+  articles Article[]
+}
+
+model Article {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  excerpt     String
+  contentHtml String
+  coverUrl    String?
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id])
+  authorName  String        @default("AFFILKI")
+  readingMin  Int
+  views       Int           @default(0)
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ArticleRequest {
+  id          String        @id @default(cuid())
+  name        String
+  tgContact   String
+  category    String
+  title       String
+  description String
+  draftUrl    String?
+  status      RequestStatus @default(NEW)
+  ipHash      String
+  createdAt   DateTime      @default(now())
+}
+
+enum RequestStatus {
+  NEW
+  IN_REVIEW
+  ACCEPTED
+  REJECTED
+}
+
+// ── Премия ─────────────────────────────────────────────────────────────────
+
+model Season {
+  id               String   @id @default(cuid())
+  year             Int      @unique
+  title            String
+  stage            Stage    @default(APPLICATIONS)
+  votingStartsAt   DateTime
+  votingEndsAt     DateTime
+  /// Дата начала следующего этапа — для индикатора-цветка.
+  nextStageAt      DateTime?
+  resultsPublished Boolean  @default(false)
+  communityWeight  Float    @default(0.5)
+  juryWeight       Float    @default(0.5)
+
+  // Пороги защиты (ТЗ v2, 4.3)
+  requireChannel  Boolean @default(true)
+  requireUsername Boolean @default(false)
+  requireAvatar   Boolean @default(false)
+  /// Голосуют аккаунты с Telegram ID не больше порога: чем меньше ID, тем старше аккаунт.
+  maxTelegramId   BigInt?
+
+  // Live-результаты (ТЗ v2, 3.1)
+  liveEnabled             Boolean  @default(true)
+  liveMode                LiveMode @default(PERCENT)
+  liveRefreshSec          Int      @default(15)
+  liveMinVotes            Int      @default(30)
+  liveFreezeHours         Int      @default(48)
+  liveShowJury            Boolean  @default(false)
+  maxVotesPerTenMinFactor Float    @default(3)
+
+  nominations Nomination[]
+}
+
+enum Stage {
+  APPLICATIONS
+  SHORTLIST
+  VOTING
+  COUNTING
+  CEREMONY
+}
+
+enum LiveMode {
+  PERCENT
+  COUNTS
+}
+
+model Nomination {
+  id                  String   @id @default(cuid())
+  seasonId            String
+  season              Season   @relation(fields: [seasonId], references: [id])
+  slug                String
+  order               Int      @default(0)
+  title               String
+  /// Одна строка для карточки.
+  shortDesc           String
+  description         String
+  /// string[] из 3–5 пунктов.
+  criteria            Json
+  eligibility         String
+  /// Имя иконки lucide.
+  icon                String
+  group               NomGroup
+  /// Состав жюри номинации, если заполнен.
+  jury                String?
+  /// Участник не публикуется, пока админ не отметит «Проверено» (номинация «Скандал года»).
+  requiresLegalReview Boolean  @default(false)
+  acceptingEntries    Boolean  @default(true)
+  nominees            Nominee[]
+
+  @@unique([seasonId, slug])
+}
+
+enum NomGroup {
+  TEAMS
+  MEDIA
+  MARKET
+}
+
+model Nominee {
+  id           String     @id @default(cuid())
+  nominationId String
+  nomination   Nomination @relation(fields: [nominationId], references: [id])
+  slug         String     @unique
+  name         String
+  logoUrl      String?
+  tagline      String?
+  description  String?
+  /// { site?: string, tg?: string }
+  links        Json?
+  juryScore    Float?
+  /// string[] ссылок на публичные источники — обязательны там, где requiresLegalReview.
+  sources      Json?
+  /// Комментарий упомянутой стороны.
+  rightOfReply String?
+  legalChecked Boolean    @default(false)
+  published    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@index([nominationId])
+}

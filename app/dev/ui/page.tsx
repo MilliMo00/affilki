@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { AD_SLOTS, type AdSlotKey } from "@/components/ads/slots";
-import { GatePanel } from "@/components/auth/GatePanel";
 import { ArticleCard, type ArticleCardData } from "@/components/articles/ArticleCard";
 import { PetalCard } from "@/components/awards/PetalCard";
 import { StageIndicator } from "@/components/awards/StageIndicator";
@@ -170,17 +169,6 @@ export default function DevUiPage() {
             <h3 className="text-xl">Traffic Devils</h3>
             <p className="mt-2 text-muted-bright">Команда года · 41% голосов</p>
           </PetalCard>
-        </div>
-      </Section>
-
-      <Section title="Диалоги перед голосом">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-petal border border-petal bg-deep p-8">
-            <GatePanel variant="login" nomineeName="Leadora" />
-          </div>
-          <div className="rounded-petal border border-petal bg-deep p-8">
-            <GatePanel variant="subscribe" channelUrl="https://t.me/yappi_manager" />
-          </div>
         </div>
       </Section>
 

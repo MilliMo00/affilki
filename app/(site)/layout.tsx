@@ -1,4 +1,3 @@
-import { LoginDialog } from "@/components/auth/LoginDialog";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Intro } from "@/components/layout/Intro";
@@ -21,7 +20,6 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
         </main>
         <Footer />
       </div>
-      <LoginDialog />
     </>
   );
 }

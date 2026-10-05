@@ -7,11 +7,11 @@ import { StageIndicator } from "./StageIndicator";
 
 type SeasonHeroProps = {
   season: Season;
-  /** Куда ведёт главная кнопка; без неё кнопка не показывается. */
-  ctaHref?: string;
+  /** Главная кнопка; без неё кнопка не показывается. */
+  cta?: { href: string; label: string };
 };
 
-export function SeasonHero({ season, ctaHref }: SeasonHeroProps) {
+export function SeasonHero({ season, cta }: SeasonHeroProps) {
   const now = new Date();
   const notStarted = now < season.votingStartsAt;
   const ended = now > season.votingEndsAt;
@@ -28,7 +28,7 @@ export function SeasonHero({ season, ctaHref }: SeasonHeroProps) {
         </div>
 
         <div className="flex w-full max-w-3xl flex-col items-center gap-6 rounded-petal border border-petal/60 bg-deep/60 p-5 backdrop-blur-sm sm:p-6 md:flex-row md:justify-between md:text-left">
-          <StageIndicator stage={season.stage} nextDate={season.nextStageAt} className="text-left" />
+          <StageIndicator stage={season.stage} nextDate={season.nextStageAt ?? undefined} className="text-left" />
           {ended ? (
             <p className="text-muted-bright">
               {season.resultsPublished
@@ -43,9 +43,9 @@ export function SeasonHero({ season, ctaHref }: SeasonHeroProps) {
           )}
         </div>
 
-        {ctaHref && (
-          <Button href={ctaHref} size="lg">
-            {ended ? "Смотреть номинации" : "Голосовать"}
+        {cta && (
+          <Button href={cta.href} size="lg">
+            {cta.label}
           </Button>
         )}
       </div>
