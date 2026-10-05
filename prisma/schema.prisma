@@ -181,6 +181,8 @@ model LoginIntent {
   /// Хэш секрета из cookie браузера, который начал вход.
   browserHash   String
   status        IntentStatus @default(PENDING)
+  /// voter — вход голосующего, admin — первый фактор входа в админку.
+  purpose       String       @default("voter")
   tgUserId      BigInt?
   tgUsername    String?
   tgFirstName   String?
@@ -294,4 +296,66 @@ model DailyStat {
 
   @@unique([date, type, entityType, entityId, source, device])
   @@index([type, date])
+}
+
+// ── Админка ────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id             String    @id @default(cuid())
+  tgId           BigInt    @unique
+  name           String
+  role           AdminRole
+  /// Секрет TOTP, зашифрованный AES-256-GCM ключом ADMIN_ENC_KEY.
+  totpSecretEnc  String?
+  /// Секрет на этапе настройки: становится основным после первого верного кода.
+  totpPendingEnc String?
+  /// Последний использованный шаг TOTP — один код нельзя ввести дважды.
+  lastTotpStep   Int?
+  /// Хэши (argon2id) одноразовых резервных кодов.
+  backupCodes    Json?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  sessions       AdminSession[]
+}
+
+enum AdminRole {
+  OWNER
+  EDITOR
+  ANALYST
+}
+
+model AdminSession {
+  /// SHA-256 от токена из cookie.
+  id         String    @id
+  adminId    String
+  admin      AdminUser @relation(fields: [adminId], references: [id])
+  uaHash     String
+  ipHash     String
+  uaLabel    String    @default("")
+  country    String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  @@index([adminId])
+}
+
+/// Журнал действий админов. Записи только добавляются: кода, который их меняет или удаляет, нет.
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  adminId    String
+  adminName  String
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipHash     String
+  ts         DateTime @default(now())
+
+  @@index([ts])
+  @@index([entityType, entityId])
 }

@@ -13,11 +13,13 @@ const CHANNEL_URL = process.env.TG_CHANNEL_URL ?? "https://t.me/affilki_cpa";
 type Fingerprint = { ipHash: string; uaHash: string; uaLabel: string };
 
 /** Шаг 1 (сайт): создаёт одноразовую ссылку входа. Секрет остаётся в cookie браузера. */
-export async function startLogin(fp: Fingerprint, now = new Date()) {
+export type LoginPurpose = "voter" | "admin";
+
+export async function startLogin(fp: Fingerprint, now = new Date(), purpose: LoginPurpose = "voter") {
   const token = randomToken();
   const browserSecret = randomToken();
   await db.loginIntent.create({
-    data: { token, browserHash: sha256(browserSecret), ...fp, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) },
+    data: { token, browserHash: sha256(browserSecret), purpose, ...fp, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) },
   });
   return { token, browserSecret, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) };
 }
@@ -38,6 +40,13 @@ export async function handleStart(token: string, from: TgUser, tg: TelegramApi, 
     return tg.sendMessage(from.id, stale);
   }
 
+  // Вход в админку: ссылку может открыть только действующий админ. Остальным — тот же ответ,
+  // что и на устаревшую ссылку, чтобы не подсказывать, что это была админская ссылка.
+  if (intent.purpose === "admin" && !(await adminByTgId(from.id))) {
+    await db.loginIntent.updateMany({ where: { id: intent.id, status: "PENDING" }, data: { status: "REJECTED" } });
+    return tg.sendMessage(from.id, stale);
+  }
+
   const hasAvatar = await tg.hasProfilePhoto(from.id);
   const bound = await db.loginIntent.updateMany({
     where: { id: intent.id, status: intent.status },
@@ -50,6 +59,14 @@ export async function handleStart(token: string, from: TgUser, tg: TelegramApi, 
     },
   });
   if (bound.count === 0) return tg.sendMessage(from.id, stale);
+
+  if (intent.purpose === "admin") {
+    return tg.sendMessage(
+      from.id,
+      `Вход в админ-панель AFFILKI\n\nБраузер: ${intent.uaLabel}\n\nПодтверждай, только если вход начал ты сам. После этого понадобится код из приложения-аутентификатора.`,
+      confirmButtons(intent.id),
+    );
+  }
 
   await tg.sendMessage(
     from.id,
@@ -78,6 +95,7 @@ export async function handleDecision(
   }
 
   await db.loginIntent.update({ where: { id: intent.id }, data: { status: "CONFIRMED" } });
+  if (intent.purpose === "admin") return { text: "Первый шаг пройден. Вернись в браузер и введи код из приложения-аутентификатора." };
 
   // Вход работает всегда; пороги проверяются при каждом голосе. Здесь — только подсказка заранее.
   const season = await db.season.findFirst({ orderBy: { year: "desc" } });
@@ -100,7 +118,7 @@ export type ClaimResult =
 /** Шаг 4 (сайт): браузер с секретом забирает сессию, когда вход подтверждён в боте. */
 export async function claimSession(browserSecret: string, now = new Date()): Promise<ClaimResult> {
   const intent = await db.loginIntent.findFirst({
-    where: { browserHash: sha256(browserSecret) },
+    where: { browserHash: sha256(browserSecret), purpose: "voter" },
     orderBy: { createdAt: "desc" },
   });
   if (!intent || intent.status === "USED") return { status: "expired" };
@@ -127,6 +145,31 @@ export async function claimSession(browserSecret: string, now = new Date()): Pro
     },
   });
   return { status: "ok", sessionToken, expiresAt };
+}
+
+/** Действующий админ по Telegram ID. Владелец из OWNER_TG_ID заводится при первом входе. */
+export async function adminByTgId(tgId: number) {
+  const existing = await db.adminUser.findUnique({ where: { tgId: BigInt(tgId) } });
+  if (existing) return existing.isActive ? existing : null;
+  if (String(tgId) !== process.env.OWNER_TG_ID) return null;
+  return db.adminUser.create({ data: { tgId: BigInt(tgId), name: "Владелец", role: "OWNER" } });
+}
+
+/** Первый фактор входа в админку: браузер с секретом узнаёт, какой админ подтвердил вход в боте. */
+export async function claimAdminLogin(browserSecret: string, now = new Date()): Promise<{ status: "pending" | "expired" | "rejected" } | { status: "ok"; adminId: string }> {
+  const intent = await db.loginIntent.findFirst({
+    where: { browserHash: sha256(browserSecret), purpose: "admin" },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!intent || intent.status === "USED") return { status: "expired" };
+  if (intent.status === "REJECTED") return { status: "rejected" };
+  if (intent.expiresAt <= now) return { status: "expired" };
+  if (intent.status !== "CONFIRMED" || intent.tgUserId === null) return { status: "pending" };
+
+  const used = await db.loginIntent.updateMany({ where: { id: intent.id, status: "CONFIRMED" }, data: { status: "USED" } });
+  if (used.count === 0) return { status: "expired" };
+  const admin = await adminByTgId(Number(intent.tgUserId));
+  return admin ? { status: "ok", adminId: admin.id } : { status: "rejected" };
 }
 
 /** Действующая сессия по токену из cookie. */
