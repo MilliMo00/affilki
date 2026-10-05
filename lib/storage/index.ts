@@ -4,7 +4,8 @@ import { join } from "node:path";
 
 // Хранилище загрузок. Сейчас — папка data/uploads на сервере (переживает деплои, в git не лежит);
 // за этим интерфейсом её можно заменить на S3-совместимое хранилище.
-const DIR = process.env.UPLOADS_DIR ?? join(process.cwd(), "data", "uploads");
+// turbopackIgnore: папка с загрузками — данные, а не часть сборки.
+const DIR = process.env.UPLOADS_DIR ?? join(/* turbopackIgnore: true */ process.cwd(), "data", "uploads");
 const MAX_BYTES = 2 * 1024 * 1024;
 
 // Тип определяется по сигнатуре файла, а не по расширению или заголовку. SVG запрещён: в нём можно спрятать скрипт.
