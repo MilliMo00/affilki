@@ -17,7 +17,7 @@ export default async function AdminHome() {
     db.vote.count({ where: { voidedAt: null, createdAt: { gte: dayAgo } } }),
     db.nominee.count({ where: { published: true } }),
     db.nominee.count({ where: { OR: [{ published: false }, { legalChecked: false, nomination: { requiresLegalReview: true } }] } }),
-    db.articleRequest.count({ where: { status: "NEW" } }),
+    db.submission.count({ where: { status: "PENDING" } }),
     db.analyticsEvent.groupBy({ by: ["sessionId"], where: { type: "page_view", ts: { gte: dayAgo } } }).then((rows) => rows.length),
   ]);
 
@@ -26,7 +26,7 @@ export default async function AdminHome() {
     { label: "Голосов за сутки", value: votesDay, show: can(admin.role, "votes") },
     { label: "Участников на сайте", value: nominees, show: true },
     { label: "Участников скрыто", value: hidden, show: can(admin.role, "awards") },
-    { label: "Новых заявок на статьи", value: requests, show: can(admin.role, "content") },
+    { label: "Заявок ждёт проверки", value: requests, show: can(admin.role, "content") },
     { label: "Визитов за сутки", value: visitors, show: can(admin.role, "stats") },
   ].filter((tile) => tile.show);
 

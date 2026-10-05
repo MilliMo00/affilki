@@ -7,6 +7,7 @@ import { logout } from "./actions";
 
 const NAV: { href: string; label: string; permission?: Permission }[] = [
   { href: "", label: "Обзор" },
+  { href: "/submissions", label: "Заявки", permission: "content" },
   { href: "/season", label: "Сезон и защита", permission: "season" },
   { href: "/nominations", label: "Номинации и участники", permission: "awards" },
   { href: "/votes", label: "Голоса", permission: "votes" },

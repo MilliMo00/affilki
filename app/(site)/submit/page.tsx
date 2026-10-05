@@ -1,28 +1,28 @@
 import type { Metadata } from "next";
-import { SubmitForm } from "@/components/articles/SubmitForm";
-import { getCategories } from "@/lib/data";
+import { SubmitGate } from "@/components/submissions/SubmitGate";
+import { getCategories, getOpenNominations } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Предложить статью",
-  description: "Есть кейс, разбор или новость для арбитражного комьюнити? Отправь заявку — редакция ответит в Telegram.",
+  title: "Подать заявку",
+  description: "Заявка на участие в номинации AFFILKI Awards или материал в ленту: кейс, новость, обзор. Редактор ответит в Telegram.",
 };
 
-// Рубрики читаются из базы — страницу нельзя замораживать при сборке.
+// Номинации и рубрики читаются из базы — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function SubmitPage() {
-  const categories = await getCategories();
+  const [nominations, categories] = await Promise.all([getOpenNominations(), getCategories()]);
 
   return (
     <div className="container-page py-10 sm:py-14">
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl">Предложить статью</h1>
+        <h1 className="text-3xl sm:text-4xl">Подать заявку</h1>
         <p className="mt-4 text-lg text-text">
-          Кейс, разбор связки, обзор сервиса или новость. Регистрация не нужна: оставь контакт, редактор напишет в
-          Telegram.
+          На участие в номинации премии или на публикацию материала. Редактор посмотрит заявку и ответит в боте: примет, попросит
+          что-то поправить или объяснит отказ.
         </p>
         <div className="mt-8">
-          <SubmitForm categories={categories} />
+          <SubmitGate nominations={nominations} categories={categories} />
         </div>
       </div>
     </div>

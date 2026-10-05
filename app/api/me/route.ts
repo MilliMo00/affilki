@@ -7,7 +7,7 @@ import { describeVoter } from "@/lib/voting/me";
 export async function GET(request: NextRequest) {
   const token = sessionToken(request);
   const session = await findSession(token);
-  if (!session || !token) return NextResponse.json({ user: null, votes: {} });
+  if (!session || !token) return NextResponse.json({ user: null, votes: {}, inbox: 0 });
 
   // Вход бессрочный: каждый заход на сайт продлевает cookie.
   await db.voterSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } });

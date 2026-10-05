@@ -67,8 +67,8 @@ function LoginStep() {
     <div className="flex flex-col items-center gap-4 text-center">
       <h2 className="text-xl">Подтверди вход в Telegram</h2>
       <p className="text-muted-bright">
-        Голос привязан к Telegram-аккаунту: один аккаунт — один голос в номинации. Регистрация нужна один раз — дальше голосуешь
-        прямо на сайте, в каждой номинации.
+        Регистрация нужна один раз. Дальше голосуешь прямо на сайте — по одному голосу в каждой номинации — и можешь
+        подавать заявки.
       </p>
       {link ? (
         <>
@@ -208,7 +208,7 @@ export function VoteDialog({ channelUrl }: { channelUrl: string }) {
           >
             <X size={20} strokeWidth={1.75} aria-hidden />
           </button>
-          {user ? <ConfirmStep target={target} channelUrl={channelUrl} /> : <LoginStep />}
+          {user && target !== "login" ? <ConfirmStep target={target} channelUrl={channelUrl} /> : <LoginStep />}
         </div>
       )}
     </dialog>

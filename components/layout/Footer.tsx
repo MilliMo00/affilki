@@ -22,7 +22,8 @@ const COLUMNS = [
     title: "AFFILKI",
     links: [
       { href: "/ads", label: "Реклама" },
-      { href: "/submit", label: "Предложить статью" },
+      { href: "/submit", label: "Подать заявку" },
+      { href: "/my", label: "Мои заявки" },
       { href: "/privacy", label: "Политика конфиденциальности" },
     ],
   },

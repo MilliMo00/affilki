@@ -28,7 +28,7 @@ export async function ArticlesView({ title, category, page }: ArticlesViewProps)
           <div className="rounded-card border border-petal/40 px-6 py-14 text-center">
             <p className="text-lg text-text">Статей в рубрике пока нет. Предложи свою.</p>
             <Button href="/submit" className="mt-6">
-              Предложить статью
+              Подать заявку
             </Button>
           </div>
         )}

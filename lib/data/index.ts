@@ -168,6 +168,17 @@ export async function getNominee(
   return null;
 }
 
+/** Номинации текущего сезона, куда сейчас принимаются заявки. */
+export async function getOpenNominations() {
+  const season = await db.season.findFirst({ orderBy: { year: "desc" } });
+  if (!season) return [];
+  return db.nomination.findMany({
+    where: { seasonId: season.id, acceptingEntries: true },
+    orderBy: { order: "asc" },
+    select: { id: true, title: true },
+  });
+}
+
 export async function seasonStats(season: Season, now = new Date()) {
   const msLeft = season.votingEndsAt.getTime() - now.getTime();
   return {

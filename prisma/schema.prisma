@@ -23,6 +23,8 @@ model Article {
   title       String
   excerpt     String
   contentHtml String
+  /// Исходник в простой разметке (## заголовки, списки, ссылки). HTML выше собирается из него.
+  contentSource String?
   coverUrl    String?
   categoryId  String
   category    Category      @relation(fields: [categoryId], references: [id])
@@ -43,26 +45,6 @@ enum ArticleStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
-}
-
-model ArticleRequest {
-  id          String        @id @default(cuid())
-  name        String
-  tgContact   String
-  category    String
-  title       String
-  description String
-  draftUrl    String?
-  status      RequestStatus @default(NEW)
-  ipHash      String
-  createdAt   DateTime      @default(now())
-}
-
-enum RequestStatus {
-  NEW
-  IN_REVIEW
-  ACCEPTED
-  REJECTED
 }
 
 // ── Премия ─────────────────────────────────────────────────────────────────
@@ -358,4 +340,70 @@ model AuditLog {
 
   @@index([ts])
   @@index([entityType, entityId])
+}
+
+// ── Заявки на публикацию ───────────────────────────────────────────────────
+// Человек входит через бота и подаёт заявку: на участие в номинации или на статью.
+// Админ правит, одобряет (тогда создаётся участник или статья) либо возвращает с правками.
+
+model Submission {
+  id           String           @id @default(cuid())
+  kind         SubmissionKind
+  status       SubmissionStatus @default(PENDING)
+  /// Автор: Telegram-аккаунт, вошедший через бота. Ему же уходят уведомления.
+  tgUserId     BigInt
+  tgUsername   String?
+  authorName   String
+  contact      String
+  title        String
+  text         String
+  imageUrl     String?
+  /// string[] ссылок автора.
+  links        Json
+  /// Для заявки в номинацию.
+  nominationId String?
+  /// Для статьи: slug рубрики.
+  categorySlug String?
+  /// Комментарий модератора при возврате или отказе — виден автору.
+  adminComment String?
+  /// Что получилось после одобрения: id участника или статьи.
+  resultId     String?
+  ipHash       String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@index([tgUserId])
+}
+
+enum SubmissionKind {
+  NOMINEE
+  ARTICLE
+}
+
+enum SubmissionStatus {
+  PENDING
+  CHANGES_REQUESTED
+  APPROVED
+  REJECTED
+}
+
+// ── Реклама ────────────────────────────────────────────────────────────────
+
+/// Проданное размещение в слоте. Слот считается проданным, пока сейчас внутри startsAt–endsAt.
+model AdCampaign {
+  id              String    @id @default(cuid())
+  slotKey         String
+  advertiser      String
+  imageUrl        String
+  mobileImageUrl  String?
+  targetUrl       String
+  startsAt        DateTime
+  endsAt          DateTime
+  /// Подписанная ссылка на отчёт для рекламодателя.
+  reportToken     String?   @unique
+  reportExpiresAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([slotKey, startsAt, endsAt])
 }

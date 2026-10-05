@@ -18,6 +18,8 @@ export interface TelegramApi {
 async function call<T>(method: string, params: Record<string, unknown>): Promise<T | null> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return null;
+  // Локальная разработка с тестовым ботом: настоящим людям ничего не отправляем.
+  if (process.env.NODE_ENV !== "production" && process.env.DEV_FAKE_BOT === "true") return null;
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
       method: "POST",
