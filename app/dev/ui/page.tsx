@@ -5,14 +5,13 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import { AD_SLOTS, type AdSlotKey } from "@/components/ads/slots";
 import { ArticleCard, type ArticleCardData } from "@/components/articles/ArticleCard";
 import { PetalCard } from "@/components/awards/PetalCard";
-import { StageIndicator } from "@/components/awards/StageIndicator";
 import { Flower } from "@/components/brand/Flower";
 import { Loader } from "@/components/brand/Loader";
 import { Logo } from "@/components/brand/Logo";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
-import { STAGES } from "@/lib/stages";
+import { STAGES, STAGE_LABELS } from "@/lib/stages";
 
 export const metadata: Metadata = { title: "Витрина компонентов", robots: { index: false } };
 
@@ -138,7 +137,10 @@ export default function DevUiPage() {
       <Section title="Индикатор этапа">
         <div className="grid gap-6 rounded-card bg-deep p-6 sm:grid-cols-2 lg:grid-cols-3">
           {STAGES.map((stage) => (
-            <StageIndicator key={stage} stage={stage} nextDate={new Date("2026-12-12")} />
+            <p key={stage} className="flex items-center gap-3 font-semibold text-paper">
+              <Flower size={40} filled={STAGES.indexOf(stage) + 1} rays={false} rayColor="var(--deep)" className="text-paper" />
+              {STAGE_LABELS[stage]}
+            </p>
           ))}
         </div>
       </Section>

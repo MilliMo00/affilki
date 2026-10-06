@@ -5,20 +5,22 @@ import { PopularList } from "@/components/articles/PopularList";
 import { TgChannelWidget } from "@/components/articles/TgChannelWidget";
 import { NominationHub } from "@/components/awards/NominationHub";
 import { SeasonHero } from "@/components/awards/SeasonHero";
+import { SponsorCall } from "@/components/awards/SponsorCall";
 import { StatsRow } from "@/components/awards/StatsRow";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { toHubNomination } from "@/lib/awards";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
-import { getArticles, getChannelInfo, getCurrentSeason, getPopularArticles, seasonStats } from "@/lib/data";
+import { getArticles, getChannelInfo, getCurrentSeason, getOpenNominations, getPopularArticles, seasonStats } from "@/lib/data";
 
 // Этап, таймер и «дней до финала» зависят от текущего времени — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [season, live, feed, popular, channel] = await Promise.all([
+  const [season, open, live, feed, popular, channel] = await Promise.all([
     getCurrentSeason(),
+    getOpenNominations(),
     getLiveSnapshot(),
     getArticles({ perPage: 8 }),
     getPopularArticles(5),
@@ -30,7 +32,7 @@ export default async function Home() {
       <LiveTickerSlot />
       {season ? (
         <>
-          <SeasonHero season={season} live={live} cta={{ href: "/awards", label: "К номинациям" }} />
+          <SeasonHero season={season} live={live} acceptingEntries={open.length > 0} nominationsHref="/awards" />
           <StatsRow stats={await seasonStats(season)} />
         </>
       ) : (
@@ -67,6 +69,8 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {season && <SponsorCall />}
 
       <section aria-labelledby="home-articles" className="container-page py-12">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">

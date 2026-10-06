@@ -195,6 +195,8 @@ export async function getOpenNominations() {
 export async function seasonStats(season: Season, now = new Date()) {
   const msLeft = season.votingEndsAt.getTime() - now.getTime();
   return {
+    /** Дней до старта голосования; 0 — уже идёт или закончилось. */
+    daysToStart: Math.max(0, Math.ceil((season.votingStartsAt.getTime() - now.getTime()) / 86_400_000)),
     // Только общее число: аннулированные голоса и голоса забаненных не считаются.
     votes: await db.vote.count({
       where: {

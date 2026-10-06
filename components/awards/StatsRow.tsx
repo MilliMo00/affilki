@@ -1,14 +1,17 @@
 import { formatCount, plural } from "@/lib/format";
 
-type Stats = { votes: number; nominees: number; nominations: number; daysLeft: number };
+type Stats = { votes: number; nominees: number; nominations: number; daysLeft: number; daysToStart: number };
 
 /** Строка живой статистики под hero. Только общие числа — без разбивки по участникам. */
 export function StatsRow({ stats }: { stats: Stats }) {
   const items = [
-    { value: formatCount(stats.votes), label: `${plural(stats.votes, ["голос", "голоса", "голосов"])} отдано` },
+    // До старта голосов ещё нет — вместо нуля показываем, сколько осталось до голосования.
+    stats.daysToStart > 0
+      ? { value: stats.daysToStart, label: `${plural(stats.daysToStart, ["день", "дня", "дней"])} до голосования` }
+      : { value: formatCount(stats.votes), label: `${plural(stats.votes, ["голос", "голоса", "голосов"])} отдано` },
     { value: stats.nominees, label: plural(stats.nominees, ["участник", "участника", "участников"]) },
     { value: stats.nominations, label: plural(stats.nominations, ["номинация", "номинации", "номинаций"]) },
-    { value: stats.daysLeft, label: `${plural(stats.daysLeft, ["день", "дня", "дней"])} до финала` },
+    { value: stats.daysLeft, label: `${plural(stats.daysLeft, ["день", "дня", "дней"])} до итогов` },
   ];
 
   return (
