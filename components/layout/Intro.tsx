@@ -25,7 +25,7 @@ const FLY_S = 0.4;
 const subscribe = () => () => {};
 const introRequested = () => document.documentElement.hasAttribute("data-intro");
 
-export function Intro() {
+export function Intro({ nonce }: { nonce?: string }) {
   // На сервере оверлей рендерится всегда (и скрыт CSS), на клиенте — только если скрипт его включил.
   const requested = useSyncExternalStore(subscribe, introRequested, () => true);
   const [done, setDone] = useState(false);
@@ -70,7 +70,7 @@ export function Intro() {
 
   return (
     <>
-      <InlineScript html={BOOT_SCRIPT} />
+      <InlineScript html={BOOT_SCRIPT} nonce={nonce} />
       {requested && !done && (
         <div ref={overlayRef} className="intro-overlay">
           <div data-intro-bg className="absolute inset-0 bg-deep">

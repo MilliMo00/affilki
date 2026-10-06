@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Onest, Unbounded } from "next/font/google";
 import { SITE_URL } from "@/lib/env";
 import "./globals.css";
@@ -36,7 +37,11 @@ export const viewport: Viewport = {
   themeColor: "#30209D",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Чтение заголовков делает каждую страницу динамической: nonce из CSP свой на каждый запрос,
+  // и Next ставит его на свои скрипты только при рендере по запросу.
+  await headers();
+
   return (
     <html lang="ru" suppressHydrationWarning className={`${unbounded.variable} ${onest.variable}`}>
       <body>{children}</body>

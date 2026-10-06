@@ -28,6 +28,19 @@ export async function aggregateDay(day: Date) {
   return inserted;
 }
 
+/** Отработавшие ссылки входа старше суток не нужны: в них хэши IP и Telegram ID. */
+export async function purgeLoginIntents(now = new Date()) {
+  const result = await db.loginIntent.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - DAY) } } });
+  return result.count;
+}
+
+/** Истёкшие и отозванные сессии админов хранятся 30 дней — для разбора инцидентов — и удаляются. */
+export async function purgeAdminSessions(now = new Date()) {
+  const cutoff = new Date(now.getTime() - 30 * DAY);
+  const result = await db.adminSession.deleteMany({ where: { OR: [{ expiresAt: { lt: cutoff } }, { revokedAt: { lt: cutoff } }] } });
+  return result.count;
+}
+
 /** Сырые события старше 180 дней удаляются; агрегаты остаются. */
 export async function purgeOldEvents(now = new Date()) {
   const result = await db.analyticsEvent.deleteMany({ where: { ts: { lt: new Date(now.getTime() - RAW_RETENTION_DAYS * DAY) } } });

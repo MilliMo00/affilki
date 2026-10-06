@@ -1,5 +1,6 @@
 import { Clock, Eye } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/ads/AdSlot";
@@ -43,6 +44,7 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <div className="container-page py-10 sm:py-14">
       <script
+        nonce={(await headers()).get("x-nonce") ?? undefined}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />

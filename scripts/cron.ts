@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createGunzip } from "node:zlib";
-import { aggregateDay, anonymizeVoters, purgeOldEvents } from "../lib/analytics/aggregate";
+import { aggregateDay, anonymizeVoters, purgeAdminSessions, purgeLoginIntents, purgeOldEvents } from "../lib/analytics/aggregate";
 import { db } from "../lib/db";
 
 async function nightly() {
@@ -16,6 +16,8 @@ async function nightly() {
   }
   console.log(`purged events: ${await purgeOldEvents(now)}`);
   console.log(`anonymized votes: ${await anonymizeVoters(now)}`);
+  console.log(`purged login links: ${await purgeLoginIntents(now)}`);
+  console.log(`purged admin sessions: ${await purgeAdminSessions(now)}`);
 }
 
 // База DB-IP Lite (CC BY 4.0, ссылка на db-ip.com стоит на /privacy). Выходит раз в месяц.

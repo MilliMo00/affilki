@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { CookieBanner } from "@/components/analytics/CookieBanner";
 import { Tracker } from "@/components/analytics/Tracker";
@@ -7,10 +8,12 @@ import { Header } from "@/components/layout/Header";
 import { Intro } from "@/components/layout/Intro";
 import { TG_CHANNEL_URL } from "@/lib/env";
 
-export default function SiteLayout({ children }: LayoutProps<"/">) {
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <>
-      <Intro />
+      <Intro nonce={nonce} />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-paper focus:px-4 focus:py-2 focus:text-deep"
