@@ -1,5 +1,6 @@
 import type { TelegramApi, TgUser } from "./client";
 import { recordServerEvent } from "@/lib/analytics/record";
+import { rememberBotUser, setSubscribed } from "@/lib/broadcast";
 import { handleDecision, handleStart } from "@/lib/voting/login";
 
 type Update = {
@@ -12,7 +13,21 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://affilki.com";
 /** Обработка одного обновления от Telegram. */
 export async function handleUpdate(update: Update, tg: TelegramApi) {
   const message = update.message;
+  // Любой, кто написал боту или нажал кнопку, становится тем, кому бот может писать.
+  const author = message?.chat.type === "private" ? message.from : update.callback_query?.from;
+  if (author) await rememberBotUser(author).catch(() => {});
+
   if (message?.from && message.chat.type === "private" && message.text) {
+    // Отписка и возврат к рассылкам. Квитанции о голосах и ответы по заявкам приходят в любом случае.
+    if (/^\/stop\b/.test(message.text)) {
+      await setSubscribed(message.from.id, false);
+      return tg.sendMessage(message.from.id, "Рассылку отключили. Квитанции о голосах и ответы по заявкам будут приходить как раньше. Вернуть рассылку — /subscribe.");
+    }
+    if (/^\/subscribe\b/.test(message.text)) {
+      await setSubscribed(message.from.id, true);
+      return tg.sendMessage(message.from.id, "Рассылка снова включена. Отключить — /stop.");
+    }
+
     const start = /^\/start(?:\s+l_([A-Za-z0-9_-]{16,64}))?\s*$/.exec(message.text);
     if (start?.[1]) {
       recordServerEvent(null, { type: "bot_start" });
@@ -26,6 +41,11 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
   }
 
   const callback = update.callback_query;
+  if (callback?.data === "unsub") {
+    await setSubscribed(callback.from.id, false);
+    await tg.answerCallback(callback.id, "Рассылку отключили");
+    return tg.sendMessage(callback.from.id, "Рассылку отключили. Вернуть — /subscribe.");
+  }
   if (callback) {
     const match = /^(ok|no):([a-z0-9]{10,40})$/.exec(callback.data ?? "");
     if (match) {

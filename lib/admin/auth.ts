@@ -26,10 +26,10 @@ export const cookieBase = { httpOnly: true, secure: PROD, sameSite: "strict" as 
 
 // ── Права ──────────────────────────────────────────────────────────────────
 
-export type Permission = "content" | "awards" | "ads" | "stats" | "votes" | "season" | "security";
+export type Permission = "content" | "awards" | "ads" | "stats" | "votes" | "season" | "security" | "broadcast";
 
 const PERMISSIONS: Record<AdminRole, Permission[]> = {
-  OWNER: ["content", "awards", "ads", "stats", "votes", "season", "security"],
+  OWNER: ["content", "awards", "ads", "stats", "votes", "season", "security", "broadcast"],
   EDITOR: ["content", "awards", "ads"],
   ANALYST: ["stats"],
 };

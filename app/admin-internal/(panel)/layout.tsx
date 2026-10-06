@@ -14,6 +14,7 @@ const NAV: { href: string; label: string; permission?: Permission }[] = [
   { href: "/nominations", label: "Номинации и участники", permission: "awards" },
   { href: "/votes", label: "Голоса", permission: "votes" },
   { href: "/winners", label: "Победители", permission: "votes" },
+  { href: "/broadcasts", label: "Рассылки", permission: "broadcast" },
   { href: "/stats", label: "Статистика", permission: "stats" },
   { href: "/security", label: "Безопасность", permission: "security" },
 ];

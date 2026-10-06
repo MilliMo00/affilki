@@ -413,3 +413,60 @@ model AdCampaign {
 
   @@index([slotKey, startsAt, endsAt])
 }
+
+// ── Рассылки через бота ────────────────────────────────────────────────────
+
+/// Все, кто писал боту: только им бот может отправлять сообщения.
+model BotUser {
+  tgUserId       BigInt    @id
+  username       String?
+  firstName      String?
+  startedAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+  /// Человек заблокировал бота — узнаём при неудачной отправке.
+  blockedAt      DateTime?
+  /// Отписался от рассылок. Служебные сообщения (квитанции о голосах, ответы по заявкам) приходят всё равно.
+  unsubscribedAt DateTime?
+}
+
+model Broadcast {
+  id          String          @id @default(cuid())
+  /// all | voters | not_voted | authors
+  segment     String
+  /// Текст в простой разметке: **жирный**, *курсив*, [текст](ссылка).
+  text        String
+  imageUrl    String?
+  /// file_id картинки в Telegram: после первой отправки файл не загружается заново.
+  photoFileId String?
+  buttonText  String?
+  buttonUrl   String?
+  status      BroadcastStatus @default(SENDING)
+  total       Int             @default(0)
+  sent        Int             @default(0)
+  failed      Int             @default(0)
+  blocked     Int             @default(0)
+  createdBy   String
+  createdAt   DateTime        @default(now())
+  finishedAt  DateTime?
+  recipients  BroadcastRecipient[]
+}
+
+enum BroadcastStatus {
+  SENDING
+  DONE
+  CANCELLED
+}
+
+/// Получатель рассылки. По этой таблице отправка возобновляется после перезапуска и никому не уходит дважды.
+model BroadcastRecipient {
+  id          String    @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  tgUserId    BigInt
+  /// PENDING | SENT | BLOCKED | FAILED
+  status      String    @default("PENDING")
+  error       String?
+
+  @@unique([broadcastId, tgUserId])
+  @@index([broadcastId, status])
+}
