@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { Article } from "@/lib/data";
-import { formatCount } from "@/lib/format";
+import { MIN_VIEWS_SHOWN, formatCount } from "@/lib/format";
 
 export function PopularList({ articles }: { articles: Article[] }) {
+  // Пока просмотров мало, честного «популярного» нет — блок называется по-другому и идёт без цифр.
+  const ranked = articles.some((article) => article.views >= MIN_VIEWS_SHOWN);
+
   return (
     <aside aria-labelledby="popular-title" className="rounded-card border border-petal/40 bg-deep/40 p-5">
       <h2 id="popular-title" className="font-sans text-lg font-semibold">
-        Популярное за неделю
+        {ranked ? "Популярное" : "Стоит прочитать"}
       </h2>
       <ol className="mt-4 space-y-4">
         {articles.map((article, i) => (
@@ -18,7 +21,7 @@ export function PopularList({ articles }: { articles: Article[] }) {
               <Link href={`/a/${article.slug}`} className="font-medium leading-snug text-paper hover:underline">
                 {article.title}
               </Link>
-              <p className="mt-1 text-sm text-muted">{formatCount(article.views)} просмотров</p>
+              {article.views >= MIN_VIEWS_SHOWN && <p className="mt-1 text-sm text-muted">{formatCount(article.views)} просмотров</p>}
             </div>
           </li>
         ))}

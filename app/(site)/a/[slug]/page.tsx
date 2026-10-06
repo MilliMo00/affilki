@@ -12,7 +12,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { StoryShare } from "@/components/ui/StoryShare";
 import { getArticle, getChannelInfo, getRelatedArticles } from "@/lib/data";
 import { SITE_URL } from "@/lib/env";
-import { formatCount, formatDate } from "@/lib/format";
+import { MIN_VIEWS_SHOWN, formatCount, formatDate } from "@/lib/format";
 
 type Props = PageProps<"/a/[slug]">;
 
@@ -64,11 +64,13 @@ export default async function ArticlePage({ params }: Props) {
                 <Clock size={15} strokeWidth={1.75} aria-hidden />
                 {article.readingMin} мин
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Eye size={15} strokeWidth={1.75} aria-hidden />
-                <span className="sr-only">Просмотров:</span>
-                {formatCount(article.views)}
-              </span>
+              {article.views >= MIN_VIEWS_SHOWN && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Eye size={15} strokeWidth={1.75} aria-hidden />
+                  <span className="sr-only">Просмотров:</span>
+                  {formatCount(article.views)}
+                </span>
+              )}
             </div>
           </header>
 

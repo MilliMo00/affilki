@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { entityOf, recordEvents, type EventInput } from "@/lib/analytics/record";
+import { entityOf, recordEvents, requestContext, type EventInput } from "@/lib/analytics/record";
 import { rateLimiter } from "@/lib/ratelimit";
 import { clientIp, hashValue } from "@/lib/request";
 
@@ -55,6 +55,9 @@ export async function POST(request: Request) {
     // Время клиента принимаем только в разумных пределах — иначе серверное.
     ts: event.ts && Math.abs(now - event.ts) < DAY ? new Date(event.ts) : new Date(now),
   }));
+
+  // Боты и админы в статистику не попадают — и счётчик просмотров статьи тоже не крутят.
+  if (!(await requestContext(request))) return new NextResponse(null, { status: 204 });
 
   // Счётчик просмотров статьи: не чаще раза в сутки на посетителя.
   for (const row of rows) {

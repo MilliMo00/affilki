@@ -1,7 +1,7 @@
 import { Clock, Eye } from "lucide-react";
 import Link from "next/link";
 import { ArticleCover } from "./ArticleCover";
-import { formatCount, formatDate } from "@/lib/format";
+import { MIN_VIEWS_SHOWN, formatCount, formatDate } from "@/lib/format";
 
 export type ArticleCardData = {
   slug: string;
@@ -45,11 +45,13 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
             {article.readingMin} мин
           </span>
           <time dateTime={article.publishedAt.toISOString()}>{formatDate(article.publishedAt)}</time>
-          <span className="ml-auto inline-flex items-center gap-1.5">
-            <Eye size={15} strokeWidth={1.75} aria-hidden />
-            <span className="sr-only">Просмотров:</span>
-            {formatCount(article.views)}
-          </span>
+          {article.views >= MIN_VIEWS_SHOWN && (
+            <span className="ml-auto inline-flex items-center gap-1.5">
+              <Eye size={15} strokeWidth={1.75} aria-hidden />
+              <span className="sr-only">Просмотров:</span>
+              {formatCount(article.views)}
+            </span>
+          )}
         </div>
       </div>
     </article>

@@ -12,6 +12,9 @@ export function formatDate(date: Date, now = new Date()) {
   return date.getFullYear() === now.getFullYear() ? dateFmt.format(date) : dateYearFmt.format(date).replace(" г.", "");
 }
 
+/** Счётчик просмотров показываем, когда он набрал хотя бы столько: до этого цифра выглядит пустой. */
+export const MIN_VIEWS_SHOWN = 100;
+
 export function formatCount(n: number) {
   return compactFmt.format(n);
 }
