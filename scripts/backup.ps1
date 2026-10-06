@@ -1,4 +1,6 @@
 # Ежедневный бэкап базы AFFILKI. Запускается планировщиком Windows.
+# ВАЖНО: строки в кавычках здесь только латиницей. Windows PowerShell читает файл без BOM как ANSI,
+# и байты кириллицы внутри строки превращаются в «умные кавычки», которые ломают разбор скрипта.
 # Дамп в формате pg_dump -Fc: сжатый, восстанавливается pg_restore (см. README, раздел «Бэкапы»).
 # Хранятся последние 14 дней. Каталог можно сменить переменной AFFILKI_BACKUP_DIR.
 $ErrorActionPreference = 'Stop'
@@ -11,16 +13,16 @@ function Log($msg) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File
 try {
   $url = (Get-Content (Join-Path $root '.env') | Where-Object { $_ -like 'DATABASE_URL=*' }) -replace '^DATABASE_URL=', ''
   $m = [regex]::Match($url, '^postgres(?:ql)?://([^:]+):([^@]+)@([^:/]+):(\d+)/([^?]+)')
-  if (-not $m.Success) { throw 'DATABASE_URL не разобран' }
+  if (-not $m.Success) { throw 'cannot parse DATABASE_URL' }
   $bin = (Get-ChildItem 'C:\Program Files\PostgreSQL\*\bin' -Directory | Sort-Object FullName -Descending | Select-Object -First 1).FullName
 
   $file = Join-Path $dir ("affilki-{0}.dump" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
   $env:PGPASSWORD = $m.Groups[2].Value
   & "$bin\pg_dump.exe" -U $m.Groups[1].Value -h $m.Groups[3].Value -p $m.Groups[4].Value -d $m.Groups[5].Value -Fc -f $file
-  if ($LASTEXITCODE -ne 0) { throw "pg_dump завершился с кодом $LASTEXITCODE" }
+  if ($LASTEXITCODE -ne 0) { throw "pg_dump exited with code $LASTEXITCODE" }
   # Дамп, который не читается, — не бэкап: проверяем оглавление.
   & "$bin\pg_restore.exe" --list $file | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw 'дамп не читается pg_restore' }
+  if ($LASTEXITCODE -ne 0) { throw 'pg_restore cannot read the dump' }
   $env:PGPASSWORD = ''
 
   # Вместе с базой — загруженные картинки: без них участники и статьи останутся без фото.
