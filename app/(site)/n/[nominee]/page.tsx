@@ -9,6 +9,7 @@ import { LiveBoard } from "@/components/live/LiveBoard";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { StoryShare } from "@/components/ui/StoryShare";
 import { VoteButton } from "@/components/voting/VoteButton";
 import { getNominee, isVotingOpen } from "@/lib/data";
 import { formatDate } from "@/lib/format";
@@ -89,6 +90,10 @@ export default async function NomineePage({ params }: Props) {
             )}
 
             <ShareButton path={voteLink} title={`${nominee.name} — ${season.title}`} label="Скопировать ссылку для голосования" copyOnly />
+            <StoryShare
+              path={`/n/${nominee.slug}`}
+              text={`${nominee.name} в номинации «${nomination.title}» — ${season.title}. ${open ? "Голосуй по ссылке" : "Смотри по ссылке"}`}
+            />
           </PetalCard>
         </div>
       </section>

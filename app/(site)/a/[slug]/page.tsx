@@ -9,6 +9,7 @@ import { ArticleCard } from "@/components/articles/ArticleCard";
 import { ArticleCover } from "@/components/articles/ArticleCover";
 import { TgChannelWidget } from "@/components/articles/TgChannelWidget";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { StoryShare } from "@/components/ui/StoryShare";
 import { getArticle, getChannelInfo, getRelatedArticles } from "@/lib/data";
 import { SITE_URL } from "@/lib/env";
 import { formatCount, formatDate } from "@/lib/format";
@@ -83,7 +84,10 @@ export default async function ArticlePage({ params }: Props) {
           <ArticleBody html={article.contentHtml} />
 
           <div className="mt-10 border-t border-petal/30 pt-6">
-            <ShareButton path={`/a/${article.slug}`} title={article.title} />
+            <div className="flex flex-wrap items-start gap-3">
+              <ShareButton path={`/a/${article.slug}`} title={article.title} />
+              <StoryShare path={`/a/${article.slug}`} text={article.title} />
+            </div>
           </div>
         </article>
 

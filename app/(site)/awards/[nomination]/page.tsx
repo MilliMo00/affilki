@@ -11,6 +11,7 @@ import { getLiveSnapshot } from "@/lib/live/snapshot";
 import type { LiveNomination } from "@/lib/live/types";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { StoryShare } from "@/components/ui/StoryShare";
 import { Tabs } from "@/components/ui/Tabs";
 import { getNomination, isVotingOpen, type Nomination, type Season } from "@/lib/data";
 import { ADS_CONTACT_URL } from "@/lib/env";
@@ -174,7 +175,10 @@ export default async function NominationPage({ params, searchParams }: Props) {
             </p>
             <h1 className="mt-1 hyphens-auto text-xl sm:hyphens-none sm:text-3xl lg:text-4xl">{nomination.title}</h1>
           </div>
-          <ShareButton path={path} title={`${nomination.title} — ${season.title}`} label="Поделиться номинацией" />
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <ShareButton path={path} title={`${nomination.title} — ${season.title}`} label="Поделиться номинацией" />
+            <StoryShare path={path} text={`Номинация «${nomination.title}» — ${season.title}`} />
+          </div>
         </header>
 
         <div className="mt-8">

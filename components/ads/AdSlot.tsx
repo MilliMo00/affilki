@@ -45,6 +45,7 @@ export async function AdSlot({ slotKey, onBrand, className }: AdSlotProps) {
     );
   }
 
+  // Свободный слот — сам себе реклама: яркий фирменный градиент и крупный призыв.
   return (
     <a
       href={ADS_CONTACT_URL}
@@ -53,18 +54,27 @@ export async function AdSlot({ slotKey, onBrand, className }: AdSlotProps) {
       data-ad-slot={slotKey}
       data-ad-sold="false"
       className={cn(
-        "items-center justify-center gap-3 rounded-card border border-dashed px-4 text-center text-sm transition-colors",
-        onBrand
-          ? "border-muted-bright/70 text-muted-bright hover:border-paper hover:text-paper"
-          : "border-petal text-muted hover:border-glow hover:text-text",
+        "group grain relative items-center justify-center gap-x-5 gap-y-3 overflow-hidden rounded-card border-2 bg-hero px-4 text-center transition-colors hover:border-paper",
+        // На фиолетовом фоне премии рамка светлее, иначе слот сливается с фоном.
+        onBrand ? "border-paper/70" : "border-glow",
         slotKey !== "sidebar" && "flex",
-        stacked && "flex-col",
+        stacked ? "flex-col" : "max-sm:flex-col max-sm:gap-y-1",
         slot.box,
         className,
       )}
     >
-      <PetalIcon size={stacked ? 28 : 20} className={cn("shrink-0", !onBrand && "text-petal")} />
-      <span>Слот свободен — напиши, чтобы узнать условия</span>
+      <PetalIcon size={stacked ? 40 : 28} filled className="shrink-0 text-paper" />
+      <span className={cn("font-display font-bold uppercase leading-tight text-paper", stacked ? "text-xl" : "text-base sm:text-xl")}>
+        Тут могла быть твоя реклама
+      </span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full bg-paper px-4 font-semibold text-deep transition-colors group-hover:bg-text",
+          stacked ? "py-2 text-base" : "py-1 text-sm sm:py-2 sm:text-base",
+        )}
+      >
+        Узнать условия
+      </span>
     </a>
   );
 }

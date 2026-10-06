@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { DEFAULT_CATEGORIES } from "../lib/nav";
-import { ARTICLE_SEEDS } from "./seed-articles";
+import { publishContent } from "./publish-content";
 import { NOMINATION_SEEDS } from "./seed-awards";
 
 // Сиды только заполняют пустую базу и никогда не перезаписывают существующие данные.
@@ -12,13 +12,8 @@ async function seedContent() {
   for (const [order, category] of DEFAULT_CATEGORIES.entries()) {
     await db.category.create({ data: { ...category, order } });
   }
-  const categories = await db.category.findMany();
-  const idBySlug = new Map(categories.map((c) => [c.slug, c.id]));
-
-  for (const { category, ...article } of ARTICLE_SEEDS) {
-    await db.article.create({ data: { ...article, status: "PUBLISHED", categoryId: idBySlug.get(category)! } });
-  }
-  console.log(`content: ${categories.length} рубрик, ${ARTICLE_SEEDS.length} статей`);
+  const { created } = await publishContent(db);
+  console.log(`content: ${DEFAULT_CATEGORIES.length} рубрик, ${created} материалов`);
 }
 
 async function seedAwards() {
