@@ -26,6 +26,7 @@ const nominationSchema = z.object({
   criteria: z.string().transform(lines).pipe(z.array(z.string().max(200)).min(1).max(8)),
   eligibility: z.string().trim().min(2).max(500),
   icon: z.enum(NOMINATION_ICON_NAMES as [string, ...string[]]),
+  coverText: z.string().trim().max(16, "Слово на обложке — не длиннее 16 символов"),
   group: z.enum(["TEAMS", "MEDIA", "MARKET"]),
   order: z.coerce.number().int().min(1).max(99),
 });
@@ -41,6 +42,7 @@ export async function saveNomination(id: string, _: ActionState, formData: FormD
     where: { id },
     data: {
       ...parsed.data,
+      coverText: parsed.data.coverText || null,
       acceptingEntries: formData.get("acceptingEntries") === "on",
       testVoting: formData.get("testVoting") === "on",
     },

@@ -8,6 +8,7 @@ export function toHubNomination(nomination: Nomination) {
     title: nomination.title,
     shortDesc: nomination.shortDesc,
     icon: nomination.icon,
+    coverText: nomination.coverText,
     group: nomination.group,
     isEvents: nomination.isEvents,
     nomineeCount: nomination.nominees.length,

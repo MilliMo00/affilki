@@ -166,7 +166,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
       <div className="container-page py-10 sm:py-14">
         <Breadcrumbs items={[{ href: "/awards", label: season.title }]} />
 
-        <NominationCover number={nomination.number} icon={nomination.icon} large className="mt-4 h-40 rounded-petal sm:h-52" />
+        <NominationCover number={nomination.number} icon={nomination.icon} text={nomination.coverText} className="mt-4 h-40 rounded-petal sm:h-52" />
 
         <header className="mt-6 flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">

@@ -12,6 +12,7 @@ export type NominationCardData = {
   title: string;
   shortDesc: string;
   icon: string;
+  coverText: string;
   nomineeCount: number;
   isEvents: boolean;
 };
@@ -25,6 +26,7 @@ export function NominationCard({ nomination, live }: { nomination: NominationCar
       <NominationCover
         number={nomination.number}
         icon={nomination.icon}
+        text={nomination.coverText}
         className="-mx-5 -mt-5 h-36 rounded-[27px_5px_0_0] sm:-mx-6 sm:-mt-6"
       />
       <h3 className="text-xl">

@@ -112,6 +112,8 @@ model Nomination {
   eligibility         String
   /// Имя иконки lucide.
   icon                String
+  /// Крупное слово на обложке номинации: «Команда», «Прорыв». Пусто — берётся из названия.
+  coverText           String?
   group               NomGroup
   /// Состав жюри номинации, если заполнен.
   jury                String?

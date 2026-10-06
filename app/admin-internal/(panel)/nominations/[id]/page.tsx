@@ -80,6 +80,9 @@ export default async function NominationEditPage({ params }: { params: Promise<{
               </select>
             </Label>
           </div>
+          <Label title="Слово на обложке" hint="Крупно на картинке номинации: «Команда», «Прорыв». До 16 символов. Пусто — возьмём из названия.">
+            <input name="coverText" defaultValue={nomination.coverText ?? ""} maxLength={16} className={`${adminInput} max-w-sm`} />
+          </Label>
           <Label title="Короткое описание" hint="Одна строка для карточки">
             <input name="shortDesc" defaultValue={nomination.shortDesc} required className={adminInput} />
           </Label>

@@ -20,6 +20,7 @@ type NominationSeed = {
   criteria: string[];
   eligibility: string;
   icon: string;
+  coverText: string;
   group: NomGroup;
   requiresLegalReview?: boolean;
   nominees: NomineeSeed[];
@@ -42,6 +43,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Арбитражные команды любого размера, работающие на любых источниках и вертикалях.",
     icon: "users",
+    coverText: "Команда",
     group: "TEAMS",
     nominees: [
       t("nord-media", "Nord Media", "FB и TikTok, гемблинг в Tier-1"),
@@ -65,6 +67,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Инфлюенс-проекты, блогеры и каналы об арбитраже, запустившиеся или выстрелившие в этом году.",
     icon: "sparkles",
+    coverText: "Инфлюенс",
     group: "MEDIA",
     nominees: [
       t("zaliv-s-utra", "Залив с утра", "Ежедневные разборы связок в коротких видео"),
@@ -87,6 +90,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Студии и агентства креативов, лендингов и брендинга для арбитражного рынка.",
     icon: "pen-tool",
+    coverText: "Дизайн",
     group: "TEAMS",
     nominees: [
       t("creo-forge", "Creo Forge", "Видео-крео под гемблинг и беттинг"),
@@ -110,6 +114,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Новые сервисы, партнёрки, трекеры, антидетекты и платёжки, запущенные в этом году.",
     icon: "rocket",
+    coverText: "Платформа",
     group: "MARKET",
     nominees: [
       t("maskbox", "Maskbox", "Антидетект-браузер для командной работы"),
@@ -133,6 +138,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Конференции, митапы, вечеринки и другие события арбитражного рынка этого года.",
     icon: "megaphone",
+    coverText: "Событие",
     group: "MARKET",
     nominees: [
       t("zaliv-conf", "Zaliv Conf", "Двухдневная конференция, 3 000 участников"),
@@ -155,6 +161,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Telegram-каналы и медиа с новостями арбитража.",
     icon: "newspaper",
+    coverText: "Новости",
     group: "MEDIA",
     nominees: [
       t("cpa-segodnya", "CPA сегодня", "Новости рынка каждый день в 10:00"),
@@ -178,6 +185,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Каналы и площадки с вакансиями и резюме в арбитраже.",
     icon: "briefcase",
+    coverText: "Вакансии",
     group: "MEDIA",
     nominees: [
       t("cpa-rabota", "CPA Работа", "Вакансии команд и партнёрок"),
@@ -200,6 +208,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Человек, команда или проект с самым заметным ростом за год.",
     icon: "trending-up",
+    coverText: "Прорыв",
     group: "MARKET",
     nominees: [
       t("svyazka-lab", "Svyazka Lab", "Команда, открывшая рынку Threads"),
@@ -222,6 +231,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     ],
     eligibility: "Публичные события и истории арбитражного рынка этого года.",
     icon: "flame",
+    coverText: "Скандал",
     group: "MARKET",
     requiresLegalReview: true,
     nominees: [

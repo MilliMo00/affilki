@@ -44,6 +44,8 @@ export type Nomination = {
   criteria: string[];
   eligibility: string;
   icon: string;
+  /** Крупное слово на обложке. */
+  coverText: string;
   group: NomGroup;
   jury: string | null;
   /** Номинация-события («Скандал года»): нейтральные формулировки, источники, право на ответ. */

@@ -2,54 +2,53 @@ import { Flower } from "@/components/brand/Flower";
 import { cn } from "@/lib/cn";
 import { NominationIcon } from "./NominationIcon";
 
-// Обложки номинаций в стиле постера: градиент, обрезанный цветок и крупная иконка.
-// Композиция выбирается по номеру номинации, поэтому у соседних карточек она разная.
+// Обложка номинации — плакат: крупное слово, большая контурная иконка и обрезанный цветок.
+// Композиция выбирается по порядковому номеру, поэтому у соседних карточек она разная.
 const VARIANTS = [
-  { bg: "radial-gradient(ellipse at 20% 30%, #7B62F0 0%, #4A33C0 45%, #30209D 100%)", flower: "left-[52%] top-[-55%] w-[78%] rotate-[8deg]" },
-  { bg: "radial-gradient(ellipse at 80% 20%, #7B62F0 0%, #4A33C0 50%, #2A1B8F 100%)", flower: "left-[-22%] top-[-20%] w-[70%] rotate-[-18deg]" },
-  { bg: "radial-gradient(ellipse at 50% 100%, #7B62F0 0%, #4A33C0 48%, #30209D 100%)", flower: "left-[18%] top-[12%] w-[64%] rotate-[36deg]" },
-  { bg: "radial-gradient(ellipse at 85% 85%, #7B62F0 0%, #4A33C0 46%, #30209D 100%)", flower: "left-[56%] top-[-10%] w-[62%] rotate-[-30deg]" },
-  { bg: "radial-gradient(ellipse at 15% 85%, #7B62F0 0%, #4A33C0 50%, #2A1B8F 100%)", flower: "left-[-14%] top-[-70%] w-[84%] rotate-[20deg]" },
-  { bg: "radial-gradient(ellipse at 50% 0%, #7B62F0 0%, #4A33C0 52%, #30209D 100%)", flower: "left-[40%] top-[20%] w-[72%] rotate-[-8deg]" },
-  { bg: "radial-gradient(ellipse at 30% 60%, #7B62F0 0%, #4A33C0 44%, #30209D 100%)", flower: "left-[60%] top-[-40%] w-[58%] rotate-[52deg]" },
-  { bg: "radial-gradient(ellipse at 70% 50%, #7B62F0 0%, #4A33C0 48%, #2A1B8F 100%)", flower: "left-[-30%] top-[5%] w-[76%] rotate-[-44deg]" },
-  { bg: "radial-gradient(ellipse at 45% 35%, #7B62F0 0%, #4A33C0 42%, #30209D 100%)", flower: "left-[30%] top-[-62%] w-[90%] rotate-[14deg]" },
+  { bg: "radial-gradient(ellipse at 12% 20%, #7B62F0 0%, #4A33C0 48%, #30209D 100%)", flower: "right-[-6%] top-[-70%] h-[210%] rotate-[8deg]", icon: "right-[4%] bottom-[-18%]", tilt: "rotate-[-10deg]" },
+  { bg: "linear-gradient(112deg, #30209D 0%, #30209D 56%, #5A45CC 56%, #7B62F0 100%)", flower: "left-[-10%] top-[-90%] h-[200%] rotate-[-18deg]", icon: "right-[5%] top-[-14%]", tilt: "rotate-[12deg]" },
+  { bg: "radial-gradient(ellipse at 88% 80%, #7B62F0 0%, #4A33C0 46%, #2A1B8F 100%)", flower: "right-[18%] top-[-30%] h-[190%] rotate-[36deg]", icon: "right-[3%] bottom-[-22%]", tilt: "rotate-[6deg]" },
+  { bg: "linear-gradient(200deg, #6C5BCE 0%, #4A33C0 45%, #1B1160 100%)", flower: "right-[-12%] bottom-[-110%] h-[220%] rotate-[-30deg]", icon: "right-[6%] top-[-10%]", tilt: "rotate-[-14deg]" },
+  { bg: "radial-gradient(ellipse at 50% 0%, #7B62F0 0%, #4A33C0 52%, #30209D 100%)", flower: "left-[30%] top-[-20%] h-[200%] rotate-[52deg]", icon: "right-[4%] bottom-[-16%]", tilt: "rotate-[9deg]" },
+  { bg: "linear-gradient(68deg, #2A1B8F 0%, #4A33C0 50%, #7B62F0 100%)", flower: "right-[-4%] top-[-110%] h-[230%] rotate-[-44deg]", icon: "right-[5%] bottom-[-20%]", tilt: "rotate-[-6deg]" },
+  { bg: "radial-gradient(ellipse at 30% 100%, #7B62F0 0%, #4A33C0 44%, #30209D 100%)", flower: "right-[10%] top-[-60%] h-[200%] rotate-[20deg]", icon: "right-[4%] top-[-12%]", tilt: "rotate-[14deg]" },
+  { bg: "linear-gradient(150deg, #5A45CC 0%, #30209D 60%, #120B3D 100%)", flower: "left-[-14%] bottom-[-120%] h-[220%] rotate-[14deg]", icon: "right-[5%] bottom-[-18%]", tilt: "rotate-[-12deg]" },
+  { bg: "radial-gradient(ellipse at 70% 30%, #7B62F0 0%, #4A33C0 42%, #30209D 100%)", flower: "right-[-10%] top-[-40%] h-[210%] rotate-[-8deg]", icon: "right-[4%] bottom-[-24%]", tilt: "rotate-[8deg]" },
 ];
 
 type NominationCoverProps = {
+  /** Порядковый номер — только чтобы выбрать композицию; на обложке не печатается. */
   number: number;
   icon: string;
-  /** Крупный вариант — для шапки страницы номинации. */
-  large?: boolean;
+  /** Крупное слово плаката. */
+  text: string;
   className?: string;
 };
 
-export function NominationCover({ number, icon, large, className }: NominationCoverProps) {
+export function NominationCover({ number, icon, text, className }: NominationCoverProps) {
   const variant = VARIANTS[(number - 1 + VARIANTS.length) % VARIANTS.length];
+  const word = text.toUpperCase();
+  // Буква Unbounded почти квадратная: слово должно уместиться примерно в две трети ширины.
+  const size = Math.min(15, 62 / word.length);
 
   return (
-    <div aria-hidden className={cn("grain relative overflow-hidden", className)} style={{ background: variant.bg }}>
-      <div className={cn("absolute aspect-square text-paper/20", variant.flower)}>
+    // container-type: size — размеры внутри считаются от ширины и высоты самой обложки,
+    // поэтому плакат одинаково собирается и на карточке, и в широкой шапке номинации.
+    <div aria-hidden className={cn("grain relative overflow-hidden", className)} style={{ background: variant.bg, containerType: "size" }}>
+      <div className={cn("absolute aspect-square text-paper/[0.14]", variant.flower)}>
         <Flower size="100%" rays={false} rayColor="var(--indigo)" />
       </div>
-      <div className={cn("absolute inset-0 flex items-center", large ? "px-8 sm:px-12" : "px-5 sm:px-6")}>
-        <span
-          className={cn(
-            "flex items-center justify-center rounded-full border border-paper/40 bg-ink/35 text-paper backdrop-blur-sm",
-            large ? "size-24 sm:size-28" : "size-16",
-          )}
-        >
-          <NominationIcon name={icon} size={large ? 52 : 32} />
+
+      {/* Иконка как иллюстрация: крупная, тонким контуром, частично уходит за край. */}
+      <div className={cn("absolute aspect-square h-[125%] text-paper/35", variant.icon, variant.tilt)}>
+        <NominationIcon name={icon} size={24} className="size-full [&>*]:[stroke-width:1.1]" />
+      </div>
+
+      <div className="absolute inset-0 flex items-end p-[7cqh] pl-[5cqw]">
+        <span className="font-display font-extrabold leading-none tracking-tight text-paper" style={{ fontSize: `min(${size}cqw, 46cqh)` }}>
+          {word}
         </span>
       </div>
-      <span
-        className={cn(
-          "absolute font-display font-bold tabular-nums text-paper/50",
-          large ? "bottom-4 right-6 text-5xl sm:right-10" : "bottom-2 right-5 text-3xl",
-        )}
-      >
-        {String(number).padStart(2, "0")}
-      </span>
     </div>
   );
 }

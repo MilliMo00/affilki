@@ -106,6 +106,16 @@ function toNominee(row: NominationRow["nominees"][number]): Nominee {
   };
 }
 
+/** Слово для обложки из названия номинации: без «Лучший/Самое/Главный», последнее слово. */
+export function nominationPosterText(title: string) {
+  const words = title
+    .replace(/\(.*?\)/g, "")
+    .split(/\s+/)
+    .filter((word) => word && !/^(лучш|сам|главн)/i.test(word));
+  const tail = words.filter((word) => !/^(года|по)$/i.test(word));
+  return tail[tail.length - 1] ?? title;
+}
+
 function toNomination(row: NominationRow): Nomination {
   return {
     slug: row.slug,
@@ -116,6 +126,7 @@ function toNomination(row: NominationRow): Nomination {
     criteria: stringList(row.criteria),
     eligibility: row.eligibility,
     icon: row.icon,
+    coverText: row.coverText?.trim() || nominationPosterText(row.title),
     group: row.group,
     jury: row.jury,
     isEvents: row.requiresLegalReview,
