@@ -5,6 +5,7 @@ import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
 import { NomineeCard, NomineeLinks, RightOfReply } from "@/components/awards/NomineeCard";
 import { PetalCard } from "@/components/awards/PetalCard";
 import { Watermark } from "@/components/brand/Watermark";
+import { Snowfall } from "@/components/festive/Snowfall";
 import { LiveBoard } from "@/components/live/LiveBoard";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
@@ -38,6 +39,7 @@ export default async function NomineePage({ params }: Props) {
       <LiveTickerSlot />
       <section className="grain relative overflow-hidden bg-hero">
         <Watermark />
+        <Snowfall density={0.6} />
         <div className="container-page relative py-10 sm:py-14">
           <Breadcrumbs
             items={[

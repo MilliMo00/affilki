@@ -1,5 +1,6 @@
 import { Send } from "lucide-react";
 import { Flower } from "@/components/brand/Flower";
+import { Snowfall } from "@/components/festive/Snowfall";
 import { Button } from "@/components/ui/Button";
 import { ADS_CONTACT_URL } from "@/lib/env";
 
@@ -14,6 +15,8 @@ export function SponsorCall() {
           <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 aspect-square w-72 text-paper/10 sm:w-96">
             <Flower size="100%" rays={false} rayColor="var(--surface)" />
           </div>
+
+          <Snowfall density={0.4} />
 
           <div className="relative grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
             <div>

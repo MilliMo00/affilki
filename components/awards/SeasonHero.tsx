@@ -1,5 +1,8 @@
+import { Gift } from "lucide-react";
 import { Flower } from "@/components/brand/Flower";
 import { Watermark } from "@/components/brand/Watermark";
+import { Snowfall } from "@/components/festive/Snowfall";
+import { isFestive } from "@/lib/festive";
 import { LiveTotal } from "@/components/live/LiveBits";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
@@ -56,7 +59,8 @@ export function SeasonHero({ season, acceptingEntries, nominationsHref, live }: 
       key: "after",
       date: formatDate(season.votingEndsAt),
       title: "Итоги",
-      text: "Объявляем победителей в день окончания голосования.",
+      text: isFestive(season.votingEndsAt) ? "Победителей объявим под самый Новый год — в день окончания голосования." : "Объявляем победителей в день окончания голосования.",
+      gift: isFestive(season.votingEndsAt),
     },
   ] as const;
 
@@ -73,6 +77,7 @@ export function SeasonHero({ season, acceptingEntries, nominationsHref, live }: 
   return (
     <section className="grain relative overflow-hidden bg-hero">
       <Watermark />
+      <Snowfall />
       <div className="container-page relative flex flex-col items-center gap-8 py-12 text-center sm:py-16">
         <p className="inline-flex items-center gap-3 rounded-full border border-paper/50 bg-deep/60 py-1.5 pl-2 pr-4 font-semibold text-paper backdrop-blur-sm">
           {/* Цветок-индикатор: закрашено столько лепестков, сколько этапов сезона начато. */}
@@ -131,7 +136,10 @@ export function SeasonHero({ season, acceptingEntries, nominationsHref, live }: 
                   <span className="font-display text-xl font-bold text-paper">{step.date}</span>
                   {current && <span className="rounded-full bg-paper px-2.5 py-0.5 text-sm font-semibold text-deep">идёт сейчас</span>}
                 </p>
-                <p className="mt-2 font-semibold text-paper">{step.title}</p>
+                <p className="mt-2 flex items-center gap-2 font-semibold text-paper">
+                  {"gift" in step && step.gift && <Gift size={18} strokeWidth={1.75} aria-hidden />}
+                  {step.title}
+                </p>
                 <p className="mt-1 text-muted-bright">{step.text}</p>
               </li>
             );

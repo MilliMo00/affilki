@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Flower } from "@/components/brand/Flower";
 import { Logo } from "@/components/brand/Logo";
 import { ADS_CONTACT_URL, TG_CHANNEL_URL } from "@/lib/env";
+import { isFestive } from "@/lib/festive";
 import { DEFAULT_CATEGORIES } from "@/lib/nav";
 
 const COLUMNS = [
@@ -72,7 +73,10 @@ export function Footer() {
       <div className="border-t border-petal/20">
         <div className="container-page flex flex-wrap items-center justify-between gap-4 py-6">
           <Logo size={24} rayColor="var(--ink)" />
-          <p className="text-sm text-muted">© AFFILKI 2024–{new Date().getFullYear()}</p>
+          <p className="text-sm text-muted">
+            © AFFILKI 2024–{new Date().getFullYear()}
+            {isFestive() && " · С наступающим!"}
+          </p>
           <a
             href={TG_CHANNEL_URL}
             target="_blank"

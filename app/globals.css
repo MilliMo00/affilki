@@ -230,6 +230,46 @@ html[data-intro] [data-header-logo] {
   animation-play-state: paused;
 }
 
+/* Новогоднее оформление: снег и гирлянда. */
+@keyframes snow-fall {
+  from {
+    transform: translate3d(0, -6%, 0);
+  }
+  to {
+    transform: translate3d(0, 104%, 0);
+  }
+}
+@keyframes snow-sway {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(10px);
+  }
+}
+.snow-column {
+  animation: snow-fall linear infinite;
+  will-change: transform;
+}
+.snow-flake {
+  animation: snow-sway ease-in-out infinite alternate;
+}
+@keyframes garland-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 10px 2px currentColor;
+  }
+}
+.garland-bulb {
+  color: rgb(255 255 255 / 0.55);
+  animation: garland-glow 2.4s ease-in-out infinite;
+}
+
 @keyframes petal-pulse {
   0%,
   100% {
@@ -258,6 +298,18 @@ html[data-intro] [data-header-logo] {
   }
   .loader-petal {
     opacity: 0.7;
+  }
+  /* Снег стоит на месте, гирлянда горит ровно. */
+  .snow-column,
+  .snow-flake,
+  .garland-bulb {
+    animation: none !important;
+  }
+  .snow-column {
+    transform: translateY(calc(var(--snow-rest, 40) * 1%));
+  }
+  .garland-bulb {
+    opacity: 0.8;
   }
   /* Без автопрокрутки: строка лидеров листается вручную. */
   .ticker {

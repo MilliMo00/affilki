@@ -8,6 +8,7 @@ import { Logo } from "@/components/brand/Logo";
 import { VoterBadge } from "@/components/voting/VoterBadge";
 import { cn } from "@/lib/cn";
 import { MAIN_NAV } from "@/lib/nav";
+import { Garland } from "@/components/festive/Garland";
 import { MobileMenu } from "./MobileMenu";
 
 export function Header({ channelUrl }: { channelUrl: string }) {
@@ -86,6 +87,8 @@ export function Header({ channelUrl }: { channelUrl: string }) {
           </button>
         </div>
       </div>
+
+      <Garland />
 
       <MobileMenu open={menuOpen} onClose={closeMenu} channelUrl={channelUrl} pathname={pathname} />
     </header>
