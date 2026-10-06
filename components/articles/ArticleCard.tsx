@@ -7,6 +7,7 @@ export type ArticleCardData = {
   slug: string;
   title: string;
   coverUrl: string | null;
+  coverText: string | null;
   category: { slug: string; title: string };
   readingMin: number;
   publishedAt: Date;
@@ -19,7 +20,10 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
       <div className="relative aspect-video overflow-hidden bg-deep">
         <ArticleCover
           slug={article.slug}
+          title={article.title}
+          category={article.category}
           coverUrl={article.coverUrl}
+          coverText={article.coverText}
           sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw"
         />
       </div>

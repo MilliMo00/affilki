@@ -75,7 +75,10 @@ export default async function ArticlePage({ params }: Props) {
           <div className="relative my-8 aspect-video overflow-hidden rounded-card">
             <ArticleCover
               slug={article.slug}
+              title={article.title}
+              category={article.category}
               coverUrl={article.coverUrl}
+              coverText={article.coverText}
               sizes="(min-width: 1024px) 860px, 100vw"
               priority
             />

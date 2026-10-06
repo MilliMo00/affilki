@@ -18,6 +18,7 @@ const schema = z.object({
   categoryId: z.string().min(1, "Выбери рубрику"),
   authorName: z.string().trim().min(1).max(100),
   excerpt: z.string().trim().max(300),
+  coverText: z.string().trim().max(24, "Текст на обложке — не длиннее 24 символов"),
   source: z.string().max(60_000),
   seoTitle: z.string().trim().max(200),
   seoDesc: z.string().trim().max(300),
@@ -29,7 +30,7 @@ export async function saveArticle(id: string, _: ActionState, formData: FormData
   const context = await requirePermission("content");
   const parsed = schema.safeParse(Object.fromEntries([...formData].filter(([, v]) => typeof v === "string")));
   if (!parsed.success) return failed(parsed.error.issues.map((i) => i.message).join("; "));
-  const { source, slug: rawSlug, seoTitle, seoDesc, ...fields } = parsed.data;
+  const { source, slug: rawSlug, seoTitle, seoDesc, coverText, ...fields } = parsed.data;
 
   const before = id === "new" ? null : await db.article.findUnique({ where: { id } });
   if (id !== "new" && !before) return failed("Статья не найдена.");
@@ -53,6 +54,7 @@ export async function saveArticle(id: string, _: ActionState, formData: FormData
     ...fields,
     slug,
     excerpt: fields.excerpt || (hasSource ? plainText(source).slice(0, 180) : (before?.excerpt ?? "")),
+    coverText: coverText || null,
     seoTitle: seoTitle || null,
     seoDesc: seoDesc || null,
     ...(hasSource && { contentSource: source, contentHtml: renderMarkup(source), readingMin: readingMinutes(source) }),

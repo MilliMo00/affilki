@@ -54,3 +54,11 @@ test("адрес страницы из названия", () => {
   assert.equal(slugify("ЩЁ"), "sche");
   assert.equal(slugify("!!!"), "item");
 });
+
+test("текст плаката из заголовка, когда редактор его не задал", async () => {
+  const { posterText } = await import("@/components/articles/ArticleCover");
+  assert.equal(posterText("Трекер: зачем он нужен и на что смотреть"), "Трекер");
+  assert.equal(posterText("Разбор: связка вышла в ноль на третий день — резать или лить"), "связка вышла");
+  assert.equal(posterText("Апрув и холд: почему деньги приходят не сразу"), "Апрув и холд");
+  assert.equal(posterText("Как посчитать ROI связки и не обмануть себя"), "Как посчитать");
+});

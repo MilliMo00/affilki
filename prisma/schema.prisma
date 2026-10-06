@@ -26,6 +26,8 @@ model Article {
   /// Исходник в простой разметке (## заголовки, списки, ссылки). HTML выше собирается из него.
   contentSource String?
   coverUrl    String?
+  /// Короткий текст для обложки-плаката, когда картинки нет: «ROI», «Апрув + холд». Пусто — берётся из заголовка.
+  coverText   String?
   categoryId  String
   category    Category      @relation(fields: [categoryId], references: [id])
   authorName  String        @default("AFFILKI")

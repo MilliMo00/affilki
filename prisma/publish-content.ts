@@ -12,7 +12,11 @@ export async function publishContent(db: PrismaClient) {
   let created = 0;
 
   for (const [i, item] of CONTENT.entries()) {
-    if (await db.article.findUnique({ where: { slug: item.slug } })) continue;
+    if (await db.article.findUnique({ where: { slug: item.slug } })) {
+      // Уже опубликовано: дописываем только текст обложки, если его ещё нет. Правки редактора не трогаем.
+      await db.article.updateMany({ where: { slug: item.slug, coverText: null }, data: { coverText: item.coverText } });
+      continue;
+    }
     const categoryId = categories.get(item.category);
     if (!categoryId) throw new Error(`Нет рубрики ${item.category}`);
     await db.article.create({
@@ -20,6 +24,7 @@ export async function publishContent(db: PrismaClient) {
         slug: item.slug,
         title: item.title,
         excerpt: item.excerpt || plainText(item.source).slice(0, 180),
+        coverText: item.coverText,
         contentSource: item.source,
         contentHtml: renderMarkup(item.source),
         categoryId,

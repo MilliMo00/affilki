@@ -8,6 +8,8 @@ export type Article = {
   excerpt: string;
   contentHtml: string;
   coverUrl: string | null;
+  /** Короткий текст для обложки-плаката, если картинки нет. */
+  coverText: string | null;
   category: Category;
   authorName: string;
   readingMin: number;

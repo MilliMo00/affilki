@@ -25,6 +25,7 @@ function toArticle(row: ArticleRow): Article {
     excerpt: row.excerpt,
     contentHtml: row.contentHtml,
     coverUrl: row.coverUrl,
+    coverText: row.coverText,
     category: { slug: row.category.slug, title: row.category.title },
     authorName: row.authorName,
     readingMin: row.readingMin,
