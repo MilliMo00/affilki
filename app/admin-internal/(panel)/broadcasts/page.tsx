@@ -16,14 +16,14 @@ export default async function BroadcastsPage() {
 
   const tiles = [
     { label: "Могут получить рассылку", value: counts.segments.all },
-    { label: "Всего писали боту", value: counts.total },
+    { label: "Всего нажали «Старт»", value: counts.total },
     { label: "Отписались от рассылок", value: counts.unsubscribed },
     { label: "Заблокировали бота", value: counts.blocked },
   ];
 
   return (
     <>
-      <PageTitle title="Рассылки" lead="Сообщения от имени бота. Бот может писать только тем, кто сам ему писал: входил на сайт, голосовал или подавал заявку." />
+      <PageTitle title="Рассылки" lead="Сообщения от имени бота всем, кто нажал в нём «Старт»." />
 
       <dl className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {tiles.map((tile) => (
@@ -37,8 +37,8 @@ export default async function BroadcastsPage() {
       <Card title="Новое сообщение" className="mb-6 max-w-3xl">
         <BroadcastForm segments={segments} />
         <p className="mt-4 text-sm text-muted">
-          Под каждым сообщением рассылки бот сам добавляет кнопку «Отписаться от рассылки». Квитанции о голосах и ответы по заявкам
-          отписавшимся приходят как раньше.
+          Рассылку получают все, кто нажал «Старт» в боте и не заблокировал его. Отказаться от рассылок человек может командой
+          /stop в боте; квитанции о голосах и ответы по заявкам ему приходят как раньше.
         </p>
       </Card>
 

@@ -41,11 +41,6 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
   }
 
   const callback = update.callback_query;
-  if (callback?.data === "unsub") {
-    await setSubscribed(callback.from.id, false);
-    await tg.answerCallback(callback.id, "Рассылку отключили");
-    return tg.sendMessage(callback.from.id, "Рассылку отключили. Вернуть — /subscribe.");
-  }
   if (callback) {
     const match = /^(ok|no):([a-z0-9]{10,40})$/.exec(callback.data ?? "");
     if (match) {

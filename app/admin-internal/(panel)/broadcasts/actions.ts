@@ -54,7 +54,7 @@ export async function sendTest(_: BroadcastState, formData: FormData): Promise<B
   const prepared = await prepare(formData);
   if ("error" in prepared) return failed(prepared.error!);
 
-  const result = await telegramSender(context.admin.tgId, { ...prepared.message, photoFileId: null }, true);
+  const result = await telegramSender(context.admin.tgId, { ...prepared.message, photoFileId: null });
   if (!result.ok) return { ok: false, message: `Telegram не принял сообщение: ${result.error}`, imageUrl: prepared.message.imageUrl };
   // Загруженную картинку возвращаем форме, чтобы для рассылки её не пришлось выбирать заново.
   return { ok: true, message: "Отправили тебе в бот. Посмотри, как выглядит.", imageUrl: prepared.message.imageUrl };

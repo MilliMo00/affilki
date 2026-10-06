@@ -71,22 +71,20 @@ export type SendResult = { ok: true; fileId?: string } | { ok: false; reason: "b
 type Message = Pick<Broadcast, "text" | "imageUrl" | "photoFileId" | "buttonText" | "buttonUrl">;
 
 /** Отправка одного сообщения одному человеку. Вынесена в тип, чтобы в тестах подставлять заглушку. */
-export type Sender = (chatId: bigint, message: Message, withUnsubscribe: boolean) => Promise<SendResult>;
+export type Sender = (chatId: bigint, message: Message) => Promise<SendResult>;
 
 const fakeBot = () => process.env.NODE_ENV !== "production" && process.env.DEV_FAKE_BOT === "true";
 
-export const telegramSender: Sender = async (chatId, message, withUnsubscribe) => {
+export const telegramSender: Sender = async (chatId, message) => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return { ok: false, reason: "error", error: "нет токена бота" };
   // Локальная разработка: настоящим людям ничего не уходит.
   if (fakeBot()) return { ok: true, fileId: "fake" };
 
   const html = toTelegramHtml(message.text);
-  const keyboard = [
-    ...(message.buttonText && message.buttonUrl ? [[{ text: message.buttonText, url: message.buttonUrl }]] : []),
-    ...(withUnsubscribe ? [[{ text: "Отписаться от рассылки", callback_data: "unsub" }]] : []),
-  ];
-  const markup = keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined;
+  // Под сообщением — только кнопка, которую задал админ. Кнопки отписки нет (решение владельца);
+  // отказаться от рассылок можно командой /stop.
+  const markup = message.buttonText && message.buttonUrl ? { inline_keyboard: [[{ text: message.buttonText, url: message.buttonUrl }]] } : undefined;
 
   let response: Response;
   try {
@@ -167,11 +165,11 @@ export async function runBroadcast(id: string, send: Sender = telegramSender, pa
 
       let fileId = broadcast.photoFileId;
       for (const recipient of batch) {
-        let result = await send(recipient.tgUserId, { ...broadcast, photoFileId: fileId }, true);
+        let result = await send(recipient.tgUserId, { ...broadcast, photoFileId: fileId });
         // Telegram просит подождать — ждём и пробуем этого же получателя ещё раз.
         if (!result.ok && result.retryAfter) {
           await sleep(Math.min(result.retryAfter, 60) * 1000);
-          result = await send(recipient.tgUserId, { ...broadcast, photoFileId: fileId }, true);
+          result = await send(recipient.tgUserId, { ...broadcast, photoFileId: fileId });
         }
 
         if (result.ok) {
