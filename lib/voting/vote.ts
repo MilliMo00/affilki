@@ -18,7 +18,7 @@ export type VoteResult =
   | { ok: false; error: VoteError; message: string };
 
 type Deps = {
-  tg: Pick<TelegramApi, "isChannelMember" | "sendMessage">;
+  tg: Pick<TelegramApi, "isChannelMember" | "sendMessage"> & Partial<Pick<TelegramApi, "hasProfilePhoto" | "usernameOf">>;
   verifyCaptcha: (token: string) => Promise<boolean>;
   now?: Date;
 };
@@ -28,7 +28,9 @@ type Input = { session: VoterSession; nomineeSlug: string; captchaToken: string;
 const fail = (error: VoteError, message: string): VoteResult => ({ ok: false, error, message });
 
 /** Запись голоса. Все проверки — на сервере и по серверному времени. */
-export async function castVote({ session, nomineeSlug, captchaToken, ipHash, uaHash }: Input, deps: Deps): Promise<VoteResult> {
+export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
+  const { nomineeSlug, captchaToken, ipHash, uaHash } = input;
+  let session = input.session;
   const now = deps.now ?? new Date();
 
   const nominee = await db.nominee.findUnique({
@@ -48,6 +50,17 @@ export async function castVote({ session, nomineeSlug, captchaToken, ipHash, uaH
     where: { tgUserId_nominationId: { tgUserId: session.tgUserId, nominationId: nomination.id } },
   });
   if (existing) return fail("already_voted", "Твой голос в этой номинации уже отдан. Изменить его нельзя.");
+
+  // Вход бессрочный, а фото и username запомнены на момент входа. Если их требуют, а в сессии их нет —
+  // спрашиваем у Telegram заново: человек мог добавить их уже после входа.
+  const tgId = Number(session.tgUserId);
+  if (season.requireAvatar && !session.hasAvatar && (await deps.tg.hasProfilePhoto?.(tgId))) {
+    session = await db.voterSession.update({ where: { id: session.id }, data: { hasAvatar: true } });
+  }
+  if (season.requireUsername && !session.tgUsername) {
+    const username = await deps.tg.usernameOf?.(tgId);
+    if (username) session = await db.voterSession.update({ where: { id: session.id }, data: { tgUsername: username } });
+  }
 
   const failure = await checkAccount(
     { tgUserId: session.tgUserId, username: session.tgUsername, hasAvatar: session.hasAvatar },

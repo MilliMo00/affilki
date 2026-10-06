@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { AD_SLOTS, type AdSlotKey } from "@/components/ads/slots";
-import { ActionForm, adminInput } from "@/components/admin/ActionForm";
+import { ActionForm } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Badge, Card, Label, PageTitle, Table } from "@/components/admin/ui";
 import { ctr, slotStats } from "@/lib/ads";
 import { requirePermission } from "@/lib/admin/auth";

@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     answerCallback: async () => {},
     isChannelMember: async () => subscribed,
     hasProfilePhoto: async () => true,
+    usernameOf: async () => "test_user",
     channelMemberCount: async () => null,
   };
 

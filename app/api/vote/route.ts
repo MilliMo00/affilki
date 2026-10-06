@@ -11,8 +11,8 @@ import { castVote, votesOf } from "@/lib/voting/vote";
 
 // В разработке с DEV_FAKE_BOT тестовый аккаунт не существует в Telegram — подписку считаем пройденной.
 const fakeBot = process.env.NODE_ENV !== "production" && process.env.DEV_FAKE_BOT === "true";
-const voteTelegram: Pick<TelegramApi, "isChannelMember" | "sendMessage"> = fakeBot
-  ? { isChannelMember: async () => true, sendMessage: async () => {} }
+const voteTelegram: Pick<TelegramApi, "isChannelMember" | "sendMessage" | "hasProfilePhoto" | "usernameOf"> = fakeBot
+  ? { isChannelMember: async () => true, sendMessage: async () => {}, hasProfilePhoto: async () => true, usernameOf: async () => null }
   : telegram;
 
 const bodySchema = z.object({ nomineeSlug: z.string().min(1).max(120), captchaToken: z.string().min(1).max(4096) });

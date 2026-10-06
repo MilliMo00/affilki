@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { adminInput } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Button } from "@/components/ui/Button";
 import { confirmSetup, finishSetup, verifyLoginCode } from "./actions";
 

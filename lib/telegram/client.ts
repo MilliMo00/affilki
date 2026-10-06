@@ -12,6 +12,8 @@ export interface TelegramApi {
   /** Подписан ли пользователь на канал. */
   isChannelMember(userId: number): Promise<boolean>;
   hasProfilePhoto(userId: number): Promise<boolean>;
+  /** Текущий username пользователя; null — если его нет или узнать не удалось. */
+  usernameOf(userId: number): Promise<string | null>;
   channelMemberCount(): Promise<number | null>;
 }
 
@@ -58,6 +60,10 @@ export const telegram: TelegramApi = {
   async hasProfilePhoto(userId) {
     const photos = await call<{ total_count: number }>("getUserProfilePhotos", { user_id: userId, limit: 1 });
     return (photos?.total_count ?? 0) > 0;
+  },
+  async usernameOf(userId) {
+    const chat = await call<{ username?: string }>("getChat", { chat_id: userId });
+    return chat?.username ?? null;
   },
   async channelMemberCount() {
     return call<number>("getChatMemberCount", { chat_id: process.env.TELEGRAM_CHANNEL_ID });

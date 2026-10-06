@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useRef, type ReactNode } from "react";
-import { adminInput } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Card, Label } from "@/components/admin/ui";
 import { cn } from "@/lib/cn";
 import { decideSubmission } from "../actions";

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ActionForm, adminInput } from "@/components/admin/ActionForm";
+import { ActionForm } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Card, Label, PageTitle } from "@/components/admin/ui";
 import { requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";

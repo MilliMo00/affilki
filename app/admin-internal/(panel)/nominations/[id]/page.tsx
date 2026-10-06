@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ActionForm, adminInput } from "@/components/admin/ActionForm";
+import { ActionForm } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Badge, Card, Check, Label, PageTitle, Table } from "@/components/admin/ui";
 import { NOMINATION_ICON_NAMES } from "@/components/awards/NominationIcon";
 import { requirePermission } from "@/lib/admin/auth";

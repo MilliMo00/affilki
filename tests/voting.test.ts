@@ -13,14 +13,15 @@ const fp = { ipHash: "ip", uaHash: "ua", uaLabel: "Chrome, macOS" };
 const alice = { id: 1001, username: "alice", first_name: "Алиса" };
 const bob = { id: 1002, username: "bob", first_name: "Боб" };
 
-function fakeTg(opts: { subscribed?: boolean } = {}) {
+function fakeTg(opts: { subscribed?: boolean; photo?: boolean; username?: string } = {}) {
   const sent: { chatId: number; text: string }[] = [];
   const tg: TelegramApi = {
     sendMessage: async (chatId, text) => void sent.push({ chatId, text }),
     editMessage: async () => {},
     answerCallback: async () => {},
     isChannelMember: async () => opts.subscribed ?? true,
-    hasProfilePhoto: async () => true,
+    hasProfilePhoto: async () => opts.photo ?? true,
+    usernameOf: async () => opts.username ?? null,
     channelMemberCount: async () => null,
   };
   return { tg, sent };
@@ -202,6 +203,22 @@ test("забаненный, слишком свежий и без username — �
   const anon = await vote(await login({ id: 1003, first_name: "Без ника" } as typeof alice), "a");
   assert.equal(!anon.ok && anon.error, "no_username");
   assert.equal(await db.vote.count(), 0);
+});
+
+test("фото и username, добавленные после входа, учитываются без повторного входа", async () => {
+  await db.season.updateMany({ data: { requireAvatar: true, requireUsername: true } });
+  // Вошёл без фото и без username.
+  const session = await login({ id: 1005, first_name: "Новичок" } as typeof alice, fakeTg({ photo: false }).tg);
+  assert.equal(session.hasAvatar, false);
+
+  const still = await vote(session, "a", { tg: fakeTg({ photo: false }).tg });
+  assert.equal(!still.ok && still.error, "no_username");
+
+  // Добавил и то и другое в Telegram — голос проходит той же сессией.
+  const result = await vote(session, "a", { tg: fakeTg({ photo: true, username: "novichok" }).tg });
+  assert.equal(result.ok, true);
+  const saved = await db.vote.findFirstOrThrow();
+  assert.deepEqual([saved.hasAvatar, saved.tgUsername], [true, "novichok"]);
 });
 
 test("непройденная капча не даёт голос", async () => {

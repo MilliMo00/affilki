@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { startTransition, useActionState, useRef, useState } from "react";
-import { adminInput } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Label } from "@/components/admin/ui";
 import { cn } from "@/lib/cn";
 import { sendBroadcast, sendTest, type BroadcastState } from "./actions";

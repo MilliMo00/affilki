@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import type { ActionState } from "@/lib/admin/action";
 import { cn } from "@/lib/cn";
+import { adminInput } from "./styles";
 
 type ActionFormProps = {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -14,9 +15,6 @@ type ActionFormProps = {
   totp?: boolean;
   className?: string;
 };
-
-export const adminInput =
-  "w-full rounded-card border border-petal/60 bg-deep/40 px-3 py-2 text-base text-paper placeholder:text-muted/70 focus:border-glow";
 
 /** Форма админки поверх серверного действия: показывает результат и состояние отправки. */
 export function ActionForm({ action, children, submit, danger, totp, className }: ActionFormProps) {

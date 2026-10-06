@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { adminInput } from "@/components/admin/ActionForm";
+import { adminInput } from "@/components/admin/styles";
 import { Badge, Card, Label, PageTitle } from "@/components/admin/ui";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
