@@ -27,7 +27,7 @@ export default async function NomineePage({ params }: Props) {
   if (!data) notFound();
 
   const { season, nomination, nominee } = data;
-  const open = isVotingOpen(season);
+  const open = isVotingOpen(season, nomination);
   const others = nomination.nominees.filter((n) => n.slug !== nominee.slug);
   const live = await getLiveSnapshot();
   const voteLink = `/n/${nominee.slug}?utm_source=share&utm_medium=nominee&utm_campaign=awards${season.year}`;

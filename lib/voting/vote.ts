@@ -40,7 +40,8 @@ export async function castVote({ session, nomineeSlug, captchaToken, ipHash, uaH
   if (!nominee || !nomination || !visible) return fail("not_found", "Участник не найден.");
 
   const season = nomination.season;
-  if (now < season.votingStartsAt) return fail("not_started", `Голосование начнётся ${dateFmt.format(season.votingStartsAt)}.`);
+  // До общего старта голосовать можно только в номинации с включённым тестовым голосованием.
+  if (now < season.votingStartsAt && !nomination.testVoting) return fail("not_started", `Голосование начнётся ${dateFmt.format(season.votingStartsAt)}.`);
   if (now > season.votingEndsAt) return fail("ended", `Голосование закончилось ${dateFmt.format(season.votingEndsAt)}.`);
 
   const existing = await db.vote.findUnique({

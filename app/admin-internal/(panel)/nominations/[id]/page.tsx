@@ -93,6 +93,12 @@ export default async function NominationEditPage({ params }: { params: Promise<{
             <textarea name="eligibility" defaultValue={nomination.eligibility} rows={2} required className={adminInput} />
           </Label>
           <Check name="acceptingEntries" title="Приём участников открыт" defaultChecked={nomination.acceptingEntries} />
+          <Check
+            name="testVoting"
+            title="Тестовое голосование"
+            hint="Открывает голосование в этой номинации до общего старта сезона. Голоса настоящие и окончательные — перед запуском их нужно стереть."
+            defaultChecked={nomination.testVoting}
+          />
         </ActionForm>
       </Card>
     </>

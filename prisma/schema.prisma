@@ -116,6 +116,8 @@ model Nomination {
   /// Участник не публикуется, пока админ не отметит «Проверено» (номинация «Скандал года»).
   requiresLegalReview Boolean  @default(false)
   acceptingEntries    Boolean  @default(true)
+  /// Тестовое голосование: в этой номинации можно голосовать до общего старта сезона.
+  testVoting          Boolean  @default(false)
   nominees            Nominee[]
   votes               Vote[]
 

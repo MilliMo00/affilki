@@ -189,7 +189,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
         <div className="mt-8">
           {tab === "about" && <About season={season} nomination={nomination} />}
           {tab === "nominees" && (
-            <Nominees nomination={nomination} votingOpen={isVotingOpen(season)} board={board} byVotes={query.sort === "votes"} />
+            <Nominees nomination={nomination} votingOpen={isVotingOpen(season, nomination)} board={board} byVotes={query.sort === "votes"} />
           )}
           {tab === "live" && <LiveBoard nominationSlug={nomination.slug} initial={live} />}
         </div>

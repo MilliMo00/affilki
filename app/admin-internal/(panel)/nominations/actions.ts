@@ -39,7 +39,11 @@ export async function saveNomination(id: string, _: ActionState, formData: FormD
   if (!before) return failed("Номинация не найдена.");
   const after = await db.nomination.update({
     where: { id },
-    data: { ...parsed.data, acceptingEntries: formData.get("acceptingEntries") === "on" },
+    data: {
+      ...parsed.data,
+      acceptingEntries: formData.get("acceptingEntries") === "on",
+      testVoting: formData.get("testVoting") === "on",
+    },
   });
   await audit(context, "nomination.update", { type: "nomination", id }, before, after);
   revalidatePath("/", "layout");

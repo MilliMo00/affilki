@@ -25,6 +25,7 @@ export default async function NominationsPage() {
                   {nomination.title}
                 </Link>
                 {nomination.requiresLegalReview && <span className="ml-2 text-sm text-muted">нужна проверка</span>}
+                {nomination.testVoting && <span className="ml-2 text-sm text-danger">тестовое голосование</span>}
               </td>
               <td className="tabular-nums">{visible}</td>
               <td className="tabular-nums">{nomination.nominees.length - visible}</td>

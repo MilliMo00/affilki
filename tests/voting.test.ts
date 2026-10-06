@@ -170,6 +170,17 @@ test("голос вне окна дат отклоняется", async () => {
   assert.equal(await db.vote.count(), 0);
 });
 
+test("тестовое голосование: до старта сезона голос проходит только в отмеченной номинации", async () => {
+  const session = await login();
+  const early = new Date(Date.now() - 2 * HOUR);
+  await db.nomination.updateMany({ where: { slug: "teams" }, data: { testVoting: true } });
+  assert.equal((await vote(session, "a", { now: early })).ok, true);
+  // После конца сезона тестовый режим ничего не открывает.
+  const late = await vote(await login(bob), "a", { now: new Date(Date.now() + 2 * HOUR) });
+  assert.equal(!late.ok && late.error, "ended");
+  assert.equal(await db.vote.count(), 1);
+});
+
 test("неподписанный аккаунт не голосует", async () => {
   const result = await vote(await login(), "a", { tg: fakeTg({ subscribed: false }).tg });
   assert.equal(!result.ok && result.error, "not_subscribed");

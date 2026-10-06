@@ -118,6 +118,7 @@ function toNomination(row: NominationRow): Nomination {
     group: row.group,
     jury: row.jury,
     isEvents: row.requiresLegalReview,
+    testVoting: row.testVoting,
     // Там, где нужна юридическая проверка, непроверенные участники наружу не попадают вообще.
     nominees: row.nominees.filter((n) => !row.requiresLegalReview || n.legalChecked).map(toNominee),
   };
@@ -196,8 +197,10 @@ export async function seasonStats(season: Season, now = new Date()) {
   };
 }
 
-export function isVotingOpen(season: Season, now = new Date()) {
-  return now >= season.votingStartsAt && now <= season.votingEndsAt;
+/** Открыто ли голосование: по датам сезона или досрочно — в номинации с тестовым голосованием. */
+export function isVotingOpen(season: Season, nomination?: Pick<Nomination, "testVoting">, now = new Date()) {
+  if (now > season.votingEndsAt) return false;
+  return now >= season.votingStartsAt || !!nomination?.testVoting;
 }
 
 let memberCount: { value: number | null; at: number } | null = null;
