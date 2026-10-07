@@ -83,6 +83,7 @@ export default async function ArticlePage({ params }: Props) {
               coverText={article.coverText}
               sizes="(min-width: 1024px) 860px, 100vw"
               priority
+              asImage
             />
           </div>
 

@@ -2,6 +2,7 @@ import { BookOpen, Layers, Mic, Newspaper, Target, type LucideIcon } from "lucid
 import Image from "next/image";
 import { Flower } from "@/components/brand/Flower";
 import { PetalIcon } from "@/components/brand/PetalIcon";
+import { coverVariant, posterSize } from "@/lib/article-cover";
 import { cn } from "@/lib/cn";
 
 type ArticleCoverProps = {
@@ -13,6 +14,8 @@ type ArticleCoverProps = {
   coverText: string | null;
   sizes: string;
   priority?: boolean;
+  /** Показать плакат настоящей картинкой (PNG) — её можно сохранить и скопировать. Для страницы статьи. */
+  asImage?: boolean;
 };
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -22,14 +25,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   interviews: Mic,
   reviews: Layers,
 };
-
-/** Текст плаката из заголовка: часть до двоеточия или тире, иначе первые два слова. */
-export function posterText(title: string) {
-  const clean = title.replace(/^(Разбор|Кейс|Обзор|Интервью)\s*:\s*/i, "");
-  const head = clean.split(/\s*[:—]\s*/)[0].trim();
-  const text = head.length <= 18 ? head : clean.split(/\s+/).slice(0, 2).join(" ");
-  return text.replace(/[,.!?]+$/, "");
-}
 
 // Пять композиций плаката. Выбираются по адресу статьи: у соседних карточек они разные,
 // а у одной и той же статьи — всегда одна.
@@ -46,18 +41,17 @@ const LAYOUTS = [
  * рубрика, крупное слово и цветок. Размеры заданы в долях ширины контейнера (cqw),
  * поэтому плакат одинаково выглядит и на карточке, и в шапке статьи.
  */
-export function ArticleCover({ slug, title, category, coverUrl, coverText, sizes, priority }: ArticleCoverProps) {
+export function ArticleCover({ slug, title, category, coverUrl, coverText, sizes, priority, asImage }: ArticleCoverProps) {
   if (coverUrl) {
     return <Image src={coverUrl} alt="" fill sizes={sizes} priority={priority} className="object-cover" />;
   }
+  if (asImage) {
+    // unoptimized: отдаём ровно тот файл, который человек сохранит.
+    return <Image src={`/a/${slug}/cover`} alt={`Обложка: ${title}`} fill unoptimized sizes={sizes} priority={priority} className="object-cover" />;
+  }
 
-  const hash = [...slug].reduce((sum, ch) => (sum * 31 + ch.charCodeAt(0)) % 9973, 7);
-  const layout = LAYOUTS[hash % LAYOUTS.length];
-  const text = (coverText?.trim() || posterText(title)).toUpperCase();
-  // Чем длиннее текст, тем мельче кегль. Буква Unbounded почти квадратная, поэтому самое длинное
-  // слово должно помещаться в ширину плаката: 86cqw на число букв.
-  const longest = Math.max(...text.split(/\s+/).map((word) => word.length));
-  const size = Math.min(text.length <= 5 ? 24 : text.length <= 9 ? 15.5 : text.length <= 14 ? 12 : 9.5, 86 / longest);
+  const layout = LAYOUTS[coverVariant(slug)];
+  const { text, size } = posterSize(coverText, title);
   const Icon = CATEGORY_ICONS[category.slug] ?? BookOpen;
 
   return (

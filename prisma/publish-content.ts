@@ -30,8 +30,8 @@ export async function publishContent(db: PrismaClient) {
         categoryId,
         readingMin: readingMinutes(item.source),
         status: "PUBLISHED",
-        // Порядок в ленте — как в списке: первый материал самый свежий.
-        publishedAt: new Date(now - i * 60_000),
+        // Дата из списка материалов (полдень по Москве); без неё — текущее время в порядке списка.
+        publishedAt: item.date ? new Date(`${item.date}T09:00:00Z`) : new Date(now - i * 60_000),
       },
     });
     created += 1;

@@ -23,6 +23,11 @@ const schema = z.object({
   seoTitle: z.string().trim().max(200),
   seoDesc: z.string().trim().max(300),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
+  // Дата публикации по московскому времени; пусто — поставится сама при публикации.
+  publishedAt: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})?$/, "Неверная дата публикации")
+    .transform((value) => (value ? new Date(`${value}:00+03:00`) : null)),
 });
 
 /** Создание и правка статьи. id = "new" — создание. */
@@ -30,7 +35,7 @@ export async function saveArticle(id: string, _: ActionState, formData: FormData
   const context = await requirePermission("content");
   const parsed = schema.safeParse(Object.fromEntries([...formData].filter(([, v]) => typeof v === "string")));
   if (!parsed.success) return failed(parsed.error.issues.map((i) => i.message).join("; "));
-  const { source, slug: rawSlug, seoTitle, seoDesc, coverText, ...fields } = parsed.data;
+  const { source, slug: rawSlug, seoTitle, seoDesc, coverText, publishedAt, ...fields } = parsed.data;
 
   const before = id === "new" ? null : await db.article.findUnique({ where: { id } });
   if (id !== "new" && !before) return failed("Статья не найдена.");
@@ -59,8 +64,8 @@ export async function saveArticle(id: string, _: ActionState, formData: FormData
     seoDesc: seoDesc || null,
     ...(hasSource && { contentSource: source, contentHtml: renderMarkup(source), readingMin: readingMinutes(source) }),
     ...(coverUrl && { coverUrl }),
-    // Дата публикации ставится при первом переводе в «Опубликовано».
-    ...(fields.status === "PUBLISHED" && !before?.publishedAt && { publishedAt: new Date() }),
+    // Дата из формы; если её не задали — ставится при первом переводе в «Опубликовано».
+    ...(publishedAt ? { publishedAt } : fields.status === "PUBLISHED" && !before?.publishedAt ? { publishedAt: new Date() } : {}),
   };
 
   if (!before) {

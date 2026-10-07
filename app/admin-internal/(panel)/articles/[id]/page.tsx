@@ -58,6 +58,14 @@ export default async function ArticleEditPage({ params }: { params: Promise<{ id
               <input name="authorName" defaultValue={article?.authorName ?? "AFFILKI"} required className={adminInput} />
             </Label>
           </div>
+          <Label title="Дата публикации" hint="По Москве. Пусто — поставится сама в момент публикации. Дата в будущем — статья появится на сайте в этот день.">
+            <input
+              type="datetime-local"
+              name="publishedAt"
+              defaultValue={article?.publishedAt ? new Date(article.publishedAt.getTime() + 3 * 3_600_000).toISOString().slice(0, 16) : ""}
+              className={`${adminInput} max-w-xs`}
+            />
+          </Label>
           <Label title="Адрес страницы" hint="Пусто — соберём из заголовка. Статья откроется по адресу /a/адрес">
             <input name="slug" defaultValue={article?.slug} className={adminInput} />
           </Label>

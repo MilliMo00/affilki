@@ -2,6 +2,8 @@
 // Правило: никаких выдуманных «реальных» кейсов, цитат и новостей. Разборы в рубрике «Кейсы»
 // считаются на модельных цифрах, и это прямо сказано в тексте.
 
+import { MORE_CONTENT } from "./content-more";
+
 export type ContentItem = {
   slug: string;
   category: "articles" | "cases" | "news" | "interviews" | "reviews";
@@ -9,10 +11,12 @@ export type ContentItem = {
   excerpt: string;
   /** Крупный текст на обложке-плакате. */
   coverText: string;
+  /** Дата публикации (ГГГГ-ММ-ДД), заданная владельцем. Без неё материал выходит текущим числом. */
+  date?: string;
   source: string;
 };
 
-export const CONTENT: ContentItem[] = [
+const BASE_CONTENT: ContentItem[] = [
   {
     slug: "affilki-awards-2026-kak-ustroena-premiya",
     coverText: "Awards 2026",
@@ -53,6 +57,7 @@ export const CONTENT: ContentItem[] = [
   },
   {
     slug: "kak-poschitat-roi-svyazki",
+    date: "2025-08-05",
     coverText: "ROI",
     category: "articles",
     title: "Как посчитать ROI связки и не обмануть себя",
@@ -108,6 +113,7 @@ ROI — не оценка тебе, а сигнал. Отрицательный 
   },
   {
     slug: "test-offera-poshagovyy-plan",
+    date: "2025-10-14",
     coverText: "Тест оффера",
     category: "articles",
     title: "Тест оффера: пошаговый план, чтобы не слить бюджет впустую",
@@ -156,6 +162,7 @@ ROI — не оценка тебе, а сигнал. Отрицательный 
   },
   {
     slug: "apruv-i-hold-prostymi-slovami",
+    date: "2025-12-02",
     coverText: "Апрув + холд",
     category: "articles",
     title: "Апрув и холд: почему деньги приходят не сразу и не все",
@@ -204,6 +211,7 @@ ROI — не оценка тебе, а сигнал. Отрицательный 
   },
   {
     slug: "slovar-bayera",
+    date: "2025-06-18",
     coverText: "Словарь",
     category: "articles",
     title: "Словарь байера: слова, без которых не понять рабочий чат",
@@ -276,6 +284,7 @@ ROI — не оценка тебе, а сигнал. Отрицательный 
   },
   {
     slug: "razbor-svyazka-v-nol-rezat-ili-lit",
+    date: "2026-02-10",
     coverText: "В ноль",
     category: "cases",
     title: "Разбор: связка вышла в ноль на третий день — резать или лить дальше",
@@ -343,6 +352,7 @@ ROI ровно ноль. Что дальше?
   },
   {
     slug: "razbor-pochemu-roi-padaet-na-masshtabe",
+    date: "2026-05-19",
     coverText: "80% → 10%",
     category: "cases",
     title: "Разбор: почему ROI 80% на тесте превращается в 10% на масштабе",
@@ -411,6 +421,7 @@ ROI на тесте отвечает на вопрос «работает ли �
   },
   {
     slug: "treker-zachem-nuzhen-i-kak-vybirat",
+    date: "2026-03-24",
     coverText: "Трекер",
     category: "reviews",
     title: "Трекер: зачем он нужен и на что смотреть при выборе",
@@ -457,6 +468,7 @@ ROI на тесте отвечает на вопрос «работает ли �
   },
   {
     slug: "antidetekt-brauzery-kak-vybirat",
+    date: "2026-07-08",
     coverText: "Антидетект",
     category: "reviews",
     title: "Антидетект-браузеры: как выбирать и на чём не экономить",
@@ -516,6 +528,8 @@ ROI на тесте отвечает на вопрос «работает ли �
 Профили хранят доступы к аккаунтам и кабинетам. Включи двухфакторный вход в сам сервис, не передавай учётку целиком — выдавай доступы через командные роли, и убирай их сразу, как человек ушёл из команды.`,
   },
 ];
+
+export const CONTENT: ContentItem[] = [...BASE_CONTENT, ...MORE_CONTENT];
 
 /** Заглушки из первых сидов с выдуманными кейсами и новостями — их место занимают материалы выше. */
 export const PLACEHOLDER_SLUGS = [
