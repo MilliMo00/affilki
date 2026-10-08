@@ -51,8 +51,9 @@ export async function POST(request: NextRequest) {
   }
 
   const ipHash = hashValue(clientIp(request));
-  const limit = await rateLimiter.hit(`submission:${session.tgUserId}`, 5, 60 * 60_000);
-  if (!limit.ok) return NextResponse.json({ error: "Слишком много заявок. Попробуй через час." }, { status: 429 });
+  // Попытки отправки (включая неудачные из-за ошибок в полях) — с большим запасом: это защита от перебора.
+  const attempts = await rateLimiter.hit(`submission-try:${session.tgUserId}`, 60, 60 * 60_000);
+  if (!attempts.ok) return NextResponse.json({ error: "Слишком много попыток. Попробуй через час." }, { status: 429 });
 
   const formData = await request.formData().catch(() => null);
   if (!formData) return NextResponse.json({ error: "Неверный запрос." }, { status: 400 });
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
   if ("errors" in parsed) return NextResponse.json({ errors: parsed.errors }, { status: 400 });
   const targetErrors = await checkTarget(parsed.data, true);
   if (targetErrors) return NextResponse.json({ errors: targetErrors }, { status: 400 });
+
+  // В лимит заявок идут только те, что прошли проверку и реально сохраняются.
+  const limit = await rateLimiter.hit(`submission:${session.tgUserId}`, 10, 60 * 60_000);
+  if (!limit.ok) return NextResponse.json({ error: "Слишком много заявок за час. Попробуй немного позже." }, { status: 429 });
 
   const image = await imageFrom(formData);
   if ("error" in image) return NextResponse.json({ errors: { image: image.error } }, { status: 400 });

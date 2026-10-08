@@ -116,3 +116,16 @@ export function NomineeCard({ nominee, nomination, votingOpen }: NomineeCardProp
     </PetalCard>
   );
 }
+
+/** Компактная карточка — для блока «Другие участники» на странице участника. */
+export function NomineeMiniCard({ nominee }: { nominee: Nominee }) {
+  return (
+    <Link href={`/n/${nominee.slug}`} className="flex h-full items-center gap-3 rounded-card border border-petal/70 bg-surface p-4 hover:border-glow hover:bg-glow/20">
+      <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} size={48} />
+      <span className="min-w-0">
+        <span className="block break-words font-semibold leading-snug text-paper">{nominee.name}</span>
+        {nominee.tagline && <span className="mt-0.5 line-clamp-2 block text-sm text-muted-bright">{nominee.tagline}</span>}
+      </span>
+    </Link>
+  );
+}

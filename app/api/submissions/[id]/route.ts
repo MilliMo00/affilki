@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Эту заявку уже нельзя менять." }, { status: 409 });
   }
 
-  const limit = await rateLimiter.hit(`submission-edit:${session.tgUserId}`, 20, 60 * 60_000);
+  const limit = await rateLimiter.hit(`submission-edit:${session.tgUserId}`, 60, 60 * 60_000);
   if (!limit.ok) return NextResponse.json({ error: "Слишком часто. Попробуй позже." }, { status: 429 });
 
   const formData = await request.formData().catch(() => null);

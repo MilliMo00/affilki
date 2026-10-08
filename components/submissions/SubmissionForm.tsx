@@ -213,28 +213,61 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       )}
 
       {nominee ? (
-        <Field id="nominationId" label="Номинация" error={errors.nominationId}>
-          <select id="nominationId" name="nominationId" value={nominationId} onChange={(event) => setNominationId(event.target.value)} className={inputClass} {...aria("nominationId")}>
-            <option value="" disabled>
-              Выбери номинацию
-            </option>
+        <fieldset aria-describedby={errors.nominationId ? "nominationId-error" : undefined}>
+          <legend className="mb-2 font-medium text-paper">Номинация</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
             {nominations.map((nomination) => (
-              <option key={nomination.id} value={nomination.id}>
-                {nomination.title}
-              </option>
+              <label
+                key={nomination.id}
+                className={cn(
+                  "flex min-h-11 cursor-pointer items-center gap-3 rounded-card border px-4 py-2.5 transition-colors has-[:focus-visible]:border-glow",
+                  nominationId === nomination.id ? "border-paper bg-deep/60 text-paper" : "border-petal/60 text-text hover:border-petal",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="nominationId"
+                  value={nomination.id}
+                  checked={nominationId === nomination.id}
+                  onChange={() => setNominationId(nomination.id)}
+                  className="size-5 shrink-0 accent-[#7B62F0]"
+                />
+                <span className="font-medium">{nomination.title}</span>
+              </label>
             ))}
-          </select>
-        </Field>
+          </div>
+          {errors.nominationId && (
+            <p id="nominationId-error" role="alert" className="mt-2 text-sm text-danger">
+              {errors.nominationId}
+            </p>
+          )}
+        </fieldset>
       ) : (
-        <Field id="categorySlug" label="Рубрика" error={errors.categorySlug}>
-          <select id="categorySlug" name="categorySlug" defaultValue={draft?.categorySlug ?? categories[0]?.slug} className={inputClass} {...aria("categorySlug")}>
-            {categories.map((category) => (
-              <option key={category.slug} value={category.slug}>
+        <fieldset>
+          <legend className="mb-2 font-medium text-paper">Рубрика</legend>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category, index) => (
+              <label
+                key={category.slug}
+                className="flex h-11 cursor-pointer items-center rounded-full border border-petal/60 px-4 font-medium text-text transition-colors hover:border-petal has-[:checked]:border-paper has-[:checked]:bg-deep/60 has-[:checked]:text-paper has-[:focus-visible]:border-glow"
+              >
+                <input
+                  type="radio"
+                  name="categorySlug"
+                  value={category.slug}
+                  defaultChecked={draft?.categorySlug ? draft.categorySlug === category.slug : index === 0}
+                  className="sr-only"
+                />
                 {category.title}
-              </option>
+              </label>
             ))}
-          </select>
-        </Field>
+          </div>
+          {errors.categorySlug && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {errors.categorySlug}
+            </p>
+          )}
+        </fieldset>
       )}
 
       <div className="grid gap-6 sm:grid-cols-2">
