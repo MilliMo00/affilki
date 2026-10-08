@@ -7,7 +7,7 @@ import { Loader } from "@/components/brand/Loader";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { voter, useVoter } from "@/lib/voter-store";
-import { SubmissionForm, type SubmissionDraft } from "./SubmissionForm";
+import { SubmissionForm, type NominationOption, type SubmissionDraft } from "./SubmissionForm";
 
 type Status = "PENDING" | "CHANGES_REQUESTED" | "APPROVED" | "REJECTED";
 type Row = SubmissionDraft & { status: Status; adminComment: string | null; publicUrl: string | null; updatedAt: string };
@@ -22,7 +22,7 @@ const STATUS: Record<Status, { label: string; className: string }> = {
 const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
 type MySubmissionsProps = {
-  nominations: { id: string; title: string }[];
+  nominations: NominationOption[];
   categories: { slug: string; title: string }[];
 };
 

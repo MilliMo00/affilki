@@ -6,7 +6,9 @@ import { Badge, Card, Label, PageTitle } from "@/components/admin/ui";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
+import { CasesEditor, LinksEditor } from "@/components/submissions/ListEditors";
 import { plainText } from "@/lib/markup";
+import { readDetails, readLinks } from "@/lib/profile";
 import { DecisionForm } from "./DecisionForm";
 
 const STATUS = {
@@ -31,7 +33,8 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
         : db.article.findUnique({ where: { id: submission.resultId }, select: { id: true, slug: true } })
       : null,
   ]);
-  const links = Array.isArray(submission.links) ? (submission.links as string[]) : [];
+  const links = readLinks(submission.links);
+  const details = readDetails(submission.details);
   const status = STATUS[submission.status];
   const firstSentence = plainText(submission.text).split(/(?<=[.!?])\s/)[0]?.slice(0, 160) ?? "";
   const legal = nominations.find((n) => n.id === submission.nominationId)?.requiresLegalReview;
@@ -139,9 +142,24 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
                   <input name="excerpt" defaultValue={plainText(submission.text).slice(0, 180)} maxLength={300} className={adminInput} />
                 </Label>
               )}
-              <Label title="Текст" hint={nominee ? undefined : "Разметка: ## заголовок, - список, **жирный**, [текст](https://ссылка), пустая строка между абзацами"}>
+              {nominee && (
+                <Label title="Год основания" hint="Пусто — не показывать">
+                  <input name="foundedYear" type="number" defaultValue={details.foundedYear ?? ""} className={adminInput} />
+                </Label>
+              )}
+              <Label title={nominee ? "О команде" : "Текст"} hint={nominee ? "Переносы строк сохраняются" : "Разметка: ## заголовок, - список, **жирный**, [текст](https://ссылка), пустая строка между абзацами"}>
                 <textarea name="text" defaultValue={submission.text} rows={nominee ? 8 : 18} required className={adminInput} />
               </Label>
+              {nominee && (
+                <>
+                  <Label title="Что сделали за год">
+                    <textarea name="achievements" defaultValue={details.achievements} rows={6} maxLength={3000} className={adminInput} />
+                  </Label>
+                  <Label title="Почему голосовать за них">
+                    <textarea name="whyVote" defaultValue={details.whyVote} rows={4} maxLength={2000} className={adminInput} />
+                  </Label>
+                </>
+              )}
               <Label title="Картинка" hint="Пусто — оставить ту, что прислал автор">
                 {submission.imageUrl && (
                   <span className="relative mb-3 block h-40 w-64 overflow-hidden rounded-card border border-petal/60">
@@ -150,9 +168,17 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
                 )}
                 <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" className="block text-text" />
               </Label>
-              <Label title="Ссылки" hint="По одной в строке">
-                <textarea name="links" defaultValue={links.join("\n")} rows={3} className={adminInput} />
-              </Label>
+              {nominee && (
+                <div>
+                  <p className="mb-1 text-sm font-medium text-paper">Кейсы</p>
+                  <CasesEditor initial={details.cases} inputClass={adminInput} />
+                </div>
+              )}
+              <div>
+                <p className="mb-1 text-sm font-medium text-paper">Ссылки</p>
+                <LinksEditor initial={links} inputClass={adminInput} />
+                <p className="mt-1 text-sm text-muted">{nominee ? "Станут кнопками на странице участника. Пустое название — подставится площадка или домен." : "Для редактора, на сайт не попадают."}</p>
+              </div>
             </div>
           </Card>
         </DecisionForm>

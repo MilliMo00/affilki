@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimiter } from "@/lib/ratelimit";
 import { isSameOrigin } from "@/lib/request";
-import { checkTarget, fieldsOf, imageFrom, notifyAdminAboutSubmission, parseSubmission } from "@/lib/submissions";
+import { caseImagesFrom, checkTarget, fieldsOf, imageFrom, notifyAdminAboutSubmission, parseSubmission } from "@/lib/submissions";
 import { sessionToken } from "@/lib/voting/cookies";
 import { findSession } from "@/lib/voting/login";
 
@@ -28,15 +28,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if ("errors" in parsed) return NextResponse.json({ errors: parsed.errors }, { status: 400 });
   // Тип заявки после подачи не меняется.
   if (parsed.data.kind !== submission.kind) return NextResponse.json({ error: "Тип заявки изменить нельзя." }, { status: 400 });
-  const targetErrors = await checkTarget(parsed.data);
+  const targetErrors = await checkTarget(parsed.data, true);
   if (targetErrors) return NextResponse.json({ errors: targetErrors }, { status: 400 });
 
   const image = await imageFrom(formData, submission.imageUrl);
   if ("error" in image) return NextResponse.json({ errors: { image: image.error } }, { status: 400 });
+  const cases = await caseImagesFrom(formData, parsed.data.cases);
+  if ("error" in cases) return NextResponse.json({ errors: { cases: cases.error } }, { status: 400 });
 
   const updated = await db.submission.update({
     where: { id: submission.id },
-    data: { ...fieldsOf(parsed.data), imageUrl: image.url, status: "PENDING" },
+    data: { ...fieldsOf(parsed.data, cases.cases), imageUrl: image.url, status: "PENDING" },
   });
   void notifyAdminAboutSubmission(updated, submission.status === "CHANGES_REQUESTED");
   return NextResponse.json({ ok: true, id: updated.id });

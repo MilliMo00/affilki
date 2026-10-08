@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { recordServerEvent } from "@/lib/analytics/record";
 import { db } from "@/lib/db";
+import { readDetails, readLinks } from "@/lib/profile";
 import { rateLimiter } from "@/lib/ratelimit";
 import { clientIp, hashValue, isSameOrigin } from "@/lib/request";
-import { checkTarget, fieldsOf, imageFrom, notifyAdminAboutSubmission, parseSubmission } from "@/lib/submissions";
+import { caseImagesFrom, checkTarget, fieldsOf, imageFrom, notifyAdminAboutSubmission, parseSubmission } from "@/lib/submissions";
 import { sessionToken } from "@/lib/voting/cookies";
 import { findSession } from "@/lib/voting/login";
 
@@ -29,7 +30,8 @@ export async function GET(request: NextRequest) {
       title: row.title,
       text: row.text,
       imageUrl: row.imageUrl,
-      links: row.links,
+      links: readLinks(row.links),
+      details: row.kind === "NOMINEE" ? readDetails(row.details) : null,
       nominationId: row.nominationId,
       categorySlug: row.categorySlug,
       adminComment: row.adminComment,
@@ -59,14 +61,16 @@ export async function POST(request: NextRequest) {
 
   const parsed = parseSubmission(formData);
   if ("errors" in parsed) return NextResponse.json({ errors: parsed.errors }, { status: 400 });
-  const targetErrors = await checkTarget(parsed.data);
+  const targetErrors = await checkTarget(parsed.data, true);
   if (targetErrors) return NextResponse.json({ errors: targetErrors }, { status: 400 });
 
   const image = await imageFrom(formData);
   if ("error" in image) return NextResponse.json({ errors: { image: image.error } }, { status: 400 });
+  const cases = await caseImagesFrom(formData, parsed.data.cases);
+  if ("error" in cases) return NextResponse.json({ errors: { cases: cases.error } }, { status: 400 });
 
   const submission = await db.submission.create({
-    data: { ...fieldsOf(parsed.data), imageUrl: image.url, tgUserId: session.tgUserId, tgUsername: session.tgUsername, ipHash },
+    data: { ...fieldsOf(parsed.data, cases.cases), imageUrl: image.url, tgUserId: session.tgUserId, tgUsername: session.tgUsername, ipHash },
   });
   recordServerEvent(request, { type: "submit_request", meta: { kind: submission.kind } });
   void notifyAdminAboutSubmission(submission, false);

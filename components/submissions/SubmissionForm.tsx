@@ -3,10 +3,12 @@
 import { Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClass } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
+import { FIRST_YEAR, type LinkButton, type NomineeDetails } from "@/lib/profile";
+import { CasesEditor, LinksEditor } from "./ListEditors";
 
 export type SubmissionKind = "NOMINEE" | "ARTICLE";
 
@@ -18,13 +20,17 @@ export type SubmissionDraft = {
   title: string;
   text: string;
   imageUrl: string | null;
-  links: string[];
+  links: LinkButton[];
+  details: NomineeDetails | null;
   nominationId: string | null;
   categorySlug: string | null;
 };
 
+/** isEvents — номинация-события: там описывают событие, а не команду. */
+export type NominationOption = { id: string; title: string; isEvents?: boolean };
+
 type SubmissionFormProps = {
-  nominations: { id: string; title: string }[];
+  nominations: NominationOption[];
   categories: { slug: string; title: string }[];
   /** Имя из Telegram — подставляется в новую заявку. */
   defaultName?: string;
@@ -36,6 +42,22 @@ type SubmissionFormProps = {
 
 type Errors = Record<string, string>;
 
+// Сервер принимает запрос до 25 МБ: проверяем общий размер картинок заранее, чтобы не терять заполненную форму.
+const MAX_TOTAL_UPLOAD = 24 * 1024 * 1024;
+
+/** Заголовок блока формы: поля заявки в номинацию разбиты на смысловые части. */
+function Section({ title, lead, children }: { title: string; lead?: string; children: ReactNode }) {
+  return (
+    <section className="space-y-6 border-t border-petal/40 pt-6">
+      <div>
+        <h2 className="font-sans text-xl font-semibold text-paper">{title}</h2>
+        {lead && <p className="mt-1 text-muted">{lead}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 const KINDS: { key: SubmissionKind; label: string; hint: string }[] = [
   { key: "NOMINEE", label: "Участие в номинации", hint: "Команда, сервис, канал или событие — в одну из номинаций премии" },
   { key: "ARTICLE", label: "Статья или кейс", hint: "Материал в ленту: кейс, новость, интервью, обзор" },
@@ -43,6 +65,7 @@ const KINDS: { key: SubmissionKind; label: string; hint: string }[] = [
 
 export function SubmissionForm({ nominations, categories, defaultName, defaultContact, draft, onSaved }: SubmissionFormProps) {
   const [kind, setKind] = useState<SubmissionKind>(draft?.kind ?? "NOMINEE");
+  const [nominationId, setNominationId] = useState(draft?.nominationId ?? "");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -54,6 +77,11 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
     formData.set("kind", kind);
     if (!formData.get("consent")) {
       setErrors({ consent: "Без согласия заявку отправить нельзя" });
+      return;
+    }
+    const uploadSize = [...formData.values()].reduce((sum, value) => sum + (value instanceof File ? value.size : 0), 0);
+    if (uploadSize > MAX_TOTAL_UPLOAD) {
+      setErrors({ form: "Картинки вместе весят больше 24 МБ. Сожми их или убери часть — остальное можно добавить позже в «Моих заявках»." });
       return;
     }
 
@@ -70,7 +98,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       const found: Errors = body.errors ?? { form: body.error ?? "Не получилось отправить. Попробуй ещё раз." };
       setErrors(found);
       const first = Object.keys(found).find((key) => key !== "form");
-      if (first) form.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      if (first) (form.querySelector<HTMLElement>(`[name="${first}"]`) ?? form.querySelector<HTMLElement>(`[data-field="${first}"] input`))?.focus();
     } catch {
       setErrors({ form: "Нет связи с сервером. Проверь интернет и попробуй ещё раз." });
     } finally {
@@ -98,9 +126,63 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
     "aria-describedby": errors[key] ? `${key}-error` : hint ? `${key}-hint` : undefined,
   });
   const nominee = kind === "NOMINEE";
+  // Номинация-события: года основания, достижений и кейсов у события нет.
+  const events = nominee && !!nominations.find((nomination) => nomination.id === nominationId)?.isEvents;
+  const team = nominee && !events;
+  const details = draft?.details;
+  const thisYear = new Date().getFullYear();
+
+  const imageField = (label: string) => (
+      <Field
+        id="image"
+        label={label}
+        optional
+        hint={draft?.imageUrl ? "PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущую." : "PNG, JPG, GIF или WebP до 10 МБ"}
+        error={errors.image}
+      >
+        {draft?.imageUrl && (
+          <span className="relative mb-3 block h-24 w-40 overflow-hidden rounded-card border border-petal/60">
+            <Image src={draft.imageUrl} alt="Текущая картинка заявки" fill sizes="160px" className="object-cover" />
+          </span>
+        )}
+        <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="block w-full text-text" {...aria("image", true)} />
+      </Field>
+  );
+
+  // В заявке в номинацию у ссылок свой блок с заголовком — вторая подпись там не нужна.
+  const linksField = (
+    <div data-field="links">
+      {!nominee && (
+        <p className="mb-2 font-medium text-paper">
+          Ссылки<span className="ml-2 font-normal text-muted">необязательно</span>
+        </p>
+      )}
+      <LinksEditor initial={draft?.links} inputClass={inputClass} invalid={!!errors.links} />
+      {errors.links ? (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {errors.links}
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-muted">
+          {nominee
+            ? "Каждая ссылка станет кнопкой на странице участника — с тем названием, которое ты укажешь. Адрес начинается с https://"
+            : "Сайт, Telegram-канал, соцсети. Адрес начинается с https://"}
+        </p>
+      )}
+    </div>
+  );
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-6">
+    <form
+      onSubmit={onSubmit}
+      onInput={(event) => {
+        // Ошибка под полем гаснет, как только его начали исправлять.
+        const name = (event.target as HTMLInputElement).name;
+        if (name && errors[name]) setErrors((current) => Object.fromEntries(Object.entries(current).filter(([key]) => key !== name)));
+      }}
+      noValidate
+      className="space-y-6"
+    >
       {/* Honeypot: люди это поле не видят, боты заполняют. */}
       <div className="hidden" aria-hidden>
         <label>
@@ -132,7 +214,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
 
       {nominee ? (
         <Field id="nominationId" label="Номинация" error={errors.nominationId}>
-          <select id="nominationId" name="nominationId" defaultValue={draft?.nominationId ?? ""} className={inputClass} {...aria("nominationId")}>
+          <select id="nominationId" name="nominationId" value={nominationId} onChange={(event) => setNominationId(event.target.value)} className={inputClass} {...aria("nominationId")}>
             <option value="" disabled>
               Выбери номинацию
             </option>
@@ -164,41 +246,86 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
         </Field>
       </div>
 
-      <Field id="title" label={nominee ? "Название участника" : "Заголовок"} hint={nominee ? "Так он будет называться на сайте" : undefined} error={errors.title}>
-        <input id="title" name="title" defaultValue={draft?.title} className={inputClass} {...aria("title", nominee)} />
-      </Field>
+      {nominee ? (
+        <>
+          <Section title={events ? "Событие" : "Об участнике"} lead={events ? "Нейтрально и по фактам, без оценок и обвинений." : "Как участник будет называться и выглядеть на сайте."}>
+            <div className={cn("grid gap-6", team && "sm:grid-cols-[minmax(0,1fr)_17rem]")}>
+              <Field id="title" label={events ? "Название события" : "Название"} hint="Так оно будет написано на сайте" error={errors.title}>
+                <input id="title" name="title" defaultValue={draft?.title} className={inputClass} {...aria("title", true)} />
+              </Field>
+              {team && (
+                <Field id="foundedYear" label="Год основания" optional error={errors.foundedYear}>
+                  <input
+                    id="foundedYear"
+                    name="foundedYear"
+                    type="number"
+                    inputMode="numeric"
+                    min={FIRST_YEAR}
+                    max={thisYear}
+                    defaultValue={details?.foundedYear ?? ""}
+                    placeholder={String(thisYear - 3)}
+                    className={inputClass}
+                    {...aria("foundedYear")}
+                  />
+                </Field>
+              )}
+            </div>
+            {imageField("Логотип или фото")}
+          </Section>
 
-      <Field
-        id="text"
-        label={nominee ? "Расскажи об участнике" : "Текст"}
-        hint={
-          nominee
-            ? "Чем занимаетесь, что сделали за год, почему подходите под номинацию"
-            : "Абзацы разделяй пустой строкой. ## Заголовок, - пункт списка, **жирный**, [текст](https://ссылка)"
-        }
-        error={errors.text}
-      >
-        <textarea id="text" name="text" rows={nominee ? 7 : 14} defaultValue={draft?.text} className={inputClass} {...aria("text", true)} />
-      </Field>
+          <Section
+            title={events ? "Что произошло" : "Расскажи о себе"}
+            lead={events ? undefined : "Три коротких блока — по ним голосующие сравнивают участников. Enter переносит строку, пустая строка разделяет абзацы."}
+          >
+            <Field
+              id="text"
+              label={events ? "Описание события" : "О команде"}
+              hint={events ? "Что случилось и когда. Источники добавь в ссылки ниже." : "Кто вы, чем занимаетесь, с какими вертикалями и гео работаете"}
+              error={errors.text}
+            >
+              <textarea id="text" name="text" rows={6} defaultValue={draft?.text} className={inputClass} {...aria("text", true)} />
+            </Field>
+            {team && (
+              <>
+                <Field id="achievements" label="Что сделали за год" hint="Главные результаты 2026 года: проекты, цифры, запуски" error={errors.achievements}>
+                  <textarea id="achievements" name="achievements" rows={6} maxLength={3000} defaultValue={details?.achievements} className={inputClass} {...aria("achievements", true)} />
+                </Field>
+                <Field id="whyVote" label="Почему голосовать за вас" hint="Чем вы отличаетесь от остальных в номинации" error={errors.whyVote}>
+                  <textarea id="whyVote" name="whyVote" rows={4} maxLength={2000} defaultValue={details?.whyVote} className={inputClass} {...aria("whyVote", true)} />
+                </Field>
+              </>
+            )}
+          </Section>
 
-      <Field
-        id="image"
-        label={nominee ? "Логотип или фото" : "Обложка"}
-        optional
-        hint={draft?.imageUrl ? "PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущую." : "PNG, JPG, GIF или WebP до 10 МБ"}
-        error={errors.image}
-      >
-        {draft?.imageUrl && (
-          <span className="relative mb-3 block h-24 w-40 overflow-hidden rounded-card border border-petal/60">
-            <Image src={draft.imageUrl} alt="Текущая картинка заявки" fill sizes="160px" className="object-cover" />
-          </span>
-        )}
-        <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="block w-full text-text" {...aria("image", true)} />
-      </Field>
+          {team && (
+            <Section title="Кейсы" lead="Необязательно, но с ними сравнивать проще: голосующий увидит твои работы рядом с работами других участников.">
+              <div data-field="cases">
+                <CasesEditor initial={details?.cases} inputClass={inputClass} />
+                {errors.cases && (
+                  <p role="alert" className="mt-2 text-sm text-danger">
+                    {errors.cases}
+                  </p>
+                )}
+              </div>
+            </Section>
+          )}
 
-      <Field id="links" label="Ссылки" optional hint="По одной в строке: сайт, Telegram-канал, соцсети. Начинаются с https://" error={errors.links}>
-        <textarea id="links" name="links" rows={3} defaultValue={draft?.links.join("\n")} placeholder="https://" className={inputClass} {...aria("links", true)} />
-      </Field>
+          <Section title={events ? "Источники" : "Ссылки"} lead={events ? "Публичные источники, где описано событие." : "Необязательно: сайт, канал, портфолио, соцсети."}>
+            {linksField}
+          </Section>
+        </>
+      ) : (
+        <>
+          <Field id="title" label="Заголовок" error={errors.title}>
+            <input id="title" name="title" defaultValue={draft?.title} className={inputClass} {...aria("title")} />
+          </Field>
+          <Field id="text" label="Текст" hint="Абзацы разделяй пустой строкой. ## Заголовок, - пункт списка, **жирный**, [текст](https://ссылка)" error={errors.text}>
+            <textarea id="text" name="text" rows={14} defaultValue={draft?.text} className={inputClass} {...aria("text", true)} />
+          </Field>
+          {imageField("Обложка")}
+          {linksField}
+        </>
+      )}
 
       <div>
         <label className="flex items-start gap-3">

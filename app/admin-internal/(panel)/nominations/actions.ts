@@ -9,7 +9,9 @@ import { audit } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
+import { parseCases, parseLinks, parseYear } from "@/lib/profile";
 import { saveImage } from "@/lib/storage";
+import { caseImagesFrom } from "@/lib/submissions";
 
 const lines = (value: string) =>
   value
@@ -70,7 +72,9 @@ const nomineeSchema = z.object({
   name: z.string().trim().min(2).max(140),
   slug,
   tagline: z.string().trim().max(200),
-  description: z.string().trim().max(3000),
+  description: z.string().trim().max(30_000),
+  achievements: z.string().trim().max(3000).default(""),
+  whyVote: z.string().trim().max(2000).default(""),
   site: url.or(z.literal("")),
   tg: url.or(z.literal("")),
   sources: z.string().transform(lines).pipe(z.array(url).max(10)),
@@ -80,15 +84,20 @@ const nomineeSchema = z.object({
 /** Создание и правка участника. id = "new" — создание в номинации nominationId. */
 export async function saveNominee(nominationId: string, id: string, _: ActionState, formData: FormData): Promise<ActionState> {
   const context = await requirePermission("awards");
-  const parsed = nomineeSchema.safeParse(Object.fromEntries(formData));
+  const parsed = nomineeSchema.safeParse(Object.fromEntries([...formData].filter(([, value]) => typeof value === "string")));
   if (!parsed.success) return failed(issues(parsed.error));
+  const buttons = parseLinks(formData, "buttonsJson");
+  const year = parseYear(formData.get("foundedYear"));
+  const parsedCases = parseCases(formData);
+  for (const part of [buttons, year, parsedCases]) if ("errors" in part) return failed(Object.values(part.errors).join("; "));
+  if ("errors" in buttons || "errors" in year || "errors" in parsedCases) return failed("Проверь поля.");
 
   const nomination = await db.nomination.findUnique({ where: { id: nominationId } });
   if (!nomination) return failed("Номинация не найдена.");
 
   const published = formData.get("published") === "on";
   const legalChecked = formData.get("legalChecked") === "on";
-  const { site, tg, sources, ...fields } = parsed.data;
+  const { site, tg, sources, achievements, whyVote, ...fields } = parsed.data;
 
   // Номинация-события: без источника и ручной проверки участник не публикуется.
   if (nomination.requiresLegalReview && published) {
@@ -107,8 +116,12 @@ export async function saveNominee(nominationId: string, id: string, _: ActionSta
     logoUrl = saved.url;
   }
 
+  const cases = await caseImagesFrom(formData, parsedCases.cases);
+  if ("error" in cases) return failed(cases.error);
+
   const data = {
     ...fields,
+    profile: { foundedYear: year.year, achievements, whyVote, cases: cases.cases, buttons: buttons.links },
     tagline: fields.tagline || null,
     description: fields.description || null,
     rightOfReply: fields.rightOfReply || null,

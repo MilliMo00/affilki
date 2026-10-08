@@ -4,10 +4,10 @@ import { Send } from "lucide-react";
 import { Loader } from "@/components/brand/Loader";
 import { Button } from "@/components/ui/Button";
 import { voter, useVoter } from "@/lib/voter-store";
-import { SubmissionForm } from "./SubmissionForm";
+import { SubmissionForm, type NominationOption } from "./SubmissionForm";
 
 type SubmitGateProps = {
-  nominations: { id: string; title: string }[];
+  nominations: NominationOption[];
   categories: { slug: string; title: string }[];
 };
 

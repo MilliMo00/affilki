@@ -6,7 +6,7 @@ import { done, failed, type ActionState } from "@/lib/admin/action";
 import { audit } from "@/lib/admin/audit";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { db } from "@/lib/db";
-import { approve, checkTarget, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
+import { approve, caseImagesFrom, checkTarget, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
 
 type Decision = "save" | "approve" | "return" | "reject";
 
@@ -31,8 +31,10 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   }
   const image = await imageFrom(formData, submission.imageUrl);
   if ("error" in image) return failed(image.error);
+  const cases = await caseImagesFrom(formData, parsed.data.cases);
+  if ("error" in cases) return failed(cases.error);
 
-  const edited = await db.submission.update({ where: { id }, data: { ...fieldsOf(parsed.data), imageUrl: image.url } });
+  const edited = await db.submission.update({ where: { id }, data: { ...fieldsOf(parsed.data, cases.cases), imageUrl: image.url } });
 
   if (decision === "save") {
     await audit(context, "submission.edit", { type: "submission", id }, { title: submission.title }, { title: edited.title });

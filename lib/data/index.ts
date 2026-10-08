@@ -4,6 +4,7 @@ import { cache } from "react";
 import { db } from "@/lib/db";
 import { TG_CHANNEL_URL } from "@/lib/env";
 import { telegram } from "@/lib/telegram/client";
+import { readProfile } from "@/lib/profile";
 import type { Article, Category, ChannelInfo, Nomination, Nominee, NomineeLinks, Season } from "./types";
 
 export type * from "./types";
@@ -101,6 +102,7 @@ function toNominee(row: NominationRow["nominees"][number]): Nominee {
     tagline: row.tagline ?? "",
     description: row.description,
     links: (row.links ?? {}) as NomineeLinks,
+    profile: readProfile(row.profile),
     sources: stringList(row.sources),
     rightOfReply: row.rightOfReply,
   };
@@ -185,11 +187,12 @@ export async function getNominee(
 export async function getOpenNominations() {
   const season = await db.season.findFirst({ orderBy: { year: "desc" } });
   if (!season) return [];
-  return db.nomination.findMany({
+  const rows = await db.nomination.findMany({
     where: { seasonId: season.id, acceptingEntries: true },
     orderBy: { order: "asc" },
-    select: { id: true, title: true },
+    select: { id: true, title: true, requiresLegalReview: true },
   });
+  return rows.map((row) => ({ id: row.id, title: row.title, isEvents: row.requiresLegalReview }));
 }
 
 export async function seasonStats(season: Season, now = new Date()) {

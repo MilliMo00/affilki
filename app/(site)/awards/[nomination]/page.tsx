@@ -133,7 +133,7 @@ function Nominees({ nomination, votingOpen, board, byVotes }: NomineesProps) {
           .
         </p>
       )}
-      <ul className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mx-auto flex max-w-4xl flex-col gap-6">
         {nominees.map((nominee) => (
           <li key={nominee.slug}>
             <NomineeCard nominee={nominee} nomination={{ slug: nomination.slug, title: nomination.title }} votingOpen={votingOpen} />

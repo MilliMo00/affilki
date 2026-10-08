@@ -145,6 +145,8 @@ model Nominee {
   description  String?
   /// { site?: string, tg?: string }
   links        Json?
+  /// Профиль: { foundedYear, achievements, whyVote, cases[], buttons[] } — см. lib/profile.ts.
+  profile      Json?
   juryScore    Float?
   /// string[] ссылок на публичные источники — обязательны там, где requiresLegalReview.
   sources      Json?
@@ -364,8 +366,10 @@ model Submission {
   title        String
   text         String
   imageUrl     String?
-  /// string[] ссылок автора.
+  /// Ссылки автора: { title, url }[]. В старых заявках — просто строки.
   links        Json
+  /// Для заявки в номинацию: { foundedYear, achievements, whyVote, cases[] } — см. lib/profile.ts.
+  details      Json?
   /// Для заявки в номинацию.
   nominationId String?
   /// Для статьи: slug рубрики.

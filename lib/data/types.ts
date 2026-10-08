@@ -1,3 +1,4 @@
+import type { NomineeProfile } from "@/lib/profile";
 import type { Stage } from "@/lib/stages";
 
 export type Category = { slug: string; title: string };
@@ -26,6 +27,8 @@ export type Nominee = {
   tagline: string;
   description: string | null;
   links: NomineeLinks;
+  /** Год основания, блоки текста, кейсы и ссылки-кнопки. */
+  profile: NomineeProfile;
   /** Публичные источники — для номинации-событий. */
   sources: string[];
   /** Комментарий упомянутой стороны. */
