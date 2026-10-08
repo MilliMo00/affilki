@@ -42,6 +42,8 @@ export default async function NomineePage({ params }: Props) {
     foundedYear && years > 0 && { label: "На рынке", value: `${years} ${plural(years, ["год", "года", "лет"])}` },
     cases.length > 0 && { label: "Кейсов показано", value: String(cases.length) },
   ].filter((fact): fact is { label: string; value: string } => !!fact);
+  // Источники показываются только у событий: у остальных ссылки уже стоят кнопками в шапке.
+  const sources = nomination.isEvents ? nominee.sources : [];
   // Текст участника разбит на блоки — так карточки удобно сравнивать между собой.
   const blocks = [
     { title: nomination.isEvents ? "Что произошло" : "О команде", text: nominee.description ?? "" },
@@ -111,7 +113,7 @@ export default async function NomineePage({ params }: Props) {
         </div>
       </section>
 
-      {(blocks.length > 0 || cases.length > 0 || nominee.sources.length > 0 || nominee.rightOfReply) && (
+      {(blocks.length > 0 || cases.length > 0 || sources.length > 0 || nominee.rightOfReply) && (
         <div className="container-page pt-12">
           <div className="mx-auto max-w-4xl space-y-10">
             {blocks.map((block) => (
@@ -155,11 +157,11 @@ export default async function NomineePage({ params }: Props) {
               </section>
             )}
 
-            {nominee.sources.length > 0 && (
+            {sources.length > 0 && (
               <section>
                 <h2 className="text-2xl">Источники</h2>
                 <ul className="mt-4 space-y-1">
-                  {nominee.sources.map((source) => (
+                  {sources.map((source) => (
                     <li key={source}>
                       <a href={source} target="_blank" rel="noopener nofollow" className="break-all text-muted-bright underline underline-offset-4 hover:text-paper">
                         {source}
