@@ -53,3 +53,9 @@ test("медиана", () => {
   assert.equal(median([BigInt(5), BigInt(1), BigInt(9)]), BigInt(5));
   assert.equal(median([]), null);
 });
+
+test("флаг «общий браузер»: три аккаунта с одного устройства", () => {
+  const votes = Array.from({ length: 12 }, (_, i) => vote(i, i * 600_000, { deviceHash: i < 3 ? "device-a" : `device-${i}` }));
+  assert.ok(codes(votes).includes("shared_device"));
+  assert.ok(!codes(votes.map((v, i) => ({ ...v, deviceHash: `device-${i}` }))).includes("shared_device"));
+});

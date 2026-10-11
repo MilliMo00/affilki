@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { voter, useVoter, type VoteTarget } from "@/lib/voter-store";
 import { Turnstile } from "./Turnstile";
 
-type LoginLink = { url: string; qr: string; devToken?: string };
+type LoginLink = { url: string; qr: string; matchCode?: string | null; devToken?: string };
 
 /** Шаг 1: вход через бота. Показывает ссылку и QR и ждёт подтверждения. */
 function LoginStep() {
@@ -72,6 +72,14 @@ function LoginStep() {
       </p>
       {link ? (
         <>
+          {link.matchCode && (
+            <div className="flex flex-col items-center gap-1 rounded-card border border-petal px-6 py-3">
+              <p className="text-sm text-muted-bright">Выбери этот номер в боте</p>
+              <p className="font-display text-5xl tabular-nums text-paper" aria-label={`Номер для подтверждения: ${link.matchCode}`}>
+                {link.matchCode}
+              </p>
+            </div>
+          )}
           <Button href={link.url} size="lg" className="w-full">
             <Send size={20} strokeWidth={1.75} aria-hidden />
             Открыть бота

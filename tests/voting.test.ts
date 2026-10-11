@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { db } from "@/lib/db";
 import type { TelegramApi } from "@/lib/telegram/client";
-import { claimSession, findSession, handleDecision, handleStart, startLogin } from "@/lib/voting/login";
+import { claimSession, findSession, handleDecision, handleStart, revokeAllSessions, startLogin } from "@/lib/voting/login";
 import { castVote } from "@/lib/voting/vote";
 
 // Тесты ходят в отдельную базу affilki_test (см. npm test в README).
@@ -31,7 +31,7 @@ async function login(user = alice, tg = fakeTg().tg) {
   const { token, browserSecret } = await startLogin(fp);
   await handleStart(token, user, tg);
   const intent = await db.loginIntent.findUniqueOrThrow({ where: { token } });
-  await handleDecision("ok", intent.id, user, tg);
+  await handleDecision("ok", intent.id, user, tg, new Date(), intent.matchCode ?? undefined);
   const claim = await claimSession(browserSecret);
   assert.equal(claim.status, "ok");
   const session = await findSession(claim.status === "ok" ? claim.sessionToken : undefined);
@@ -135,7 +135,7 @@ test("чужую ссылку нельзя перехватить или под�
   // Боб открывает ту же ссылку и жмёт «Подтвердить» на чужом входе.
   await handleStart(token, bob, tg);
   assert.match(sent.at(-1)?.text ?? "", /устарела/);
-  assert.match((await handleDecision("ok", intent.id, bob, tg)).text, /устарела/);
+  assert.match((await handleDecision("ok", intent.id, bob, tg, new Date(), intent.matchCode ?? undefined)).text, /устарела/);
   assert.equal((await db.loginIntent.findUniqueOrThrow({ where: { token } })).tgUserId, BigInt(alice.id));
 
   // Без секрета из cookie сессию не получить, даже зная токен.
@@ -157,7 +157,7 @@ test("сессию по одной ссылке можно получить то
   const { token, browserSecret } = await startLogin(fp);
   await handleStart(token, alice, tg);
   const intent = await db.loginIntent.findUniqueOrThrow({ where: { token } });
-  await handleDecision("ok", intent.id, alice, tg);
+  await handleDecision("ok", intent.id, alice, tg, new Date(), intent.matchCode ?? undefined);
   assert.equal((await claimSession(browserSecret)).status, "ok");
   assert.equal((await claimSession(browserSecret)).status, "expired");
 });
@@ -230,4 +230,48 @@ test("непройденная капча не даёт голос", async () =>
 test("за участника без юридической проверки проголосовать нельзя", async () => {
   const result = await vote(await login(), "unchecked");
   assert.equal(!result.ok && result.error, "not_found");
+});
+
+test("неверный номер отменяет вход и сжигает ссылку", async () => {
+  const { tg } = fakeTg();
+  const { token, browserSecret, matchCode } = await startLogin(fp);
+  assert.match(matchCode ?? "", /^\d{2}$/);
+  await handleStart(token, alice, tg);
+  const intent = await db.loginIntent.findUniqueOrThrow({ where: { token } });
+  const wrong = String((Number(matchCode) - 10 + 1) % 90 + 10) === matchCode ? "99" : String((Number(matchCode) - 10 + 1) % 90 + 10);
+
+  assert.match((await handleDecision("ok", intent.id, alice, tg, new Date(), wrong)).text, /не совпал/);
+  assert.equal((await claimSession(browserSecret)).status, "rejected");
+  // Подтвердить после ошибки уже нельзя, даже верным номером.
+  assert.match((await handleDecision("ok", intent.id, alice, tg, new Date(), matchCode ?? undefined)).text, /устарела/);
+  assert.equal(await db.voterSession.count(), 0);
+});
+
+test("подтверждение без номера не проходит", async () => {
+  const { tg } = fakeTg();
+  const { token, browserSecret } = await startLogin(fp);
+  await handleStart(token, alice, tg);
+  const intent = await db.loginIntent.findUniqueOrThrow({ where: { token } });
+  await handleDecision("ok", intent.id, alice, tg);
+  assert.equal((await claimSession(browserSecret)).status, "rejected");
+});
+
+test("кнопки в боте содержат настоящий номер среди трёх", async () => {
+  const buttons: { callback_data?: string }[][] = [];
+  const tg = { ...fakeTg().tg, sendMessage: async (_: number, __: string, b?: { callback_data?: string }[][]) => void (b && buttons.push(...b)) };
+  const { token, matchCode } = await startLogin(fp);
+  await handleStart(token, alice, tg);
+  const codes = buttons[0].map((b) => b.callback_data?.split(":")[2]);
+  assert.equal(codes.length, 3);
+  assert.equal(new Set(codes).size, 3);
+  assert.ok(codes.includes(matchCode ?? ""));
+});
+
+test("/logout закрывает все сессии и не трогает голоса", async () => {
+  const session = await login();
+  assert.equal((await vote(session, "a")).ok, true);
+  assert.equal(await revokeAllSessions(session.tgUserId), 1);
+  assert.equal(await findSession("anything"), null);
+  assert.equal((await db.voterSession.findUniqueOrThrow({ where: { id: session.id } })).revokedAt !== null, true);
+  assert.equal(await db.vote.count(), 1);
 });

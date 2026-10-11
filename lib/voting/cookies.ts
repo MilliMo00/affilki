@@ -6,6 +6,8 @@ const PROD = process.env.NODE_ENV === "production";
 // Префикс __Host- заставляет браузер принимать cookie только по HTTPS и только для этого хоста.
 export const SESSION_COOKIE = PROD ? "__Host-aff_s" : "aff_s";
 export const LOGIN_COOKIE = PROD ? "__Host-aff_login" : "aff_login";
+// Идентификатор браузера для защиты от накрутки: по нему видно, что с одного браузера голосуют десятки аккаунтов.
+export const DEVICE_COOKIE = PROD ? "__Host-aff_d" : "aff_d";
 
 // Браузеры не хранят cookie дольше 400 дней, поэтому она продлевается при каждом заходе на сайт.
 const SESSION_COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
@@ -31,4 +33,10 @@ export function refreshSessionCookie(response: NextResponse, token: string) {
 
 export function clearSessionCookie(response: NextResponse) {
   response.cookies.set(SESSION_COOKIE, "", { ...base, maxAge: 0 });
+}
+
+export const deviceId = (request: NextRequest) => request.cookies.get(DEVICE_COOKIE)?.value;
+
+export function setDeviceCookie(response: NextResponse, id: string) {
+  response.cookies.set(DEVICE_COOKIE, id, { ...base, maxAge: SESSION_COOKIE_MAX_AGE });
 }

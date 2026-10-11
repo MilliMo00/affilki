@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { recordServerEvent } from "@/lib/analytics/record";
 import { rateLimiter } from "@/lib/ratelimit";
-import { clientIp, hashValue, isSameOrigin } from "@/lib/request";
+import { clientIp, hashValue, isSameOrigin, rawClientIp } from "@/lib/request";
 import { telegram, type TelegramApi } from "@/lib/telegram/client";
 import { verifyTurnstile } from "@/lib/turnstile";
-import { sessionToken } from "@/lib/voting/cookies";
+import { deviceId, sessionToken, setDeviceCookie } from "@/lib/voting/cookies";
+import { randomToken } from "@/lib/voting/tokens";
 import { findSession } from "@/lib/voting/login";
 import { castVote, votesOf } from "@/lib/voting/vote";
 
@@ -23,11 +24,11 @@ export async function POST(request: NextRequest) {
   const session = await findSession(sessionToken(request));
   if (!session) return NextResponse.json({ error: "unauthorized", message: "Сначала войди через бота." }, { status: 401 });
 
-  const ip = clientIp(request);
-  const ipHash = hashValue(ip);
+  const ipHash = hashValue(clientIp(request));
+  // Лимит на адрес мягче лимита на аккаунт: за одним мобильным адресом сидят сотни настоящих людей.
   const [byUser, byIp] = await Promise.all([
     rateLimiter.hit(`vote:u:${session.tgUserId}`, 10, 60_000),
-    rateLimiter.hit(`vote:ip:${ipHash}`, 10, 60_000),
+    rateLimiter.hit(`vote:ip:${ipHash}`, 40, 60_000),
   ]);
   if (!byUser.ok || !byIp.ok) {
     return NextResponse.json({ error: "rate_limit", message: "Слишком часто. Подожди минуту." }, { status: 429 });
@@ -36,15 +37,20 @@ export async function POST(request: NextRequest) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "bad_request", message: "Неверный запрос." }, { status: 400 });
 
+  // Идентификатор браузера: создаём при первом голосе и отдаём обратно cookie.
+  const knownDevice = deviceId(request);
+  const device = knownDevice && /^[A-Za-z0-9_-]{16,64}$/.test(knownDevice) ? knownDevice : randomToken();
+
   const result = await castVote(
     {
       session,
+      deviceHash: hashValue(`device:${device}`),
       nomineeSlug: parsed.data.nomineeSlug,
       captchaToken: parsed.data.captchaToken,
       ipHash,
       uaHash: hashValue(request.headers.get("user-agent") ?? ""),
     },
-    { tg: voteTelegram, verifyCaptcha: (token) => verifyTurnstile(token, ip) },
+    { tg: voteTelegram, verifyCaptcha: (token) => verifyTurnstile(token, rawClientIp(request.headers.get("x-forwarded-for"))) },
   );
 
   // Воронка голосования: на каком шаге и почему люди отваливаются.
@@ -60,7 +66,11 @@ export async function POST(request: NextRequest) {
 
   if (!result.ok) {
     const status = result.error === "not_found" ? 404 : result.error === "already_voted" ? 409 : 403;
-    return NextResponse.json(result, { status });
+    const failure = NextResponse.json(result, { status });
+    setDeviceCookie(failure, device);
+    return failure;
   }
-  return NextResponse.json({ ...result, votes: await votesOf(session.tgUserId) });
+  const response = NextResponse.json({ ...result, votes: await votesOf(session.tgUserId) });
+  setDeviceCookie(response, device);
+  return response;
 }

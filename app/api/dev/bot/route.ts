@@ -24,6 +24,6 @@ export async function POST(request: Request) {
   await handleStart(token, from, fake);
   const intent = await db.loginIntent.findUnique({ where: { token } });
   if (!intent) return NextResponse.json({ error: "no intent" }, { status: 404 });
-  const reply = await handleDecision("ok", intent.id, from, fake);
+  const reply = await handleDecision("ok", intent.id, from, fake, new Date(), intent.matchCode ?? undefined);
   return NextResponse.json({ reply: reply.text });
 }

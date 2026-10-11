@@ -1,7 +1,7 @@
 import type { TelegramApi, TgUser } from "./client";
 import { recordServerEvent } from "@/lib/analytics/record";
 import { rememberBotUser, setSubscribed } from "@/lib/broadcast";
-import { handleDecision, handleStart } from "@/lib/voting/login";
+import { handleDecision, handleStart, revokeAllSessions } from "@/lib/voting/login";
 
 type Update = {
   message?: { text?: string; from?: TgUser; chat: { id: number; type: string } };
@@ -28,6 +28,17 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
       return tg.sendMessage(message.from.id, "Рассылка снова включена. Отключить — /stop.");
     }
 
+    // Выход со всех устройств: на случай, если вход подтвердили по чужой ссылке или потеряли телефон.
+    if (/^\/logout\b/.test(message.text)) {
+      const count = await revokeAllSessions(BigInt(message.from.id));
+      return tg.sendMessage(
+        message.from.id,
+        count > 0
+          ? `Вышли со всех устройств (${count}). Голоса, которые уже отданы, остаются. Чтобы голосовать снова, войди на сайте ещё раз.`
+          : "Открытых входов на сайте нет.",
+      );
+    }
+
     const start = /^\/start(?:\s+l_([A-Za-z0-9_-]{16,64}))?\s*$/.exec(message.text);
     if (start?.[1]) {
       recordServerEvent(null, { type: "bot_start" });
@@ -42,9 +53,9 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
 
   const callback = update.callback_query;
   if (callback) {
-    const match = /^(ok|no):([a-z0-9]{10,40})$/.exec(callback.data ?? "");
+    const match = /^(ok|no):([a-z0-9]{10,40})(?::(\d{2}))?$/.exec(callback.data ?? "");
     if (match) {
-      const reply = await handleDecision(match[1] as "ok" | "no", match[2], callback.from, tg);
+      const reply = await handleDecision(match[1] as "ok" | "no", match[2], callback.from, tg, new Date(), match[3]);
       recordServerEvent(null, { type: match[1] === "ok" ? "login_confirmed" : "login_rejected" });
       if (callback.message) await tg.editMessage(callback.message.chat.id, callback.message.message_id, reply.text, reply.buttons);
     }

@@ -1,9 +1,9 @@
 // Детектор аномалий: считает по голосам участника признаки накрутки. Решение всегда принимает человек —
 // флаги только показывают, куда смотреть.
 
-export type VoteRow = { tgUserId: bigint; tgUsername: string | null; hasAvatar: boolean; ipHash: string; createdAt: Date };
+export type VoteRow = { tgUserId: bigint; tgUsername: string | null; hasAvatar: boolean; ipHash: string; createdAt: Date; deviceHash?: string | null };
 
-export type Flag = { code: "burst" | "fresh" | "anonymous" | "shared_ip" | "uniform"; text: string };
+export type Flag = { code: "burst" | "fresh" | "anonymous" | "shared_ip" | "shared_device" | "uniform"; text: string };
 
 const TEN_MIN = 10 * 60_000;
 const share = (part: number, total: number) => (total === 0 ? 0 : part / total);
@@ -53,6 +53,15 @@ export function detectAnomalies(votes: VoteRow[], { burstFactor, medianTgId }: O
   if (crowded.length > 0) {
     const accounts = crowded.reduce((sum, set) => sum + set.size, 0);
     flags.push({ code: "shared_ip", text: `${accounts} аккаунтов голосовали с ${crowded.length} общих адресов (от 5 аккаунтов на адрес)` });
+  }
+
+  // 4а. Много аккаунтов с одного браузера: адрес можно сменить прокси, cookie браузера — не так просто.
+  const byDevice = new Map<string, Set<bigint>>();
+  for (const vote of votes) if (vote.deviceHash) byDevice.set(vote.deviceHash, (byDevice.get(vote.deviceHash) ?? new Set()).add(vote.tgUserId));
+  const shared = [...byDevice.values()].filter((accounts) => accounts.size >= 3);
+  if (shared.length > 0) {
+    const accounts = shared.reduce((sum, set) => sum + set.size, 0);
+    flags.push({ code: "shared_device", text: `${accounts} аккаунтов голосовали с ${shared.length} общих браузеров (от 3 аккаунтов на браузер)` });
   }
 
   // 5. Подозрительная равномерность: интервалы между голосами почти одинаковые.

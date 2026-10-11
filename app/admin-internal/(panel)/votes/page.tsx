@@ -19,7 +19,7 @@ export default async function VotesPage() {
     tallySeason(season.id),
     db.vote.findMany({
       where: { voidedAt: null, nomination: { seasonId: season.id } },
-      select: { nomineeId: true, tgUserId: true, tgUsername: true, hasAvatar: true, ipHash: true, createdAt: true },
+      select: { nomineeId: true, tgUserId: true, tgUsername: true, hasAvatar: true, ipHash: true, deviceHash: true, createdAt: true },
     }),
     db.tgBan.findMany({ orderBy: { createdAt: "desc" } }),
   ]);

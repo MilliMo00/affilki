@@ -23,13 +23,13 @@ type Deps = {
   now?: Date;
 };
 
-type Input = { session: VoterSession; nomineeSlug: string; captchaToken: string; ipHash: string; uaHash: string };
+type Input = { session: VoterSession; nomineeSlug: string; captchaToken: string; ipHash: string; uaHash: string; deviceHash?: string };
 
 const fail = (error: VoteError, message: string): VoteResult => ({ ok: false, error, message });
 
 /** Запись голоса. Все проверки — на сервере и по серверному времени. */
 export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
-  const { nomineeSlug, captchaToken, ipHash, uaHash } = input;
+  const { nomineeSlug, captchaToken, ipHash, uaHash, deviceHash } = input;
   let session = input.session;
   const now = deps.now ?? new Date();
 
@@ -81,6 +81,7 @@ export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
         nomineeId: nominee.id,
         ipHash,
         uaHash,
+        deviceHash,
       },
     });
   } catch (error) {

@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { db } from "@/lib/db";
 import type { TelegramApi, TgUser } from "@/lib/telegram/client";
 import { CHECK_MESSAGES, checkAccount } from "./checks";
@@ -18,14 +19,25 @@ export type LoginPurpose = "voter" | "admin";
 export async function startLogin(fp: Fingerprint, now = new Date(), purpose: LoginPurpose = "voter") {
   const token = randomToken();
   const browserSecret = randomToken();
+  // Номер видит только человек у экрана этого браузера. Тому, кому ссылку прислали «со стороны», выбирать нечего.
+  const matchCode = purpose === "voter" ? String(randomInt(10, 100)) : null;
   await db.loginIntent.create({
-    data: { token, browserHash: sha256(browserSecret), purpose, ...fp, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) },
+    data: { token, browserHash: sha256(browserSecret), purpose, matchCode, ...fp, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) },
   });
-  return { token, browserSecret, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) };
+  return { token, browserSecret, matchCode, expiresAt: new Date(now.getTime() + LOGIN_TTL_MS) };
 }
 
-const confirmButtons = (intentId: string) => [
-  [{ text: "Подтвердить вход", callback_data: `ok:${intentId}` }],
+/** Три номера в случайном порядке: настоящий и два ложных. */
+function codeChoices(real: string) {
+  const choices = new Set([real]);
+  while (choices.size < 3) choices.add(String(randomInt(10, 100)));
+  return [...choices].sort(() => randomInt(0, 2) - 0.5);
+}
+
+const confirmButtons = (intentId: string, matchCode: string | null) => [
+  ...(matchCode
+    ? [codeChoices(matchCode).map((code) => ({ text: code, callback_data: `ok:${intentId}:${code}` }))]
+    : [[{ text: "Подтвердить вход", callback_data: `ok:${intentId}` }]]),
   [{ text: "Это не я", callback_data: `no:${intentId}` }],
 ];
 
@@ -64,14 +76,14 @@ export async function handleStart(token: string, from: TgUser, tg: TelegramApi, 
     return tg.sendMessage(
       from.id,
       `Вход в админ-панель AFFILKI\n\nБраузер: ${intent.uaLabel}\n\nПодтверждай, только если вход начал ты сам. После этого понадобится код из приложения-аутентификатора.`,
-      confirmButtons(intent.id),
+      confirmButtons(intent.id, null),
     );
   }
 
   await tg.sendMessage(
     from.id,
-    `Вход на affilki.com\n\nБраузер: ${intent.uaLabel}\n\nЕсли это ты нажал «Голосовать» на сайте — подтверди. Если ссылку прислал кто-то другой, нажми «Это не я»: с твоего аккаунта никто не проголосует.`,
-    confirmButtons(intent.id),
+    `Вход на affilki.com\n\nБраузер: ${intent.uaLabel}\n\nНа сайте, где ты нажал «Голосовать», показан номер. Выбери его ниже.\n\nНомера на экране нет, или ссылку прислал кто-то другой? Нажми «Это не я»: с твоего аккаунта никто не проголосует.`,
+    confirmButtons(intent.id, intent.matchCode),
   );
 }
 
@@ -82,6 +94,7 @@ export async function handleDecision(
   from: TgUser,
   tg: Pick<TelegramApi, "isChannelMember">,
   now = new Date(),
+  pickedCode?: string,
 ): Promise<{ text: string; buttons?: { text: string; url?: string; callback_data?: string }[][] }> {
   const intent = await db.loginIntent.findUnique({ where: { id: intentId } });
   // Чужую ссылку подтвердить нельзя: решает только аккаунт, к которому она привязана.
@@ -92,6 +105,12 @@ export async function handleDecision(
   if (action === "no") {
     await db.loginIntent.update({ where: { id: intent.id }, data: { status: "REJECTED" } });
     return { text: "Вход отменён. С твоего аккаунта никто не вошёл." };
+  }
+
+  // Номер не тот, что на экране браузера: вход по чужой ссылке. Ссылка сгорает — угадывать второй раз нельзя.
+  if (intent.matchCode && pickedCode !== intent.matchCode) {
+    await db.loginIntent.update({ where: { id: intent.id }, data: { status: "REJECTED" } });
+    return { text: "Номер не совпал, вход отменён. Если ты входил сам — вернись на сайт и начни заново." };
   }
 
   await db.loginIntent.update({ where: { id: intent.id }, data: { status: "CONFIRMED" } });
@@ -178,4 +197,14 @@ export async function findSession(sessionToken: string | undefined, now = new Da
   const session = await db.voterSession.findUnique({ where: { id: sha256(sessionToken) } });
   if (!session || session.revokedAt || session.expiresAt <= now) return null;
   return session;
+}
+
+/** Выход со всех устройств: команда /logout в боте. Возвращает число закрытых сессий. */
+export async function revokeAllSessions(tgUserId: bigint) {
+  const result = await db.voterSession.updateMany({ where: { tgUserId, revokedAt: null }, data: { revokedAt: new Date() } });
+  await db.loginIntent.updateMany({
+    where: { tgUserId, purpose: "voter", status: { in: ["PENDING", "BOUND", "CONFIRMED"] } },
+    data: { status: "REJECTED" },
+  });
+  return result.count;
 }

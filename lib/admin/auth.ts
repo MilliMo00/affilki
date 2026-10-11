@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { countryOf } from "@/lib/analytics/geo";
 import { db } from "@/lib/db";
-import { hashValue } from "@/lib/request";
+import { hashValue, normalizeIp, rawClientIp } from "@/lib/request";
 import { telegram } from "@/lib/telegram/client";
 import { randomToken, sha256, uaLabel } from "@/lib/voting/tokens";
 import { decrypt, sign, unsign, verifySecret, verifyTotp } from "./crypto";
@@ -41,8 +41,8 @@ export const can = (role: AdminRole, permission: Permission) => PERMISSIONS[role
 export async function requestInfo() {
   const h = await headers();
   const ua = h.get("user-agent") ?? "";
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  return { ip, ipHash: hashValue(ip), uaHash: hashValue(ua), uaLabel: uaLabel(ua) };
+  const forwarded = h.get("x-forwarded-for");
+  return { ip: rawClientIp(forwarded), ipHash: hashValue(normalizeIp(forwarded)), uaHash: hashValue(ua), uaLabel: uaLabel(ua) };
 }
 
 // ── Сессия ─────────────────────────────────────────────────────────────────

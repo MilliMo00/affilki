@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { clientIp, hashValue } from "@/lib/request";
+import { clientIp, hashValue, rawClientIp } from "@/lib/request";
 import { countryOf } from "./geo";
 import { isBot, parseUa } from "./ua";
 
@@ -33,8 +33,11 @@ export function entityOf(path: string): { entityType: string; entityId: string }
 export async function requestContext(request: Request) {
   const ua = request.headers.get("user-agent") ?? "";
   if (isBot(ua) || ADMIN_COOKIE.test(request.headers.get("cookie") ?? "")) return null;
-  const ip = clientIp(request);
-  return { ipHash: hashValue(ip), country: await countryOf(ip), ...parseUa(ua) };
+  return {
+    ipHash: hashValue(clientIp(request)),
+    country: await countryOf(rawClientIp(request.headers.get("x-forwarded-for"))),
+    ...parseUa(ua),
+  };
 }
 
 /** Пишет события одного запроса. Ошибки аналитики никогда не ломают основной сценарий. */

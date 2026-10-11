@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
+import { hashSalt } from "@/lib/request";
 
 const DAY = 86_400_000;
 export const RAW_RETENTION_DAYS = 180;
@@ -58,7 +59,7 @@ export async function anonymizeVoters(now = new Date()) {
   // Пока идёт более поздний сезон, сессии ещё нужны — чистим только когда закончились все.
   const active = await db.season.count({ where: { votingEndsAt: { gte: cutoff } } });
 
-  const salt = process.env.IP_HASH_SALT ?? "dev-salt";
+  const salt = hashSalt();
   const votes = await db.vote.findMany({
     where: { nomination: { seasonId: { in: seasons.map((s) => s.id) } }, tgUserId: { gt: 0 } },
     select: { id: true, tgUserId: true },

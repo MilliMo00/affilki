@@ -199,6 +199,8 @@ model LoginIntent {
   uaHash        String
   /// «Chrome, macOS» — показываем в боте, чтобы человек узнал свой браузер.
   uaLabel       String
+  /// Номер, который сайт показывает человеку, а бот просит выбрать из трёх: вход по чужой ссылке не пройдёт.
+  matchCode     String?
   createdAt     DateTime     @default(now())
   expiresAt     DateTime
 
@@ -242,6 +244,8 @@ model Vote {
   ipHash       String
   uaHash       String
   captchaKind  String     @default("turnstile")
+  /// Хэш cookie-идентификатора браузера: много аккаунтов с одного браузера видно в админке.
+  deviceHash   String?
   voidedAt     DateTime?
   voidReason   String?
   voidedBy     String?

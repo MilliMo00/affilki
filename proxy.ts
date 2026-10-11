@@ -43,7 +43,8 @@ export function proxy(request: NextRequest) {
 
   const isAdmin = pathname === ADMIN_PATH || pathname.startsWith(`${ADMIN_PATH}/`);
   if (isAdmin && ALLOWLIST.length > 0) {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+    // Последний адрес дописал наш Caddy; всё, что левее, мог подставить клиент.
+    const ip = request.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "";
     if (!ALLOWLIST.includes(ip)) return notFound();
   }
 
