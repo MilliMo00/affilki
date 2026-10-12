@@ -38,6 +38,9 @@ export default async function SeasonPage() {
             <Label title="Конец голосования">
               <input type="datetime-local" name="votingEndsAt" defaultValue={msk(season.votingEndsAt)} required className={adminInput} />
             </Label>
+            <Label title="Объявление итогов" hint="Пусто — в день окончания голосования">
+              <input type="datetime-local" name="resultsAt" defaultValue={msk(season.resultsAt)} className={adminInput} />
+            </Label>
             <Label title="Начало следующего этапа" hint="Необязательно, показывается в индикаторе">
               <input type="datetime-local" name="nextStageAt" defaultValue={msk(season.nextStageAt)} className={adminInput} />
             </Label>

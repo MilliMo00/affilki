@@ -64,6 +64,8 @@ export type Season = {
   stage: Stage;
   votingStartsAt: Date;
   votingEndsAt: Date;
+  /** Когда объявляем итоги: своя дата или конец голосования. */
+  resultsAt: Date;
   nextStageAt: Date | null;
   resultsPublished: boolean;
   communityWeight: number;

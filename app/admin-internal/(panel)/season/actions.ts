@@ -19,6 +19,7 @@ const schema = z.object({
   stage: z.enum(STAGES),
   votingStartsAt: mskDate,
   votingEndsAt: mskDate,
+  resultsAt: mskDate.optional(),
   nextStageAt: mskDate.optional(),
   liveEnabled: z.boolean(),
   liveMode: z.enum(["PERCENT", "COUNTS"]),
@@ -44,6 +45,7 @@ export async function saveSeason(_: ActionState, formData: FormData): Promise<Ac
   const flag = (name: string) => formData.get(name) === "on";
   const parsed = schema.safeParse({
     ...raw,
+    resultsAt: raw.resultsAt || undefined,
     nextStageAt: raw.nextStageAt || undefined,
     liveEnabled: flag("liveEnabled"),
     requireChannel: flag("requireChannel"),
@@ -52,12 +54,13 @@ export async function saveSeason(_: ActionState, formData: FormData): Promise<Ac
   });
   if (!parsed.success) return failed(`Проверь поля: ${parsed.error.issues.map((i) => i.path.join(".")).join(", ")}`);
   if (parsed.data.votingEndsAt <= parsed.data.votingStartsAt) return failed("Конец голосования должен быть позже начала.");
+  if (parsed.data.resultsAt && parsed.data.resultsAt < parsed.data.votingEndsAt) return failed("Итоги нельзя объявить раньше конца голосования.");
 
   // Настройки защиты и даты меняют правила игры — нужен свежий код.
   const denied = await stepUp(context, formData);
   if (denied) return failed(denied);
 
-  const data = { ...parsed.data, nextStageAt: parsed.data.nextStageAt ?? null };
+  const data = { ...parsed.data, resultsAt: parsed.data.resultsAt ?? null, nextStageAt: parsed.data.nextStageAt ?? null };
   const updated = await db.season.update({ where: { id: season.id }, data });
   await audit(context, "season.update", { type: "season", id: season.id }, season, updated);
   revalidatePath("/", "layout");

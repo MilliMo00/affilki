@@ -145,6 +145,7 @@ function toSeason(row: SeasonRow): Season {
     stage: row.stage,
     votingStartsAt: row.votingStartsAt,
     votingEndsAt: row.votingEndsAt,
+    resultsAt: row.resultsAt ?? row.votingEndsAt,
     nextStageAt: row.nextStageAt,
     resultsPublished: row.resultsPublished,
     communityWeight: row.communityWeight,
@@ -196,7 +197,7 @@ export async function getOpenNominations() {
 }
 
 export async function seasonStats(season: Season, now = new Date()) {
-  const msLeft = season.votingEndsAt.getTime() - now.getTime();
+  const msLeft = season.resultsAt.getTime() - now.getTime();
   return {
     /** Дней до старта голосования; 0 — уже идёт или закончилось. */
     daysToStart: Math.max(0, Math.ceil((season.votingStartsAt.getTime() - now.getTime()) / 86_400_000)),

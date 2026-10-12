@@ -18,7 +18,7 @@ export function LiveNotice({ snapshot }: { snapshot: LiveSnapshot }) {
   return (
     <div className={`${plate} flex flex-col items-center gap-6`}>
       <p>Финальные часы — результаты скрыты до объявления итогов.</p>
-      <Countdown to={snapshot.votingEndsAt} label="До объявления итогов" />
+      <Countdown to={snapshot.votingEndsAt} label="До конца голосования" />
     </div>
   );
 }

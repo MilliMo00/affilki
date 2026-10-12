@@ -58,6 +58,8 @@ model Season {
   stage            Stage    @default(APPLICATIONS)
   votingStartsAt   DateTime
   votingEndsAt     DateTime
+  /// Когда объявляем итоги. Пусто — в день окончания голосования.
+  resultsAt        DateTime?
   /// Дата начала следующего этапа — для индикатора-цветка.
   nextStageAt      DateTime?
   resultsPublished Boolean  @default(false)

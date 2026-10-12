@@ -53,14 +53,17 @@ export function SeasonHero({ season, acceptingEntries, nominationsHref, live }: 
       key: "voting",
       date: formatDate(season.votingStartsAt),
       title: "Голосование",
-      text: "Один голос в каждой номинации. Решает только комьюнити — жюри нет.",
+      text: `Идёт до ${formatDate(season.votingEndsAt)}. Один голос в каждой номинации, решает только комьюнити — жюри нет.`,
     },
     {
       key: "after",
-      date: formatDate(season.votingEndsAt),
+      date: formatDate(season.resultsAt),
       title: "Итоги",
-      text: isFestive(season.votingEndsAt) ? "Победителей объявим под самый Новый год — в день окончания голосования." : "Объявляем победителей в день окончания голосования.",
-      gift: isFestive(season.votingEndsAt),
+      text:
+        season.resultsAt > season.votingEndsAt
+          ? "После конца голосования проверяем голоса на накрутку и объявляем победителей."
+          : "Объявляем победителей в день окончания голосования.",
+      gift: isFestive(season.resultsAt),
     },
   ] as const;
 
