@@ -10,6 +10,7 @@ const NAV: { href: string; label: string; permission?: Permission }[] = [
   { href: "/submissions", label: "Заявки", permission: "content" },
   { href: "/articles", label: "Статьи и рубрики", permission: "content" },
   { href: "/ads", label: "Реклама", permission: "ads" },
+  { href: "/sponsors", label: "Спонсоры", permission: "ads" },
   { href: "/season", label: "Сезон и защита", permission: "season" },
   { href: "/nominations", label: "Номинации и участники", permission: "awards" },
   { href: "/votes", label: "Голоса", permission: "votes" },

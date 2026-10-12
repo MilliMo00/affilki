@@ -11,7 +11,8 @@ import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
 import { parseCases, parseLinks, parseYear } from "@/lib/profile";
 import { saveImage } from "@/lib/storage";
-import { caseImagesFrom } from "@/lib/submissions";
+import { MAX_NOMINEES } from "@/lib/entry-rules";
+import { caseImagesFrom, nominationIsFull } from "@/lib/submissions";
 
 const lines = (value: string) =>
   value
@@ -103,6 +104,10 @@ export async function saveNominee(nominationId: string, id: string, _: ActionSta
   if (nomination.requiresLegalReview && published) {
     if (sources.length === 0) return failed("Для этой номинации нужен хотя бы один источник.");
     if (!legalChecked) return failed("Чтобы опубликовать, отметь «Проверено»: без этого карточка на сайт не попадёт.");
+  }
+
+  if (published && (await nominationIsFull(nominationId, id === "new" ? undefined : id))) {
+    return failed(`В номинации уже ${MAX_NOMINEES} опубликованных участников — это максимум.`);
   }
 
   const taken = await db.nominee.findUnique({ where: { slug: fields.slug } });

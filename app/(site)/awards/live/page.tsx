@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { SponsorStrip } from "@/components/awards/Sponsors";
 import { LiveGrid } from "@/components/live/LiveGrid";
 import { getCurrentSeason } from "@/lib/data";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
@@ -14,5 +15,12 @@ export const dynamic = "force-dynamic";
 export default async function LivePage() {
   const [season, snapshot] = await Promise.all([getCurrentSeason(), getLiveSnapshot()]);
   if (!season || !snapshot) notFound();
-  return <LiveGrid initial={snapshot} title={`${season.title} — live`} />;
+  return (
+    <>
+      <div className="bg-indigo">
+        <SponsorStrip compact className="container-page pt-6" />
+      </div>
+      <LiveGrid initial={snapshot} title={`${season.title} — live`} />
+    </>
+  );
 }

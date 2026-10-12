@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
 import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
 import { NomineeLinks, NomineeMiniCard, RightOfReply } from "@/components/awards/NomineeCard";
+import { SponsorStrip } from "@/components/awards/Sponsors";
 import { PetalCard } from "@/components/awards/PetalCard";
 import { Watermark } from "@/components/brand/Watermark";
 import { Snowfall } from "@/components/festive/Snowfall";
@@ -62,6 +63,7 @@ export default async function NomineePage({ params }: Props) {
         <Watermark />
         <Snowfall density={0.6} />
         <div className="container-page relative py-10 sm:py-14">
+          <SponsorStrip compact className="mb-6" />
           <Breadcrumbs
             items={[
               { href: "/awards", label: season.title },

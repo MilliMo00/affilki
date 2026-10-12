@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if ("errors" in parsed) return NextResponse.json({ errors: parsed.errors }, { status: 400 });
   // Тип заявки после подачи не меняется.
   if (parsed.data.kind !== submission.kind) return NextResponse.json({ error: "Тип заявки изменить нельзя." }, { status: 400 });
-  const targetErrors = await checkTarget(parsed.data, true);
+  const targetErrors = await checkTarget(parsed.data, true, { tgUserId: session.tgUserId, exceptId: submission.id });
   if (targetErrors) return NextResponse.json({ errors: targetErrors }, { status: 400 });
 
   const image = await imageFrom(formData, submission.imageUrl);

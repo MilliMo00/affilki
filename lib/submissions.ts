@@ -3,6 +3,7 @@ import { z } from "zod";
 import { notifyOwner } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
+import { MAX_NOMINEES, MIN_CASES } from "@/lib/entry-rules";
 import { plainText, readingMinutes, renderMarkup } from "@/lib/markup";
 import { isTelegramLink, parseCases, parseLinks, parseYear, readDetails, readLinks, type CaseItem, type LinkButton, type NomineeDetails, type ParsedCase } from "@/lib/profile";
 import { uniqueSlug } from "@/lib/slug";
@@ -59,7 +60,12 @@ export function parseSubmission(formData: FormData): { data: SubmissionInput } |
  * requireDetails — автор обязан рассказать, что сделано за год и почему голосовать за него
  * (кроме номинации-событий: там описывается событие, а не команда).
  */
-export async function checkTarget(data: SubmissionInput, requireDetails = false): Promise<FieldErrors | null> {
+export async function checkTarget(
+  data: SubmissionInput,
+  requireDetails = false,
+  /** Автор заявки: проверяем, что у него нет заявки в другую номинацию. exceptId — заявка, которую он сейчас правит. */
+  author?: { tgUserId: bigint; exceptId?: string },
+): Promise<FieldErrors | null> {
   if (data.kind === "NOMINEE") {
     const nomination = await db.nomination.findUnique({ where: { id: data.nominationId } });
     if (!nomination) return { nominationId: "Такой номинации нет" };
@@ -68,12 +74,36 @@ export async function checkTarget(data: SubmissionInput, requireDetails = false)
       const errors: FieldErrors = {};
       if (data.achievements.length < 20) errors.achievements = "Расскажи, что сделали за год, — хотя бы пару предложений";
       if (data.whyVote.length < 20) errors.whyVote = "Напиши, почему голосовать стоит за вас, — хотя бы пару предложений";
+      if (data.cases.length < MIN_CASES) errors.cases = `Нужно минимум ${MIN_CASES} кейсов — сейчас ${data.cases.length}`;
       if (Object.keys(errors).length > 0) return errors;
+    }
+    if (author && !nomination.requiresLegalReview) {
+      if (await nominationIsFull(nomination.id)) return { nominationId: `В этой номинации уже ${MAX_NOMINEES} участников — мест нет` };
+      // Одна номинация на участника. События (requiresLegalReview) не в счёт: там описывают событие, а не себя.
+      const other = await db.submission.findFirst({
+        where: {
+          kind: "NOMINEE",
+          tgUserId: author.tgUserId,
+          status: { not: "REJECTED" },
+          id: { not: author.exceptId },
+          nominationId: { not: nomination.id },
+        },
+      });
+      const otherNomination = other?.nominationId ? await db.nomination.findUnique({ where: { id: other.nominationId } }) : null;
+      if (otherNomination && !otherNomination.requiresLegalReview) {
+        return { nominationId: `Подать можно только в одну номинацию. У тебя уже есть заявка в «${otherNomination.title}» — её можно изменить в «Моих заявках»` };
+      }
     }
   } else if (!(await db.category.findUnique({ where: { slug: data.categorySlug } }))) {
     return { categorySlug: "Такой рубрики нет" };
   }
   return null;
+}
+
+/** В номинации уже максимум опубликованных участников. */
+export async function nominationIsFull(nominationId: string, exceptNomineeId?: string) {
+  const count = await db.nominee.count({ where: { nominationId, published: true, id: { not: exceptNomineeId } } });
+  return count >= MAX_NOMINEES;
 }
 
 /** Картинка из формы: новая сохраняется, пустое поле оставляет прежнюю. */

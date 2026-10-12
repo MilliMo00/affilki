@@ -1,6 +1,7 @@
 import {
   Award,
   Briefcase,
+  Code,
   Flame,
   Megaphone,
   Newspaper,
@@ -17,6 +18,7 @@ const ICONS: Record<string, LucideIcon> = {
   users: Users,
   sparkles: Sparkles,
   "pen-tool": PenTool,
+  code: Code,
   rocket: Rocket,
   megaphone: Megaphone,
   newspaper: Newspaper,

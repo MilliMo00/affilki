@@ -4,6 +4,7 @@ import { HowWeVote } from "@/components/awards/HowWeVote";
 import { NominationHub } from "@/components/awards/NominationHub";
 import { SeasonHero } from "@/components/awards/SeasonHero";
 import { SponsorCall } from "@/components/awards/SponsorCall";
+import { SponsorStrip } from "@/components/awards/Sponsors";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { toHubNomination } from "@/lib/awards";
@@ -40,6 +41,8 @@ export default async function AwardsPage() {
   return (
     <div className="bg-indigo">
       <SeasonHero season={season} live={live} acceptingEntries={open.length > 0} nominationsHref="#nominations" />
+
+      <SponsorStrip className="container-page pt-10" />
 
       <section id="nominations" aria-labelledby="nominations-title" className="container-page scroll-mt-20 pb-6 pt-10">
         <AdSlot slotKey="awards_top" onBrand className="mb-10" />

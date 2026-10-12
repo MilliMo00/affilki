@@ -16,7 +16,7 @@ export type NomineeDetails = {
 export type NomineeProfile = NomineeDetails & { buttons: LinkButton[] };
 
 export const MAX_LINKS = 8;
-export const MAX_CASES = 6;
+export const MAX_CASES = 10;
 export const FIRST_YEAR = 1990;
 
 const HTTPS = /^https:\/\/[^\s"'<>]+$/;

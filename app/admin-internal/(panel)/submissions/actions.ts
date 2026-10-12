@@ -6,7 +6,8 @@ import { done, failed, type ActionState } from "@/lib/admin/action";
 import { audit } from "@/lib/admin/audit";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { db } from "@/lib/db";
-import { approve, caseImagesFrom, checkTarget, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
+import { MAX_NOMINEES } from "@/lib/entry-rules";
+import { approve, caseImagesFrom, checkTarget, nominationIsFull, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
 
 type Decision = "save" | "approve" | "return" | "reject";
 
@@ -43,6 +44,9 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   }
 
   if (decision === "approve") {
+    if (edited.kind === "NOMINEE" && (await nominationIsFull(edited.nominationId!))) {
+      return failed(`В номинации уже ${MAX_NOMINEES} участников — это максимум. Сними кого-то с публикации или выбери другую номинацию.`);
+    }
     const result = await approve(edited, {
       tagline: String(formData.get("tagline") ?? "").trim().slice(0, 200),
       excerpt: String(formData.get("excerpt") ?? "").trim().slice(0, 300),

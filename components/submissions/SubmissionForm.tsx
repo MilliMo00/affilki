@@ -4,9 +4,11 @@ import { Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { EntryRequirements } from "@/components/awards/EntryRequirements";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClass } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
+import { MIN_CASES } from "@/lib/entry-rules";
 import { FIRST_YEAR, type LinkButton, type NomineeDetails } from "@/lib/profile";
 import { CasesEditor, LinksEditor } from "./ListEditors";
 
@@ -281,6 +283,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
 
       {nominee ? (
         <>
+          {team && <EntryRequirements />}
           <Section title={events ? "Событие" : "Об участнике"} lead={events ? "Нейтрально и по фактам, без оценок и обвинений." : "Как участник будет называться и выглядеть на сайте."}>
             <div className={cn("grid gap-6", team && "sm:grid-cols-[minmax(0,1fr)_17rem]")}>
               <Field id="title" label={events ? "Название события" : "Название"} hint="Так оно будет написано на сайте" error={errors.title}>
@@ -331,7 +334,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
           </Section>
 
           {team && (
-            <Section title="Кейсы" lead="Необязательно, но с ними сравнивать проще: голосующий увидит твои работы рядом с работами других участников.">
+            <Section title="Кейсы" lead={`Нужно минимум ${MIN_CASES}: голосующий увидит твои работы рядом с работами других участников.`}>
               <div data-field="cases">
                 <CasesEditor initial={details?.cases} inputClass={inputClass} />
                 {errors.cases && (

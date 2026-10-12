@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = parseSubmission(formData);
   if ("errors" in parsed) return NextResponse.json({ errors: parsed.errors }, { status: 400 });
-  const targetErrors = await checkTarget(parsed.data, true);
+  const targetErrors = await checkTarget(parsed.data, true, { tgUserId: session.tgUserId });
   if (targetErrors) return NextResponse.json({ errors: targetErrors }, { status: 400 });
 
   // В лимит заявок идут только те, что прошли проверку и реально сохраняются.

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
 import { NominationCover } from "@/components/awards/NominationCover";
+import { EntryRequirements } from "@/components/awards/EntryRequirements";
+import { NominationSponsor, SponsorStrip } from "@/components/awards/Sponsors";
 import { NomineeCard } from "@/components/awards/NomineeCard";
 import { LiveBoard } from "@/components/live/LiveBoard";
 import { cn } from "@/lib/cn";
@@ -61,6 +63,7 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
   ];
 
   return (
+    <>
     <div className="grid gap-10 lg:grid-cols-[1.2fr_1fr]">
       <div>
         <p className="max-w-prose text-lg text-paper">{nomination.description}</p>
@@ -83,6 +86,9 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
         ))}
       </dl>
     </div>
+    {/* У событий требований к участнику нет: там описывают событие, а не команду. */}
+    {!nomination.isEvents && <EntryRequirements taken={nomination.nominees.length} className="mt-10" />}
+    </>
   );
 }
 
@@ -164,6 +170,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
   return (
     <div className="bg-indigo">
       <div className="container-page py-10 sm:py-14">
+        <SponsorStrip compact className="mb-6" />
         <Breadcrumbs items={[{ href: "/awards", label: season.title }]} />
 
         <NominationCover number={nomination.number} icon={nomination.icon} text={nomination.coverText} className="mt-4 h-40 rounded-petal sm:h-52" />
@@ -180,6 +187,8 @@ export default async function NominationPage({ params, searchParams }: Props) {
             <StoryShare path={path} text={`Номинация «${nomination.title}» — ${season.title}`} />
           </div>
         </header>
+
+        <NominationSponsor slug={nomination.slug} className="mt-8" />
 
         <div className="mt-8">
           <Tabs

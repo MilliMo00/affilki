@@ -6,6 +6,7 @@ import { TgChannelWidget } from "@/components/articles/TgChannelWidget";
 import { NominationHub } from "@/components/awards/NominationHub";
 import { SeasonHero } from "@/components/awards/SeasonHero";
 import { SponsorCall } from "@/components/awards/SponsorCall";
+import { SponsorStrip } from "@/components/awards/Sponsors";
 import { StatsRow } from "@/components/awards/StatsRow";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +35,9 @@ export default async function Home() {
         <>
           <SeasonHero season={season} live={live} acceptingEntries={open.length > 0} nominationsHref="/awards" />
           <StatsRow stats={await seasonStats(season)} />
+          <div className="bg-indigo">
+            <SponsorStrip className="container-page py-10" />
+          </div>
         </>
       ) : (
         <section className="grain relative overflow-hidden bg-hero">

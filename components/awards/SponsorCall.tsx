@@ -22,12 +22,26 @@ export function SponsorCall() {
             <div>
               <p className="font-semibold text-muted-bright">Спонсорам и партнёрам</p>
               <h2 id="sponsor-title" className="mt-2 text-2xl sm:text-3xl">
-                Стань спонсором номинации
+                Стань спонсором премии или номинации
               </h2>
               <p className="mt-4 max-w-xl text-lg text-paper">
-                У каждой номинации может быть свой спонсор. За премией следит рынок: команды, партнёрки и сервисы приводят сюда
-                свою аудиторию голосовать. Напиши — расскажем про форматы, свободные номинации и условия.
+                За премией следит рынок: команды, партнёрки и сервисы приводят сюда свою аудиторию голосовать.
               </p>
+              <dl className="mt-5 max-w-xl space-y-4">
+                <div>
+                  <dt className="font-semibold text-paper">Спонсор премии</dt>
+                  <dd className="mt-1 text-muted-bright">
+                    Логотип на главной, в разделе премии, на live-табло и на страницах всех номинаций и участников. Мест четыре.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-paper">Спонсор номинации</dt>
+                  <dd className="mt-1 text-muted-bright">
+                    Отдельный блок на странице одной номинации — у каждой номинации один спонсор. Подходит компаниям из той же
+                    ниши: например, дизайн-студия может поддержать номинацию дизайн-агентств.
+                  </dd>
+                </div>
+              </dl>
             </div>
 
             <div className="flex flex-col items-start gap-3 lg:items-end">
@@ -35,7 +49,7 @@ export function SponsorCall() {
                 <Send size={20} strokeWidth={1.75} aria-hidden />
                 Написать {handle}
               </Button>
-              <p className="text-sm text-muted-bright lg:text-right">Отвечаем в Telegram. Там же — про рекламу на сайте.</p>
+              <p className="text-sm text-muted-bright lg:text-right">Напиши — расскажем про свободные места и условия. Там же — про рекламу на сайте.</p>
             </div>
           </div>
         </div>

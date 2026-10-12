@@ -124,8 +124,24 @@ model Nomination {
   testVoting          Boolean  @default(false)
   nominees            Nominee[]
   votes               Vote[]
+  sponsors            Sponsor[]
 
   @@unique([seasonId, slug])
+}
+
+/// Спонсор премии (nominationId пуст) или отдельной номинации.
+model Sponsor {
+  id           String      @id @default(cuid())
+  name         String
+  logoUrl      String?
+  url          String
+  nominationId String?
+  nomination   Nomination? @relation(fields: [nominationId], references: [id], onDelete: Cascade)
+  /// Порядок среди спонсоров премии: меньше — левее.
+  order        Int         @default(0)
+  createdAt    DateTime    @default(now())
+
+  @@index([nominationId])
 }
 
 enum NomGroup {
