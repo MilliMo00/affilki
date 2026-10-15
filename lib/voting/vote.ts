@@ -42,13 +42,19 @@ export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
   if (!nominee || !nomination || !visible) return fail("not_found", "Участник не найден.");
 
   const season = nomination.season;
-  // До общего старта голосовать можно только в номинации с включённым тестовым голосованием.
-  if (now < season.votingStartsAt && !nomination.testVoting) return fail("not_started", `Голосование начнётся ${dateFmt.format(season.votingStartsAt)}.`);
+  // До общего старта голосовать можно только в тестовом режиме.
+  const isTest = now < season.votingStartsAt;
+  if (isTest && !season.testVoting) return fail("not_started", `Голосование начнётся ${dateFmt.format(season.votingStartsAt)}.`);
   if (now > season.votingEndsAt) return fail("ended", `Голосование закончилось ${dateFmt.format(season.votingEndsAt)}.`);
 
-  const existing = await db.vote.findUnique({
+  let existing = await db.vote.findUnique({
     where: { tgUserId_nominationId: { tgUserId: session.tgUserId, nominationId: nomination.id } },
   });
+  // Тестовый голос, оставшийся с проверки до старта, не мешает проголосовать по-настоящему.
+  if (existing?.isTest && !isTest) {
+    await db.vote.delete({ where: { id: existing.id } });
+    existing = null;
+  }
   if (existing) return fail("already_voted", "Твой голос в этой номинации уже отдан. Изменить его нельзя.");
 
   // Вход бессрочный, а фото и username запомнены на момент входа. Если их требуют, а в сессии их нет —
@@ -82,6 +88,7 @@ export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
         ipHash,
         uaHash,
         deviceHash,
+        isTest,
       },
     });
   } catch (error) {

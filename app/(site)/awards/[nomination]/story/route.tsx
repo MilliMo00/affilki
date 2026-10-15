@@ -16,7 +16,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ nomination
     eyebrow: `Номинация ${nomination.number} из ${season.nominations.length}`,
     title: nomination.title,
     subtitle: `${count} ${plural(count, noun)} · ${season.title}`,
-    action: isVotingOpen(season, nomination) ? "Голосовать" : "Смотреть участников",
+    action: isVotingOpen(season) ? "Голосовать" : "Смотреть участников",
     link: `${host}/awards/${nomination.slug}`,
   });
 }

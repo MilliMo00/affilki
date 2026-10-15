@@ -53,8 +53,6 @@ export type Nomination = {
   jury: string | null;
   /** Номинация-события («Скандал года»): нейтральные формулировки, источники, право на ответ. */
   isEvents: boolean;
-  /** Тестовое голосование открыто досрочно, до общего старта сезона. */
-  testVoting: boolean;
   nominees: Nominee[];
 };
 
@@ -68,6 +66,8 @@ export type Season = {
   resultsAt: Date;
   nextStageAt: Date | null;
   resultsPublished: boolean;
+  /** Тестовое голосование: до старта голосовать можно во всех номинациях. */
+  testVoting: boolean;
   communityWeight: number;
   juryWeight: number;
   nominations: Nomination[];

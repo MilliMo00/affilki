@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { TG_CHANNEL_URL } from "@/lib/env";
 import { telegram } from "@/lib/telegram/client";
 import { readProfile } from "@/lib/profile";
+import { countedVotes } from "@/lib/voting/test-mode";
 import type { Article, Category, ChannelInfo, Nomination, Nominee, NomineeLinks, Season } from "./types";
 
 export type * from "./types";
@@ -132,7 +133,6 @@ function toNomination(row: NominationRow): Nomination {
     group: row.group,
     jury: row.jury,
     isEvents: row.requiresLegalReview,
-    testVoting: row.testVoting,
     // Там, где нужна юридическая проверка, непроверенные участники наружу не попадают вообще.
     nominees: row.nominees.filter((n) => !row.requiresLegalReview || n.legalChecked).map(toNominee),
   };
@@ -148,6 +148,7 @@ function toSeason(row: SeasonRow): Season {
     resultsAt: row.resultsAt ?? row.votingEndsAt,
     nextStageAt: row.nextStageAt,
     resultsPublished: row.resultsPublished,
+    testVoting: row.testVoting,
     communityWeight: row.communityWeight,
     juryWeight: row.juryWeight,
     nominations: row.nominations.map(toNomination),
@@ -205,6 +206,7 @@ export async function seasonStats(season: Season, now = new Date()) {
     votes: await db.vote.count({
       where: {
         voidedAt: null,
+        ...countedVotes(season, now),
         nomination: { season: { year: season.year } },
         tgUserId: { notIn: (await db.tgBan.findMany({ select: { tgUserId: true } })).map((b) => b.tgUserId) },
       },
@@ -215,10 +217,10 @@ export async function seasonStats(season: Season, now = new Date()) {
   };
 }
 
-/** Открыто ли голосование: по датам сезона или досрочно — в номинации с тестовым голосованием. */
-export function isVotingOpen(season: Season, nomination?: Pick<Nomination, "testVoting">, now = new Date()) {
+/** Открыто ли голосование: по датам сезона или досрочно — в тестовом режиме. */
+export function isVotingOpen(season: Season, now = new Date()) {
   if (now > season.votingEndsAt) return false;
-  return now >= season.votingStartsAt || !!nomination?.testVoting;
+  return now >= season.votingStartsAt || season.testVoting;
 }
 
 let memberCount: { value: number | null; at: number } | null = null;

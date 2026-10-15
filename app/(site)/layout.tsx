@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { Suspense } from "react";
 import { CookieBanner } from "@/components/analytics/CookieBanner";
 import { Tracker } from "@/components/analytics/Tracker";
+import { TestModeBanner } from "@/components/voting/TestModeBanner";
 import { VoteDialog } from "@/components/voting/VoteDialog";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -21,6 +22,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
         К содержимому
       </a>
       <div className="flex min-h-dvh flex-col">
+        <TestModeBanner />
         <Header channelUrl={TG_CHANNEL_URL} />
         <main id="main" className="flex-1">
           {children}

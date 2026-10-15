@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ nominee: s
   if (!data) return new Response(null, { status: 404 });
   const { season, nomination, nominee } = data;
   const initials = nominee.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
-  const voting = isVotingOpen(season, nomination);
+  const voting = isVotingOpen(season);
 
   return storyImage({
     eyebrow: nomination.isEvents ? "Событие в номинации" : voting ? "Голосуй за" : "Участник премии",

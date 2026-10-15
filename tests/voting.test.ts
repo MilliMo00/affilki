@@ -171,15 +171,24 @@ test("голос вне окна дат отклоняется", async () => {
   assert.equal(await db.vote.count(), 0);
 });
 
-test("тестовое голосование: до старта сезона голос проходит только в отмеченной номинации", async () => {
+test("тестовое голосование: до старта голос проходит только в тестовом режиме и помечается тестовым", async () => {
   const session = await login();
   const early = new Date(Date.now() - 2 * HOUR);
-  await db.nomination.updateMany({ where: { slug: "teams" }, data: { testVoting: true } });
+  const closed = await vote(session, "a", { now: early });
+  assert.equal(!closed.ok && closed.error, "not_started");
+
+  await db.season.updateMany({ data: { testVoting: true } });
   assert.equal((await vote(session, "a", { now: early })).ok, true);
+  assert.equal((await db.vote.findFirstOrThrow()).isTest, true);
+
+  // После настоящего старта тестовый голос не мешает проголосовать заново, уже по-настоящему.
+  const real = await vote(session, "a");
+  assert.equal(real.ok, true);
+  assert.deepEqual((await db.vote.findMany()).map((v) => v.isTest), [false]);
+
   // После конца сезона тестовый режим ничего не открывает.
   const late = await vote(await login(bob), "a", { now: new Date(Date.now() + 2 * HOUR) });
   assert.equal(!late.ok && late.error, "ended");
-  assert.equal(await db.vote.count(), 1);
 });
 
 test("неподписанный аккаунт не голосует", async () => {

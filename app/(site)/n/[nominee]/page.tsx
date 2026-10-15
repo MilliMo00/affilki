@@ -36,7 +36,7 @@ export default async function NomineePage({ params }: Props) {
   if (!data) notFound();
 
   const { season, nomination, nominee } = data;
-  const open = isVotingOpen(season, nomination);
+  const open = isVotingOpen(season);
   const others = nomination.nominees.filter((n) => n.slug !== nominee.slug);
   const live = await getLiveSnapshot();
   const { foundedYear, achievements, whyVote, cases } = nominee.profile;

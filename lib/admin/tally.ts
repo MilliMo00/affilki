@@ -1,11 +1,14 @@
 import { db } from "@/lib/db";
+import { countedVotes } from "@/lib/voting/test-mode";
 
 /** Точные счётчики по участникам сезона — только для админки. */
 export async function tallySeason(seasonId: string) {
   const banned = (await db.tgBan.findMany({ select: { tgUserId: true } })).map((b) => b.tgUserId);
+  const season = await db.season.findUniqueOrThrow({ where: { id: seasonId } });
+  const tests = countedVotes(season);
   const [counted, voided, nominations] = await Promise.all([
-    db.vote.groupBy({ by: ["nomineeId"], where: { voidedAt: null, tgUserId: { notIn: banned }, nomination: { seasonId } }, _count: { _all: true } }),
-    db.vote.groupBy({ by: ["nomineeId"], where: { OR: [{ voidedAt: { not: null } }, { tgUserId: { in: banned } }], nomination: { seasonId } }, _count: { _all: true } }),
+    db.vote.groupBy({ by: ["nomineeId"], where: { voidedAt: null, tgUserId: { notIn: banned }, nomination: { seasonId }, ...tests }, _count: { _all: true } }),
+    db.vote.groupBy({ by: ["nomineeId"], where: { OR: [{ voidedAt: { not: null } }, { tgUserId: { in: banned } }], nomination: { seasonId }, ...tests }, _count: { _all: true } }),
     db.nomination.findMany({ where: { seasonId }, orderBy: { order: "asc" }, include: { nominees: true } }),
   ]);
   const countedBy = new Map(counted.map((g) => [g.nomineeId, g._count._all]));

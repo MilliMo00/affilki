@@ -63,6 +63,9 @@ model Season {
   /// Дата начала следующего этапа — для индикатора-цветка.
   nextStageAt      DateTime?
   resultsPublished Boolean  @default(false)
+  /// Тестовый режим: до старта голосовать можно во всех номинациях. Голоса помечаются isTest
+  /// и удаляются при выключении режима; после настоящего старта не учитываются.
+  testVoting       Boolean  @default(false)
   /// По умолчанию побеждает тот, за кого больше голосов; жюри включается весом > 0.
   communityWeight  Float    @default(1)
   juryWeight       Float    @default(0)
@@ -122,8 +125,6 @@ model Nomination {
   /// Участник не публикуется, пока админ не отметит «Проверено» (номинация «Скандал года»).
   requiresLegalReview Boolean  @default(false)
   acceptingEntries    Boolean  @default(true)
-  /// Тестовое голосование: в этой номинации можно голосовать до общего старта сезона.
-  testVoting          Boolean  @default(false)
   nominees            Nominee[]
   votes               Vote[]
   sponsors            Sponsor[]
@@ -246,6 +247,8 @@ model Vote {
   captchaKind  String     @default("turnstile")
   /// Хэш cookie-идентификатора браузера: много аккаунтов с одного браузера видно в админке.
   deviceHash   String?
+  /// Голос отдан в тестовом режиме, до старта сезона.
+  isTest       Boolean    @default(false)
   voidedAt     DateTime?
   voidReason   String?
   voidedBy     String?

@@ -115,3 +115,18 @@ test("после публикации итогов табло открыто и 
   assert.equal(snapshot.status, "final");
   assert.deepEqual(snapshot.nominations[0].rows.map((r) => [r.slug, r.percent]), [["b", 100], ["a", 0]]);
 });
+
+test("тестовый режим: табло открыто без порога; после старта тестовые голоса не считаются", async () => {
+  const { season, vote } = await setup({ votingStartsAt: new Date(Date.now() + HOUR), testVoting: true });
+  await vote("a", { isTest: true });
+  const testing = await computeSnapshot(season);
+  assert.equal(testing.status, "live");
+  assert.equal(testing.totalVotes, 1);
+  assert.equal(testing.nominations[0].state, "live");
+
+  // Тест забыли выключить, а голосование началось: тестовый голос не попадает ни в счётчик, ни в табло.
+  const started = { ...season, votingStartsAt: new Date(Date.now() - HOUR) };
+  await vote("b");
+  const real = await computeSnapshot(started);
+  assert.equal(real.totalVotes, 1);
+});

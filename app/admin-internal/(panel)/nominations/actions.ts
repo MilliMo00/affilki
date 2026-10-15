@@ -47,7 +47,6 @@ export async function saveNomination(id: string, _: ActionState, formData: FormD
       ...parsed.data,
       coverText: parsed.data.coverText || null,
       acceptingEntries: formData.get("acceptingEntries") === "on",
-      testVoting: formData.get("testVoting") === "on",
     },
   });
   await audit(context, "nomination.update", { type: "nomination", id }, before, after);

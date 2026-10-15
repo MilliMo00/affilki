@@ -8,14 +8,16 @@ import { adminUrl } from "@/lib/admin/path";
 import { tallySeason } from "@/lib/admin/tally";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
-import { banAccount, unbanAccount } from "./actions";
+import { banAccount, setTestVoting, unbanAccount } from "./actions";
 
 export default async function VotesPage() {
   await requirePermission("votes");
   const season = await db.season.findFirst({ orderBy: { year: "desc" } });
   if (!season) return <PageTitle title="Голоса" lead="Сезон ещё не создан." />;
 
-  const [tally, votes, bans] = await Promise.all([
+  const testing = season.testVoting && new Date() < season.votingStartsAt;
+  const [testVotes, tally, votes, bans] = await Promise.all([
+    db.vote.count({ where: { isTest: true, nomination: { seasonId: season.id } } }),
     tallySeason(season.id),
     db.vote.findMany({
       where: { voidedAt: null, nomination: { seasonId: season.id } },
@@ -37,6 +39,40 @@ export default async function VotesPage() {
   return (
     <>
       <PageTitle title="Голоса" lead="Точные счётчики видны только здесь. На сайте — по настройкам live-табло." />
+
+      <Card title="Тестовое голосование" className={`mb-6 ${testing ? "border-danger" : ""}`}>
+        {new Date() >= season.votingStartsAt ? (
+          <p className="text-muted">
+            Настоящее голосование уже идёт — тест недоступен.
+            {testVotes > 0 && ` Тестовых голосов осталось: ${testVotes}; в табло и итогах они не учитываются.`}
+          </p>
+        ) : (
+          <>
+            <p className="mb-4 text-text">
+              {testing ? (
+                <>
+                  <Badge tone="warn">идёт тест</Badge> Голосовать можно во всех номинациях, live-табло открыто, на сайте висит плашка
+                  «тестовый режим». Тестовых голосов сейчас: <b className="tabular-nums">{testVotes}</b>.
+                </>
+              ) : (
+                <>
+                  Включи, чтобы до {formatDate(season.votingStartsAt)} пройти весь путь голоса на живом сайте: вход через бота, голос,
+                  квитанция, live-табло. Когда выключишь, все тестовые голоса удалятся.
+                </>
+              )}
+            </p>
+            {testing ? (
+              <ActionForm action={setTestVoting.bind(null, false)} submit="Выключить и удалить тестовые голоса" danger>
+                <span />
+              </ActionForm>
+            ) : (
+              <ActionForm action={setTestVoting.bind(null, true)} submit="Включить тестовое голосование">
+                {testVotes > 0 ? <p className="text-muted">Остались голоса прошлого теста: {testVotes}. Они удалятся при следующем выключении.</p> : <span />}
+              </ActionForm>
+            )}
+          </>
+        )}
+      </Card>
 
       <Card title={`Подозрительное (${flagged.length})`} className="mb-6">
         {flagged.length === 0 ? (

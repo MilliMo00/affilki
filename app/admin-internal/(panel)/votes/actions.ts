@@ -6,6 +6,7 @@ import { done, failed, stepUp, type ActionState } from "@/lib/admin/action";
 import { audit } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 import { db } from "@/lib/db";
+import { resetLiveCache } from "@/lib/live/snapshot";
 
 const reason = z.string().trim().min(3, "Укажи причину").max(300);
 
@@ -102,4 +103,19 @@ export async function setResultsPublished(published: boolean, _: ActionState, fo
   await audit(context, published ? "results.publish" : "results.unpublish", { type: "season", id: season.id }, { resultsPublished: season.resultsPublished }, { resultsPublished: updated.resultsPublished });
   revalidatePath("/", "layout");
   return done(published ? "Итоги опубликованы" : "Публикация итогов отменена");
+}
+
+/** Тестовое голосование: включить — до старта голосовать можно везде; выключить — все тестовые голоса удаляются. */
+export async function setTestVoting(enable: boolean): Promise<ActionState> {
+  const context = await requirePermission("votes");
+  const season = await db.season.findFirst({ orderBy: { year: "desc" } });
+  if (!season) return failed("Сезон не найден.");
+  if (enable && new Date() >= season.votingStartsAt) return failed("Настоящее голосование уже началось — тестовый режим больше не нужен.");
+
+  const removed = enable ? 0 : (await db.vote.deleteMany({ where: { isTest: true, nomination: { seasonId: season.id } } })).count;
+  await db.season.update({ where: { id: season.id }, data: { testVoting: enable } });
+  await audit(context, enable ? "test_voting.on" : "test_voting.off", { type: "season", id: season.id }, { testVoting: season.testVoting }, { testVoting: enable, removed });
+  resetLiveCache();
+  revalidatePath("/", "layout");
+  return done(enable ? "Тестовое голосование включено." : `Тестовое голосование выключено, удалено тестовых голосов: ${removed}.`);
 }

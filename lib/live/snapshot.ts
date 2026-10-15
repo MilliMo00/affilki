@@ -1,5 +1,6 @@
 import type { Season } from "@prisma/client";
 import { db } from "@/lib/db";
+import { countedVotes, testModeActive } from "@/lib/voting/test-mode";
 import type { LiveNomination, LiveSnapshot } from "./types";
 
 type Cache = { snapshot: LiveSnapshot; expiresAt: number };
@@ -11,7 +12,8 @@ const globalForLive = globalThis as unknown as { liveCache?: Cache };
 export function liveStatus(season: Season, now: Date): LiveSnapshot["status"] {
   if (!season.liveEnabled) return "off";
   if (season.resultsPublished) return "final";
-  if (now < season.votingStartsAt) return "soon";
+  // В тестовом режиме табло открыто — владелец проверяет весь путь голоса.
+  if (now < season.votingStartsAt) return testModeActive(season, now) ? "live" : "soon";
   const freezeAt = season.votingEndsAt.getTime() - season.liveFreezeHours * 3_600_000;
   return now.getTime() >= freezeAt ? "frozen" : "live";
 }
@@ -20,7 +22,8 @@ export function liveStatus(season: Season, now: Date): LiveSnapshot["status"] {
 export async function computeSnapshot(season: Season, now = new Date()): Promise<LiveSnapshot> {
   const status = liveStatus(season, now);
   const banned = (await db.tgBan.findMany({ select: { tgUserId: true } })).map((b) => b.tgUserId);
-  const counted = { voidedAt: null, tgUserId: { notIn: banned }, nomination: { seasonId: season.id } };
+  const counted = { voidedAt: null, tgUserId: { notIn: banned }, nomination: { seasonId: season.id }, ...countedVotes(season, now) };
+  const testing = testModeActive(season, now);
 
   const base = {
     status,
@@ -55,7 +58,8 @@ export async function computeSnapshot(season: Season, now = new Date()): Promise
     const head = { slug: nomination.slug, title: nomination.title, number: nomination.order };
 
     // Пока голосов меньше порога, распределение не показываем (после публикации итогов — показываем всегда).
-    if (status === "live" && total < season.liveMinVotes) return { ...head, state: "collecting", rows: [] };
+    // В тестовом режиме порог не действует: иначе на паре тестовых голосов табло не видно.
+    if (status === "live" && !testing && total < season.liveMinVotes) return { ...head, state: "collecting", rows: [] };
 
     return {
       ...head,
@@ -73,6 +77,11 @@ export async function computeSnapshot(season: Season, now = new Date()): Promise
   });
 
   return { ...base, nominations: result };
+}
+
+/** Сбросить кэш: после включения или выключения теста табло должно обновиться сразу. */
+export function resetLiveCache() {
+  globalForLive.liveCache = undefined;
 }
 
 /** Снимок текущего сезона из кэша; пересчитывается не чаще, чем раз в liveRefreshSec. */
