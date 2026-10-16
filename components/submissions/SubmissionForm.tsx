@@ -10,6 +10,7 @@ import { Field, inputClass } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
 import { MIN_CASES } from "@/lib/entry-rules";
 import { FIRST_YEAR, type LinkButton, type NomineeDetails } from "@/lib/profile";
+import { ArticleEditor } from "./ArticleEditor";
 import { CasesEditor, LinksEditor } from "./ListEditors";
 
 export type SubmissionKind = "NOMINEE" | "ARTICLE";
@@ -355,10 +356,18 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
           <Field id="title" label="Заголовок" error={errors.title}>
             <input id="title" name="title" defaultValue={draft?.title} className={inputClass} {...aria("title")} />
           </Field>
-          <Field id="text" label="Текст" hint="Абзацы разделяй пустой строкой. ## Заголовок, - пункт списка, **жирный**, [текст](https://ссылка)" error={errors.text}>
-            <textarea id="text" name="text" rows={14} defaultValue={draft?.text} className={inputClass} {...aria("text", true)} />
-          </Field>
           {imageField("Обложка")}
+          <div data-field="text">
+            <p className="mb-2 font-medium text-paper">Текст</p>
+            <ArticleEditor name="text" initial={draft?.text} inputClass={inputClass} invalid={!!errors.text} />
+            {errors.text ? (
+              <p role="alert" className="mt-2 text-sm text-danger">
+                {errors.text}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-muted">Собирай материал из блоков: текст, подзаголовки, фото с подписями, списки и цитаты. Порядок меняется стрелками.</p>
+            )}
+          </div>
           {linksField}
         </>
       )}
