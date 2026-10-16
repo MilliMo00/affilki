@@ -70,16 +70,16 @@ export async function checkTarget(
     const nomination = await db.nomination.findUnique({ where: { id: data.nominationId } });
     if (!nomination) return { nominationId: "Такой номинации нет" };
     if (!nomination.acceptingEntries) return { nominationId: "В эту номинацию заявки сейчас не принимаются" };
-    if (requireDetails && !nomination.requiresLegalReview) {
+    if (requireDetails && !nomination.isEvent) {
       const errors: FieldErrors = {};
       if (data.achievements.length < 20) errors.achievements = "Расскажи, что сделали за год, — хотя бы пару предложений";
       if (data.whyVote.length < 20) errors.whyVote = "Напиши, почему голосовать стоит за вас, — хотя бы пару предложений";
       if (data.cases.length < MIN_CASES) errors.cases = `Нужно минимум ${MIN_CASES} кейсов — сейчас ${data.cases.length}`;
       if (Object.keys(errors).length > 0) return errors;
     }
-    if (author && !nomination.requiresLegalReview) {
+    if (author && !nomination.isEvent) {
       if (await nominationIsFull(nomination.id)) return { nominationId: `В этой номинации уже ${MAX_NOMINEES} участников — мест нет` };
-      // Одна номинация на участника. События (requiresLegalReview) не в счёт: там описывают событие, а не себя.
+      // Одна номинация на участника. Номинации событий не в счёт: там описывают событие, а не себя.
       const other = await db.submission.findFirst({
         where: {
           kind: "NOMINEE",
@@ -90,7 +90,7 @@ export async function checkTarget(
         },
       });
       const otherNomination = other?.nominationId ? await db.nomination.findUnique({ where: { id: other.nominationId } }) : null;
-      if (otherNomination && !otherNomination.requiresLegalReview) {
+      if (otherNomination && !otherNomination.isEvent) {
         return { nominationId: `Подать можно только в одну номинацию. У тебя уже есть заявка в «${otherNomination.title}» — её можно изменить в «Моих заявках»` };
       }
     }
@@ -195,7 +195,7 @@ export async function approve(submission: Submission, extra: { tagline: string; 
         logoUrl: submission.imageUrl,
         links: { ...(site && { site }), ...(tg && { tg }) },
         // Источники нужны только номинации-событиям; у остальных ссылки показываются кнопками.
-        sources: nomination.requiresLegalReview ? links.map((link) => link.url) : [],
+        sources: nomination.isEvent ? links.map((link) => link.url) : [],
         published: true,
         // Номинация-события: карточка не появится, пока модератор отдельно не отметит «Проверено».
         legalChecked: false,

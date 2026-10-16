@@ -18,9 +18,9 @@ after(() => db.$disconnect());
 
 async function nominations() {
   const season = await db.season.create({ data: { year: 2026, title: "T", votingStartsAt: new Date(), votingEndsAt: new Date(Date.now() + 1e6) } });
-  const make = (slug: string, requiresLegalReview = false) =>
+  const make = (slug: string, isEvent = false) =>
     db.nomination.create({
-      data: { seasonId: season.id, slug, title: slug, shortDesc: "", description: "", criteria: [], eligibility: "", icon: "users", group: "TEAMS", requiresLegalReview },
+      data: { seasonId: season.id, slug, title: slug, shortDesc: "", description: "", criteria: [], eligibility: "", icon: "users", group: "TEAMS", isEvent },
     });
   return { a: await make("a"), b: await make("b"), events: await make("events", true) };
 }
@@ -73,4 +73,12 @@ test(`в номинации не больше ${MAX_NOMINEES} участнико
   assert.equal(await checkTarget(form(a.id, MIN_CASES), true, author), null);
   await db.nominee.create({ data: { nominationId: a.id, slug: "last", name: "Last", published: true } });
   assert.match((await checkTarget(form(a.id, MIN_CASES), true, author))?.nominationId ?? "", /мест нет/);
+});
+
+test("номинация событий: без кейсов и текстовых блоков команды, и она не занимает «одну номинацию»", async () => {
+  const { a, events } = await nominations();
+  const data = { ...form(events.id, 0), achievements: "", whyVote: "" };
+  assert.equal(await checkTarget(data, true, author), null);
+  await submit(events.id);
+  assert.equal(await checkTarget(form(a.id, MIN_CASES), true, author), null);
 });

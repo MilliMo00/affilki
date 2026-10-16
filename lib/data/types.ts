@@ -52,7 +52,10 @@ export type Nomination = {
   group: NomGroup;
   jury: string | null;
   /** Номинация-события («Скандал года»): нейтральные формулировки, источники, право на ответ. */
+  /** Номинация событий: участники — события, а не команды (`Nomination.isEvent`). */
   isEvents: boolean;
+  /** Нужна юридическая проверка и право на ответ упомянутой стороны («Скандал года»). */
+  legalReview: boolean;
   nominees: Nominee[];
 };
 

@@ -22,6 +22,7 @@ type NominationSeed = {
   icon: string;
   coverText: string;
   group: NomGroup;
+  isEvent?: boolean;
   requiresLegalReview?: boolean;
   nominees: NomineeSeed[];
 };
@@ -163,6 +164,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     icon: "megaphone",
     coverText: "Событие",
     group: "MARKET",
+    isEvent: true,
     nominees: [
       t("zaliv-conf", "Zaliv Conf", "Двухдневная конференция, 3 000 участников"),
       t("buyers-night", "Buyers Night", "Закрытая вечеринка для команд"),
@@ -256,6 +258,7 @@ export const NOMINATION_SEEDS: NominationSeed[] = [
     icon: "flame",
     coverText: "Скандал",
     group: "MARKET",
+    isEvent: true,
     requiresLegalReview: true,
     nominees: [
       {

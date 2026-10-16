@@ -25,7 +25,8 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
   const links = (nominee?.links ?? {}) as { site?: string; tg?: string };
   const profile = readProfile(nominee?.profile);
   const sources = Array.isArray(nominee?.sources) ? (nominee.sources as string[]).join("\n") : "";
-  const events = nomination.requiresLegalReview;
+  const events = nomination.isEvent;
+  const legal = nomination.requiresLegalReview;
 
   return (
     <>
@@ -39,7 +40,7 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
         <ActionForm action={saveNominee.bind(null, nomination.id, id)} submit={isNew ? "Создать" : "Сохранить"}>
           {events && (
             <p className="rounded-card border border-petal/60 p-4 text-text">
-              Это номинация событий. Название — нейтральное описание события без оценок и обвинений. Описание — только
+              Это номинация событий. Название — нейтральное описание события без оценок{legal && " и обвинений"}. Описание — только
               факты, со ссылками на публичные источники.
             </p>
           )}
@@ -88,17 +89,17 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
           <Label title="Логотип" hint="PNG, JPG, GIF или WebP до 10 МБ. Пусто — оставить текущий.">
             <input type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/webp" className="block text-text" />
           </Label>
-          <Label title="Источники" hint={events ? "По одной ссылке в строке. Обязательно хотя бы одна." : "По одной ссылке в строке. Необязательно."}>
+          <Label title="Источники" hint={legal ? "По одной ссылке в строке. Обязательно хотя бы одна." : "По одной ссылке в строке. Необязательно."}>
             <textarea name="sources" defaultValue={sources} rows={3} className={adminInput} />
           </Label>
-          {events && (
+          {legal && (
             <Label title="Комментарий стороны" hint="Право на ответ: выводится на карточке, если заполнено">
               <textarea name="rightOfReply" defaultValue={nominee?.rightOfReply ?? ""} rows={3} className={adminInput} />
             </Label>
           )}
-          {!events && <input type="hidden" name="rightOfReply" value="" />}
+          {!legal && <input type="hidden" name="rightOfReply" value="" />}
           <Check name="published" title="Опубликовать" hint="Без галочки участник остаётся черновиком" defaultChecked={nominee?.published ?? false} />
-          {events ? (
+          {legal ? (
             <Check name="legalChecked" title="Проверено" hint="Я проверил формулировки и источники. Без этой отметки карточка на сайт не попадёт." defaultChecked={nominee?.legalChecked ?? false} />
           ) : (
             <input type="hidden" name="legalChecked" value="" />

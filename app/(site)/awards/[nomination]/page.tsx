@@ -130,7 +130,7 @@ function Nominees({ nomination, votingOpen, board, byVotes }: NomineesProps) {
           </Link>
         </div>
       )}
-      {nomination.isEvents && (
+      {nomination.legalReview && (
         <p className="mb-8 rounded-card border border-petal bg-deep/50 p-5 text-paper">
           Мы фиксируем события, которые обсуждал рынок. Если вы упомянуты и хотите дать комментарий — напишите{" "}
           <a href={OWNER_CONTACT_URL} target="_blank" rel="noopener" className="font-semibold underline underline-offset-4">

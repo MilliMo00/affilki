@@ -122,6 +122,9 @@ model Nomination {
   group               NomGroup
   /// Состав жюри номинации, если заполнен.
   jury                String?
+  /// Номинация событий: в заявке и на сайте — событие (название, описание, картинка, источники), а не команда.
+  /// Требования к участникам и правило «одна номинация» на неё не распространяются.
+  isEvent             Boolean  @default(false)
   /// Участник не публикуется, пока админ не отметит «Проверено» (номинация «Скандал года»).
   requiresLegalReview Boolean  @default(false)
   acceptingEntries    Boolean  @default(true)

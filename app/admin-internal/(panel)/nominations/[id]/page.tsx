@@ -26,7 +26,7 @@ export default async function NominationEditPage({ params }: { params: Promise<{
         </Link>
       </PageTitle>
 
-      <Card title={nomination.requiresLegalReview ? "События" : "Участники"} className="mb-6">
+      <Card title={nomination.isEvent ? "События" : "Участники"} className="mb-6">
         {nomination.nominees.length === 0 ? (
           <p className="text-muted">Пока никого. Нажми «Добавить участника».</p>
         ) : (

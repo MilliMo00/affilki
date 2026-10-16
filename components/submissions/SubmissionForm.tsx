@@ -284,7 +284,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       {nominee ? (
         <>
           {team && <EntryRequirements />}
-          <Section title={events ? "Событие" : "Об участнике"} lead={events ? "Нейтрально и по фактам, без оценок и обвинений." : "Как участник будет называться и выглядеть на сайте."}>
+          <Section title={events ? "Событие" : "Об участнике"} lead={events ? "Как событие будет называться на сайте. Только факты, без оценок." : "Как участник будет называться и выглядеть на сайте."}>
             <div className={cn("grid gap-6", team && "sm:grid-cols-[minmax(0,1fr)_17rem]")}>
               <Field id="title" label={events ? "Название события" : "Название"} hint="Так оно будет написано на сайте" error={errors.title}>
                 <input id="title" name="title" defaultValue={draft?.title} className={inputClass} {...aria("title", true)} />
@@ -306,7 +306,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
                 </Field>
               )}
             </div>
-            {imageField("Логотип или фото")}
+            {imageField(events ? "Фото события" : "Логотип или фото")}
           </Section>
 
           <Section
@@ -316,7 +316,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
             <Field
               id="text"
               label={events ? "Описание события" : "О команде"}
-              hint={events ? "Что случилось и когда. Источники добавь в ссылки ниже." : "Кто вы, чем занимаетесь, с какими вертикалями и гео работаете"}
+              hint={events ? "Что это было, где и когда прошло, кто участвовал, чем запомнилось. Источники добавь ниже." : "Кто вы, чем занимаетесь, с какими вертикалями и гео работаете"}
               error={errors.text}
             >
               <textarea id="text" name="text" rows={6} defaultValue={draft?.text} className={inputClass} {...aria("text", true)} />
@@ -346,7 +346,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
             </Section>
           )}
 
-          <Section title={events ? "Источники" : "Ссылки"} lead={events ? "Публичные источники, где описано событие." : "Необязательно: сайт, канал, портфолио, соцсети."}>
+          <Section title={events ? "Источники" : "Ссылки"} lead={events ? "Публичные ссылки, где описано событие: посты, статьи, фото и видео." : "Необязательно: сайт, канал, портфолио, соцсети."}>
             {linksField}
           </Section>
         </>

@@ -132,7 +132,8 @@ function toNomination(row: NominationRow): Nomination {
     coverText: row.coverText?.trim() || nominationPosterText(row.title),
     group: row.group,
     jury: row.jury,
-    isEvents: row.requiresLegalReview,
+    isEvents: row.isEvent,
+    legalReview: row.requiresLegalReview,
     // Там, где нужна юридическая проверка, непроверенные участники наружу не попадают вообще.
     nominees: row.nominees.filter((n) => !row.requiresLegalReview || n.legalChecked).map(toNominee),
   };
@@ -192,9 +193,9 @@ export async function getOpenNominations() {
   const rows = await db.nomination.findMany({
     where: { seasonId: season.id, acceptingEntries: true },
     orderBy: { order: "asc" },
-    select: { id: true, title: true, requiresLegalReview: true },
+    select: { id: true, title: true, isEvent: true },
   });
-  return rows.map((row) => ({ id: row.id, title: row.title, isEvents: row.requiresLegalReview }));
+  return rows.map((row) => ({ id: row.id, title: row.title, isEvents: row.isEvent }));
 }
 
 export async function seasonStats(season: Season, now = new Date()) {
