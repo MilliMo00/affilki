@@ -88,9 +88,19 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       return;
     }
 
+    // Пустые поля файлов не отправляем: Safari на iPhone с ними может повесить запрос навсегда.
+    for (const [key, value] of [...formData.entries()]) {
+      if (value instanceof File && value.size === 0) formData.delete(key);
+    }
+
     setPending(true);
     try {
-      const res = await fetch(draft ? `/api/submissions/${draft.id}` : "/api/submissions", { method: "POST", body: formData });
+      const res = await fetch(draft ? `/api/submissions/${draft.id}` : "/api/submissions", {
+        method: "POST",
+        body: formData,
+        // Медленный мобильный интернет и тяжёлые фото: не держим кнопку в «Отправляем…» бесконечно.
+        signal: AbortSignal.timeout(120_000),
+      });
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
         setErrors({});
@@ -102,8 +112,13 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       setErrors(found);
       const first = Object.keys(found).find((key) => key !== "form");
       if (first) (form.querySelector<HTMLElement>(`[name="${first}"]`) ?? form.querySelector<HTMLElement>(`[data-field="${first}"] input`))?.focus();
-    } catch {
-      setErrors({ form: "Нет связи с сервером. Проверь интернет и попробуй ещё раз." });
+    } catch (error) {
+      setErrors({
+        form:
+          error instanceof DOMException && error.name === "TimeoutError"
+            ? "Отправка заняла слишком долго. Проверь интернет или уменьши фото и попробуй ещё раз — заполненное не пропадёт."
+            : "Нет связи с сервером. Проверь интернет и попробуй ещё раз.",
+      });
     } finally {
       setPending(false);
     }

@@ -193,7 +193,7 @@ function ImageBlock({ block, onChange, inputClass }: { block: Extract<Block, { t
     const body = new FormData();
     body.set("image", file);
     try {
-      const res = await fetch("/api/uploads", { method: "POST", body });
+      const res = await fetch("/api/uploads", { method: "POST", body, signal: AbortSignal.timeout(120_000) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) return setState({ uploading: false, error: data.error ?? "Не получилось загрузить фото." });
       onChange({ url: data.url });
