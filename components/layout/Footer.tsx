@@ -68,8 +68,11 @@ export function Footer() {
                   rel="noopener"
                   className="flex items-center gap-3 rounded-card border border-petal/40 p-3 hover:border-glow"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo">
+                  {/* Аватарка из Telegram поверх цветка: пока грузится или если не загрузилась, виден цветок. */}
+                  <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo ring-2 ring-petal/60">
                     <Flower size={22} className="text-paper" />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- картинка с нашего же адреса, уже нужного размера */}
+                    <img src={`/tg-avatar/${handleOf(contact.url).slice(1)}`} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-paper">{handleOf(contact.url)}</span>
