@@ -24,6 +24,9 @@ function inline(escaped: string) {
     );
 }
 
+/** Одна строка разметки → безопасный HTML (жирный, курсив, код, ссылки). Для редактора статьи. */
+export const renderInline = (line: string) => inline(escapeHtml(line));
+
 export function renderMarkup(source: string): string {
   const blocks = source.replace(/\r\n?/g, "\n").trim().split(/\n{2,}/);
   const html: string[] = [];

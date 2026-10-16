@@ -359,7 +359,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
           {imageField("Обложка")}
           <div data-field="text">
             <p className="mb-2 font-medium text-paper">Текст</p>
-            <ArticleEditor name="text" initial={draft?.text} inputClass={inputClass} invalid={!!errors.text} />
+            <ArticleEditor name="text" initial={draft?.text} inputClass={inputClass} invalid={!!errors.text} categories={categories} coverUrl={draft?.imageUrl} />
             {errors.text ? (
               <p role="alert" className="mt-2 text-sm text-danger">
                 {errors.text}

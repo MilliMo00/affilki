@@ -1,10 +1,12 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Bold, Heading2, ImagePlus, Italic, Link2, List, Loader2, Pilcrow, Plus, Quote, Trash2, type LucideIcon } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ArticleCover } from "@/components/articles/ArticleCover";
 import { blockKey, parseBlocks, serializeBlocks, type Block, type BlockType } from "@/lib/blocks";
 import { cn } from "@/lib/cn";
 import { renderMarkup } from "@/lib/markup";
+import { editableToMarkup, markupToEditable } from "@/lib/rich-dom";
 
 // Редактор статьи из блоков: текст, подзаголовок, фото с подписью, список, цитата.
 // Блоки можно добавлять, переставлять и удалять; результат уходит в форму скрытым полем в простой разметке.
@@ -23,57 +25,109 @@ const empty = (type: BlockType): Block =>
 const iconButton = "flex size-10 items-center justify-center rounded-full text-muted-bright hover:bg-paper/10 hover:text-paper disabled:opacity-30 disabled:hover:bg-transparent";
 const toolButton = "flex h-9 items-center gap-1.5 rounded-full border border-petal/60 px-3 text-sm font-medium text-paper hover:border-glow hover:bg-glow/20";
 
-/** Поле текста с кнопками «жирный», «курсив», «ссылка» — они оборачивают выделенный фрагмент. */
-function RichText({ value, onChange, rows, placeholder, inputClass, label }: { value: string; onChange: (value: string) => void; rows: number; placeholder: string; inputClass: string; label: string }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const [linkFor, setLinkFor] = useState<{ start: number; end: number } | null>(null);
-  const [url, setUrl] = useState("https://");
+type RichMode = "text" | "list" | "quote";
 
-  const wrap = (before: string, after: string, fallback: string) => {
-    const area = ref.current;
-    if (!area) return;
-    const { selectionStart: start, selectionEnd: end } = area;
-    const selected = value.slice(start, end) || fallback;
-    onChange(value.slice(0, start) + before + selected + after + value.slice(end));
-    requestAnimationFrame(() => {
-      area.focus();
-      area.setSelectionRange(start + before.length, start + before.length + selected.length);
-    });
+const MODE_CLASS: Record<RichMode, string> = {
+  text: "",
+  // Каждая строка списка — отдельный <div>: показываем их пунктами.
+  list: "pl-6 [&>div]:list-item [&>div]:list-disc",
+  quote: "border-l-4 border-glow pl-4 italic",
+};
+
+/**
+ * Поле с готовым оформлением, как в Ворде: жирный виден жирным, ссылка — ссылкой.
+ * Кнопки и сочетания Ctrl/Cmd+B, Ctrl/Cmd+I оформляют выделенный фрагмент. В заявку уходит разметка.
+ */
+function RichText({ value, onChange, placeholder, inputClass, label, mode }: { value: string; onChange: (value: string) => void; placeholder: string; inputClass: string; label: string; mode: RichMode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const range = useRef<Range | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [url, setUrl] = useState("https://");
+  const [isEmpty, setIsEmpty] = useState(!value.trim());
+
+  // Содержимое ставим один раз: дальше его ведёт браузер, иначе курсор прыгал бы при каждом вводе.
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.innerHTML = markupToEditable(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- только при создании блока
+  }, []);
+
+  const sync = () => {
+    if (!ref.current) return;
+    const markup = editableToMarkup(ref.current);
+    setIsEmpty(!markup.trim());
+    onChange(markup);
+  };
+
+  const saveSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && ref.current?.contains(selection.anchorNode)) range.current = selection.getRangeAt(0).cloneRange();
+  };
+  const restoreSelection = () => {
+    ref.current?.focus();
+    const selection = window.getSelection();
+    if (selection && range.current) {
+      selection.removeAllRanges();
+      selection.addRange(range.current);
+    }
+  };
+
+  const format = (command: "bold" | "italic") => {
+    restoreSelection();
+    document.execCommand(command);
+    sync();
   };
 
   const applyLink = () => {
-    if (!linkFor || !/^https:\/\/\S+$/.test(url.trim())) return;
-    const text = value.slice(linkFor.start, linkFor.end) || "ссылка";
-    onChange(value.slice(0, linkFor.start) + `[${text.replace(/[[\]]/g, "")}](${url.trim()})` + value.slice(linkFor.end));
-    setLinkFor(null);
+    const href = url.trim();
+    if (!/^https:\/\/\S+$/.test(href)) return;
+    restoreSelection();
+    const selection = window.getSelection();
+    if (selection && selection.isCollapsed) document.execCommand("insertText", false, "ссылка");
+    if (selection && selection.isCollapsed && selection.anchorNode) {
+      // Только что вставленное слово выделяем, чтобы превратить его в ссылку.
+      const node = selection.anchorNode;
+      const end = selection.anchorOffset;
+      const next = document.createRange();
+      next.setStart(node, Math.max(0, end - "ссылка".length));
+      next.setEnd(node, end);
+      selection.removeAllRanges();
+      selection.addRange(next);
+    }
+    document.execCommand("createLink", false, href);
+    sync();
+    setLinkOpen(false);
     setUrl("https://");
   };
+
+  // Кнопки не забирают фокус у текста, иначе пропадёт выделение.
+  const keep = (event: React.MouseEvent) => event.preventDefault();
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => wrap("**", "**", "жирный текст")} className={toolButton}>
+        <button type="button" onMouseDown={keep} onClick={() => format("bold")} className={toolButton}>
           <Bold size={16} strokeWidth={2} aria-hidden /> Жирный
         </button>
-        <button type="button" onClick={() => wrap("*", "*", "курсив")} className={toolButton}>
+        <button type="button" onMouseDown={keep} onClick={() => format("italic")} className={toolButton}>
           <Italic size={16} strokeWidth={2} aria-hidden /> Курсив
         </button>
         <button
           type="button"
+          onMouseDown={keep}
           onClick={() => {
-            const area = ref.current;
-            setLinkFor(area ? { start: area.selectionStart, end: area.selectionEnd } : { start: value.length, end: value.length });
+            saveSelection();
+            setLinkText(range.current?.toString().slice(0, 40) ?? "");
+            setLinkOpen(true);
           }}
           className={toolButton}
         >
           <Link2 size={16} strokeWidth={2} aria-hidden /> Ссылка
         </button>
       </div>
-      {linkFor && (
+      {linkOpen && (
         <div className="flex flex-wrap items-center gap-2 rounded-card border border-petal/60 p-3">
-          <span className="text-sm text-muted-bright">
-            {linkFor.end > linkFor.start ? `Ссылка на «${value.slice(linkFor.start, linkFor.end).slice(0, 40)}»` : "Ссылка"}
-          </span>
+          <span className="text-sm text-muted-bright">{linkText ? `Ссылка на «${linkText}»` : "Ссылка"}</span>
           <input
             aria-label="Адрес ссылки"
             value={url}
@@ -91,12 +145,40 @@ function RichText({ value, onChange, rows, placeholder, inputClass, label }: { v
           <button type="button" onClick={applyLink} className={toolButton}>
             Вставить
           </button>
-          <button type="button" onClick={() => setLinkFor(null)} className="text-sm text-muted-bright underline">
+          <button type="button" onClick={() => setLinkOpen(false)} className="text-sm text-muted-bright underline">
             Отмена
           </button>
         </div>
       )}
-      <textarea ref={ref} aria-label={label} value={value} rows={rows} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className={inputClass} />
+      <div className="relative">
+        {isEmpty && (
+          <p aria-hidden className="pointer-events-none absolute left-4 top-3 whitespace-pre-line text-muted/70">
+            {placeholder}
+          </p>
+        )}
+        <div
+          ref={ref}
+          role="textbox"
+          aria-multiline="true"
+          aria-label={label}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={sync}
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
+          onBlur={saveSelection}
+          onPaste={(event) => {
+            // Вставляем только текст: чужое оформление из Word и сайтов в статью не попадает.
+            event.preventDefault();
+            document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+          }}
+          className={cn(
+            inputClass,
+            "min-h-28 whitespace-pre-wrap break-words text-lg leading-relaxed [&_a]:text-paper [&_a]:underline [&_a]:decoration-glow [&_a]:underline-offset-4 [&_b]:font-bold [&_strong]:font-bold",
+            MODE_CLASS[mode],
+          )}
+        />
+      </div>
     </div>
   );
 }
@@ -142,14 +224,45 @@ function ImageBlock({ block, onChange, inputClass }: { block: Extract<Block, { t
   );
 }
 
-type ArticleEditorProps = { name: string; initial?: string; inputClass: string; invalid?: boolean };
+type ArticleEditorProps = {
+  name: string;
+  initial?: string;
+  inputClass: string;
+  invalid?: boolean;
+  /** Для шапки предпросмотра: рубрики и обложка, уже сохранённая в заявке. */
+  categories: { slug: string; title: string }[];
+  coverUrl?: string | null;
+};
 
-export function ArticleEditor({ name, initial = "", inputClass, invalid }: ArticleEditorProps) {
+type PreviewMeta = { title: string; author: string; category: { slug: string; title: string }; cover: string | null };
+
+export function ArticleEditor({ name, initial = "", inputClass, invalid, categories, coverUrl = null }: ArticleEditorProps) {
   const [blocks, setBlocks] = useState<Block[]>(() => {
     const parsed = parseBlocks(initial);
     return parsed.length > 0 ? parsed : [{ key: "i0", type: "text", text: "" }];
   });
   const [preview, setPreview] = useState(false);
+  const [meta, setMeta] = useState<PreviewMeta | null>(null);
+  const root = useRef<HTMLDivElement>(null);
+
+  // Заголовок, автор, рубрика и обложка берутся из полей формы в момент открытия предпросмотра.
+  const openPreview = (on: boolean) => {
+    setPreview(on);
+    if (!on) return;
+    const form = root.current?.closest("form");
+    const field = (fieldName: string) => form?.querySelector<HTMLInputElement>(`[name="${fieldName}"]`);
+    const slug = form?.querySelector<HTMLInputElement>('[name="categorySlug"]:checked')?.value ?? categories[0]?.slug;
+    const file = field("image")?.files?.[0];
+    setMeta((previous) => {
+      if (previous?.cover?.startsWith("blob:")) URL.revokeObjectURL(previous.cover);
+      return {
+        title: field("title")?.value.trim() ?? "",
+        author: field("authorName")?.value.trim() ?? "",
+        category: categories.find((category) => category.slug === slug) ?? { slug: "articles", title: "Статьи" },
+        cover: file ? URL.createObjectURL(file) : coverUrl,
+      };
+    });
+  };
   const source = useMemo(() => serializeBlocks(blocks), [blocks]);
 
   const update = (key: string, patch: Partial<Block>) => setBlocks((list) => list.map((block) => (block.key === key ? ({ ...block, ...patch } as Block) : block)));
@@ -177,7 +290,7 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
   );
 
   return (
-    <div className={cn("rounded-card border p-3 sm:p-4", invalid ? "border-danger" : "border-petal/60")}>
+    <div ref={root} className={cn("rounded-card border p-3 sm:p-4", invalid ? "border-danger" : "border-petal/60")}>
       <input type="hidden" name={name} value={source} />
 
       <div role="tablist" aria-label="Режим редактора" className="mb-4 flex gap-2">
@@ -190,7 +303,7 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
             type="button"
             role="tab"
             aria-selected={preview === tab.key}
-            onClick={() => setPreview(tab.key)}
+            onClick={() => openPreview(tab.key)}
             className={cn("h-9 rounded-full px-4 text-sm font-semibold", preview === tab.key ? "bg-paper text-deep" : "text-paper hover:bg-paper/10")}
           >
             {tab.label}
@@ -199,11 +312,33 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
       </div>
 
       {preview ? (
-        source ? (
-          <div className="article-body min-h-40" dangerouslySetInnerHTML={{ __html: renderMarkup(source) }} />
-        ) : (
-          <p className="py-10 text-center text-muted">Пока пусто — добавь текст или фото.</p>
-        )
+        <div className="px-1 py-2 sm:px-3">
+          {meta && (
+            <header className="max-w-prose">
+              <p className="font-medium text-muted-bright">{meta.category.title}</p>
+              <h1 className="mt-3 text-2xl sm:text-3xl">{meta.title || "Заголовок статьи"}</h1>
+              {meta.author && <p className="mt-4 text-sm font-medium text-text">{meta.author}</p>}
+            </header>
+          )}
+          {meta && (
+            <div className="relative my-6 aspect-video overflow-hidden rounded-card">
+              <ArticleCover
+                slug={meta.title || "preview"}
+                title={meta.title || "Заголовок статьи"}
+                category={meta.category}
+                coverUrl={meta.cover}
+                coverText={null}
+                sizes="(min-width: 768px) 640px, 100vw"
+              />
+            </div>
+          )}
+          {!meta?.cover && <p className="-mt-3 mb-6 text-sm text-muted">Обложку не загрузили — на сайте будет фирменный плакат, как выше.</p>}
+          {source ? (
+            <div className="article-body min-h-40" dangerouslySetInnerHTML={{ __html: renderMarkup(source) }} />
+          ) : (
+            <p className="py-10 text-center text-muted">Пока пусто — добавь текст или фото.</p>
+          )}
+        </div>
       ) : (
         <div className="space-y-3">
           {blocks.map((block, index) => {
@@ -229,8 +364,8 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
                 {block.type === "text" && (
                   <RichText
                     label={`Текст, блок ${index + 1}`}
+                    mode="text"
                     value={block.text}
-                    rows={Math.min(14, Math.max(4, block.text.split("\n").length + 1))}
                     placeholder="Пиши как в обычном редакторе. Enter — новая строка, пустая строка — новый абзац."
                     inputClass={inputClass}
                     onChange={(text) => update(block.key, { text })}
@@ -249,8 +384,8 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
                 {block.type === "list" && (
                   <RichText
                     label={`Список, блок ${index + 1}`}
+                    mode="list"
                     value={block.text}
-                    rows={Math.max(3, block.text.split("\n").length + 1)}
                     placeholder={"Каждый пункт — с новой строки\nВторой пункт\nТретий пункт"}
                     inputClass={inputClass}
                     onChange={(text) => update(block.key, { text })}
@@ -259,8 +394,8 @@ export function ArticleEditor({ name, initial = "", inputClass, invalid }: Artic
                 {block.type === "quote" && (
                   <RichText
                     label={`Цитата, блок ${index + 1}`}
+                    mode="quote"
                     value={block.text}
-                    rows={3}
                     placeholder="Цитата или важная мысль"
                     inputClass={inputClass}
                     onChange={(text) => update(block.key, { text })}
