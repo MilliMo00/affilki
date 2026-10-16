@@ -55,7 +55,7 @@ npx tsc --noEmit
 | `ADMIN_PATH` | адрес админки, например `/ctrl-8f3k2` |
 | `ADMIN_ENC_KEY` | ключ шифрования секретов двухфакторного входа (32+ символа) |
 | `ADMIN_IP_ALLOWLIST` | необязательно: IP через запятую, с которых открывается админка |
-| `ADS_CONTACT_URL` | куда ведёт заглушка «Слот свободен» |
+| `PARTNERS_CONTACT_URL`, `SUPPORT_CONTACT_URL`, `OWNER_CONTACT_URL` | контакты (по умолчанию @affilki_partners, @affilki_support, @affilki_owner) |
 
 Все секреты — только в `.env` на сервере. `.env` в git не попадает.
 

@@ -16,7 +16,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { StoryShare } from "@/components/ui/StoryShare";
 import { Tabs } from "@/components/ui/Tabs";
 import { getNomination, isVotingOpen, type Nomination, type Season } from "@/lib/data";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { OWNER_CONTACT_URL, handleOf } from "@/lib/env";
 import { formatDate, plural } from "@/lib/format";
 
 type Props = PageProps<"/awards/[nomination]">;
@@ -133,8 +133,8 @@ function Nominees({ nomination, votingOpen, board, byVotes }: NomineesProps) {
       {nomination.isEvents && (
         <p className="mb-8 rounded-card border border-petal bg-deep/50 p-5 text-paper">
           Мы фиксируем события, которые обсуждал рынок. Если вы упомянуты и хотите дать комментарий — напишите{" "}
-          <a href={ADS_CONTACT_URL} target="_blank" rel="noopener" className="font-semibold underline underline-offset-4">
-            @{ADS_CONTACT_URL.split("/").pop()}
+          <a href={OWNER_CONTACT_URL} target="_blank" rel="noopener" className="font-semibold underline underline-offset-4">
+            {handleOf(OWNER_CONTACT_URL)}
           </a>
           .
         </p>

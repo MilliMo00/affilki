@@ -2,11 +2,11 @@ import { Send } from "lucide-react";
 import { Flower } from "@/components/brand/Flower";
 import { Snowfall } from "@/components/festive/Snowfall";
 import { Button } from "@/components/ui/Button";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { PARTNERS_CONTACT_URL, handleOf } from "@/lib/env";
 
 /** Приглашение спонсорам номинаций с контактом для связи. */
 export function SponsorCall() {
-  const handle = `@${ADS_CONTACT_URL.split("/").pop()}`;
+  const handle = handleOf(PARTNERS_CONTACT_URL);
 
   return (
     <section aria-labelledby="sponsor-title" className="border-y border-petal/40 bg-deep">
@@ -45,7 +45,7 @@ export function SponsorCall() {
             </div>
 
             <div className="flex flex-col items-start gap-3 lg:items-end">
-              <Button href={ADS_CONTACT_URL} size="lg">
+              <Button href={PARTNERS_CONTACT_URL} size="lg">
                 <Send size={20} strokeWidth={1.75} aria-hidden />
                 Написать {handle}
               </Button>

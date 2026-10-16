@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TextPage } from "@/components/layout/TextPage";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { SUPPORT_CONTACT_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности",
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
 
       <h2>Как удалить данные</h2>
       <p>
-        Напишите нам в <a href={ADS_CONTACT_URL}>Telegram</a> с того аккаунта, данные которого нужно удалить. Удалим в
+        Напишите в поддержку — <a href={SUPPORT_CONTACT_URL}>@affilki_support</a> — с того аккаунта, данные которого нужно удалить. Удалим в
         течение 30 дней. Если голосование ещё идёт, голоса этого аккаунта будут аннулированы.
       </p>
 

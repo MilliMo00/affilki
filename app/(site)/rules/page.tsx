@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TextPage } from "@/components/layout/TextPage";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { SUPPORT_CONTACT_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Правила голосования",
@@ -51,7 +51,7 @@ export default function RulesPage() {
 
       <h2>Вопросы</h2>
       <p>
-        Не согласен с решением или нашёл ошибку — напиши нам в <a href={ADS_CONTACT_URL}>Telegram</a>.
+        Не согласен с решением или нашёл ошибку — напиши в поддержку — <a href={SUPPORT_CONTACT_URL}>@affilki_support</a>.
       </p>
     </TextPage>
   );

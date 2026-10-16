@@ -111,7 +111,7 @@ export async function castVote(input: Input, deps: Deps): Promise<VoteResult> {
       Number(session.tgUserId),
       `Голос за «${nominee.name}» в номинации «${nomination.title}» засчитан.\n\n${
         remaining > 0 ? `Осталось номинаций: ${remaining}.` : "Ты проголосовал во всех номинациях."
-      }\n\nЕсли это был не ты — напиши нам.`,
+      }\n\nЕсли это был не ты — напиши в поддержку: @affilki_support`,
       [[{ text: "Другие номинации", url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://affilki.com"}/awards` }]],
     )
     .catch(() => {});

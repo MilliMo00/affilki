@@ -2,7 +2,7 @@ import { Send } from "lucide-react";
 import Link from "next/link";
 import { Flower } from "@/components/brand/Flower";
 import { Logo } from "@/components/brand/Logo";
-import { ADS_CONTACT_URL, TG_CHANNEL_URL } from "@/lib/env";
+import { OWNER_CONTACT_URL, PARTNERS_CONTACT_URL, SUPPORT_CONTACT_URL, TG_CHANNEL_URL, handleOf } from "@/lib/env";
 import { isFestive } from "@/lib/festive";
 import { DEFAULT_CATEGORIES } from "@/lib/nav";
 
@@ -30,8 +30,13 @@ const COLUMNS = [
   },
 ];
 
+const CONTACTS = [
+  { url: PARTNERS_CONTACT_URL, label: "Реклама, спонсорство и сотрудничество" },
+  { url: SUPPORT_CONTACT_URL, label: "Поддержка: вход, голос, заявки" },
+  { url: OWNER_CONTACT_URL, label: "Владелец проекта" },
+];
+
 export function Footer() {
-  const contactHandle = `@${ADS_CONTACT_URL.split("/").pop()}`;
 
   return (
     <footer className="border-t border-petal/30 bg-ink">
@@ -53,20 +58,26 @@ export function Footer() {
 
         <div>
           <h2 className="mb-4 font-sans text-base font-semibold text-paper">Контакты</h2>
-          <a
-            href={ADS_CONTACT_URL}
-            target="_blank"
-            rel="noopener"
-            className="flex items-center gap-3 rounded-card border border-petal/40 p-3 hover:border-glow"
-          >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-indigo">
-              <Flower size={28} className="text-paper" />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate font-semibold text-paper">{contactHandle}</span>
-              <span className="block text-sm text-muted">Реклама и сотрудничество</span>
-            </span>
-          </a>
+          <ul className="space-y-2">
+            {CONTACTS.map((contact) => (
+              <li key={contact.url}>
+                <a
+                  href={contact.url}
+                  target="_blank"
+                  rel="noopener"
+                  className="flex items-center gap-3 rounded-card border border-petal/40 p-3 hover:border-glow"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo">
+                    <Flower size={22} className="text-paper" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-paper">{handleOf(contact.url)}</span>
+                    <span className="block text-sm text-muted">{contact.label}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 

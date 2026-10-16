@@ -2,7 +2,7 @@ import Image from "next/image";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { getActiveCampaigns } from "@/lib/ads";
 import { cn } from "@/lib/cn";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { PARTNERS_CONTACT_URL } from "@/lib/env";
 import { AD_SLOTS, type AdSlotKey } from "./slots";
 
 type AdSlotProps = {
@@ -48,7 +48,7 @@ export async function AdSlot({ slotKey, onBrand, className }: AdSlotProps) {
   // Свободный слот — сам себе реклама: яркий фирменный градиент и крупный призыв.
   return (
     <a
-      href={ADS_CONTACT_URL}
+      href={PARTNERS_CONTACT_URL}
       target="_blank"
       rel="noopener"
       data-ad-slot={slotKey}

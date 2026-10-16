@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { GENERAL_SPONSOR_SLOTS } from "@/lib/entry-rules";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { PARTNERS_CONTACT_URL } from "@/lib/env";
 import { getSponsors, type SponsorView } from "@/lib/sponsors";
 
 // Спонсорские места: у премии — несколько общих (на главной, в премии, на страницах номинаций и участников),
@@ -14,7 +14,7 @@ function SponsorTile({ sponsor, compact }: { sponsor: SponsorView | null; compac
   if (!sponsor) {
     return (
       <a
-        href={ADS_CONTACT_URL}
+        href={PARTNERS_CONTACT_URL}
         target="_blank"
         rel="noopener"
         className={cn(box, "gap-2 border border-dashed border-muted-bright/70 text-muted-bright hover:border-paper hover:text-paper", !compact && "flex-col")}

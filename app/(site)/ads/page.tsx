@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AD_SLOTS, type AdSlotKey } from "@/components/ads/slots";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { Button } from "@/components/ui/Button";
-import { ADS_CONTACT_URL } from "@/lib/env";
+import { PARTNERS_CONTACT_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Реклама",
@@ -28,7 +28,7 @@ export default function AdsPage() {
           Нас читают медиабайеры, команды, партнёрки и сервисы. Пять форматов, принимаем картинки и гифки. Условия и
           свободные даты — в личке.
         </p>
-        <Button href={ADS_CONTACT_URL} size="lg" className="mt-6">
+        <Button href={PARTNERS_CONTACT_URL} size="lg" className="mt-6">
           <Send size={20} strokeWidth={1.75} aria-hidden />
           Написать в Telegram
         </Button>
@@ -66,7 +66,7 @@ export default function AdsPage() {
 
       <div className="mt-12 flex flex-col items-start gap-4 rounded-card border border-petal/40 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-lg text-text">Все рекламные материалы помечаются подписью «Реклама». По каждому слоту считаем показы и клики.</p>
-        <Button href={ADS_CONTACT_URL} className="shrink-0">
+        <Button href={PARTNERS_CONTACT_URL} className="shrink-0">
           Узнать условия
         </Button>
       </div>
