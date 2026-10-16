@@ -8,6 +8,7 @@ import { SeasonHero } from "@/components/awards/SeasonHero";
 import { SponsorCall } from "@/components/awards/SponsorCall";
 import { SponsorStrip } from "@/components/awards/Sponsors";
 import { StatsRow } from "@/components/awards/StatsRow";
+import { WinnerPrize } from "@/components/awards/WinnerPrize";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
@@ -37,6 +38,7 @@ export default async function Home() {
         <>
           <SeasonHero season={season} live={live} acceptingEntries={open.length > 0} nominationsHref="/awards" />
           <StatsRow stats={await seasonStats(season)} />
+          <WinnerPrize year={season.year} />
           <div className="bg-indigo">
             <SponsorStrip className="container-page py-10" />
           </div>

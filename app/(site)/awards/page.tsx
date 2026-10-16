@@ -4,6 +4,7 @@ import { HowWeVote } from "@/components/awards/HowWeVote";
 import { NominationHub } from "@/components/awards/NominationHub";
 import { SeasonHero } from "@/components/awards/SeasonHero";
 import { SponsorCall } from "@/components/awards/SponsorCall";
+import { WinnerPrize } from "@/components/awards/WinnerPrize";
 import { SponsorStrip } from "@/components/awards/Sponsors";
 import { Watermark } from "@/components/brand/Watermark";
 import { Button } from "@/components/ui/Button";
@@ -53,6 +54,7 @@ export default async function AwardsPage() {
         <NominationHub nominations={season.nominations.map((n) => toHubNomination(n, sponsors.byNomination.get(n.slug)))} live={live} />
       </section>
 
+      <WinnerPrize year={season.year} />
       <HowWeVote />
       <SponsorCall />
     </div>
