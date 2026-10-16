@@ -13,19 +13,21 @@ import { Button } from "@/components/ui/Button";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { toHubNomination } from "@/lib/awards";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
+import { getSponsors } from "@/lib/sponsors";
 import { getArticles, getChannelInfo, getCurrentSeason, getOpenNominations, getPopularArticles, seasonStats } from "@/lib/data";
 
 // Этап, таймер и «дней до финала» зависят от текущего времени — страницу нельзя замораживать при сборке.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [season, open, live, feed, popular, channel] = await Promise.all([
+  const [season, open, live, feed, popular, channel, sponsors] = await Promise.all([
     getCurrentSeason(),
     getOpenNominations(),
     getLiveSnapshot(),
     getArticles({ perPage: 8 }),
     getPopularArticles(5),
     getChannelInfo(),
+    getSponsors(),
   ]);
 
   return (
@@ -69,7 +71,7 @@ export default async function Home() {
                 Вся премия
               </Link>
             </div>
-            <NominationHub nominations={season.nominations.map(toHubNomination)} filters={false} live={live} />
+            <NominationHub nominations={season.nominations.map((n) => toHubNomination(n, sponsors.byNomination.get(n.slug)))} filters={false} live={live} />
           </div>
         </section>
       )}

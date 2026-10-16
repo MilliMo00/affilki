@@ -2,6 +2,7 @@ export const MAIN_NAV = [
   { href: "/awards", label: "Премия" },
   { href: "/articles", label: "Статьи" },
   { href: "/submit", label: "Подать заявку" },
+  { href: "/sponsors", label: "Спонсоры" },
   { href: "/ads", label: "Реклама" },
 ] as const;
 

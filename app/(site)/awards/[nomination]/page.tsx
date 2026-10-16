@@ -10,6 +10,7 @@ import { NomineeCard } from "@/components/awards/NomineeCard";
 import { LiveBoard } from "@/components/live/LiveBoard";
 import { cn } from "@/lib/cn";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
+import { getSponsors } from "@/lib/sponsors";
 import type { LiveNomination } from "@/lib/live/types";
 import { PetalIcon } from "@/components/brand/PetalIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
@@ -157,7 +158,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
   const { season, nomination, prev, next } = data;
   const query = await searchParams;
   const requested = query.tab;
-  const live = await getLiveSnapshot();
+  const [live, sponsors] = await Promise.all([getLiveSnapshot(), getSponsors()]);
   const liveNomination = live?.nominations.find((n) => n.slug === nomination.slug);
   const board = liveNomination?.state === "live" ? liveNomination : null;
   const tab = TABS.find((t) => t.key === requested)?.key ?? "about";
@@ -173,7 +174,7 @@ export default async function NominationPage({ params, searchParams }: Props) {
         <SponsorStrip compact className="mb-6" />
         <Breadcrumbs items={[{ href: "/awards", label: season.title }]} />
 
-        <NominationCover number={nomination.number} icon={nomination.icon} text={nomination.coverText} className="mt-4 h-40 rounded-petal sm:h-52" />
+        <NominationCover number={nomination.number} icon={nomination.icon} text={nomination.coverText} sponsor={sponsors.byNomination.get(nomination.slug)} className="mt-4 h-40 rounded-petal sm:h-52" />
 
         <header className="mt-6 flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">

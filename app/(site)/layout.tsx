@@ -4,6 +4,7 @@ import { CookieBanner } from "@/components/analytics/CookieBanner";
 import { Tracker } from "@/components/analytics/Tracker";
 import { TestModeBanner } from "@/components/voting/TestModeBanner";
 import { VoteDialog } from "@/components/voting/VoteDialog";
+import { SponsorStrip } from "@/components/awards/Sponsors";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Intro } from "@/components/layout/Intro";
@@ -27,6 +28,10 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
         <main id="main" className="flex-1">
           {children}
         </main>
+        {/* Спонсоры премии — на каждой странице сайта. */}
+        <div className="border-t border-petal/30 bg-deep">
+          <SponsorStrip compact className="container-page py-6" />
+        </div>
         <Footer />
       </div>
       <VoteDialog channelUrl={TG_CHANNEL_URL} />

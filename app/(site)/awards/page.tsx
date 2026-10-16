@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { toHubNomination } from "@/lib/awards";
 import { getCurrentSeason, getOpenNominations } from "@/lib/data";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
+import { getSponsors } from "@/lib/sponsors";
 import { TG_CHANNEL_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AwardsPage() {
-  const [season, live, open] = await Promise.all([getCurrentSeason(), getLiveSnapshot(), getOpenNominations()]);
+  const [season, live, open, sponsors] = await Promise.all([getCurrentSeason(), getLiveSnapshot(), getOpenNominations(), getSponsors()]);
 
   if (!season) {
     return (
@@ -49,7 +50,7 @@ export default async function AwardsPage() {
         <h2 id="nominations-title" className="mb-6 text-2xl">
           Номинации
         </h2>
-        <NominationHub nominations={season.nominations.map(toHubNomination)} live={live} />
+        <NominationHub nominations={season.nominations.map((n) => toHubNomination(n, sponsors.byNomination.get(n.slug)))} live={live} />
       </section>
 
       <HowWeVote />

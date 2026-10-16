@@ -141,6 +141,10 @@ model Sponsor {
   name         String
   logoUrl      String?
   url          String
+  /// Описание компании для страницы «Подробнее о спонсоре»; переносы строк сохраняются.
+  description  String?
+  /// Дополнительные ссылки-кнопки: { title, url }[] (см. lib/profile.ts).
+  links        Json?
   nominationId String?
   nomination   Nomination? @relation(fields: [nominationId], references: [id], onDelete: Cascade)
   /// Порядок среди спонсоров премии: меньше — левее.

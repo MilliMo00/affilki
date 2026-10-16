@@ -15,6 +15,7 @@ export type NominationCardData = {
   coverText: string;
   nomineeCount: number;
   isEvents: boolean;
+  sponsor: { name: string; logoUrl: string | null } | null;
 };
 
 export function NominationCard({ nomination, live }: { nomination: NominationCardData; live: LiveSnapshot | null }) {
@@ -27,6 +28,7 @@ export function NominationCard({ nomination, live }: { nomination: NominationCar
         number={nomination.number}
         icon={nomination.icon}
         text={nomination.coverText}
+        sponsor={nomination.sponsor}
         className="-mx-5 -mt-5 h-36 rounded-[27px_5px_0_0] sm:-mx-6 sm:-mt-6"
       />
       <h3 className="text-xl">

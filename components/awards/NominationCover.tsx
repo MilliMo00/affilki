@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Flower } from "@/components/brand/Flower";
 import { cn } from "@/lib/cn";
 import { NominationIcon } from "./NominationIcon";
@@ -22,10 +23,12 @@ type NominationCoverProps = {
   icon: string;
   /** Крупное слово плаката. */
   text: string;
+  /** Спонсор номинации: его логотип стоит в углу обложки. */
+  sponsor?: { name: string; logoUrl: string | null } | null;
   className?: string;
 };
 
-export function NominationCover({ number, icon, text, className }: NominationCoverProps) {
+export function NominationCover({ number, icon, text, sponsor, className }: NominationCoverProps) {
   const variant = VARIANTS[(number - 1 + VARIANTS.length) % VARIANTS.length];
   const word = text.toUpperCase();
   // Буква Unbounded почти квадратная: слово должно уместиться примерно в две трети ширины.
@@ -49,6 +52,19 @@ export function NominationCover({ number, icon, text, className }: NominationCov
           {word}
         </span>
       </div>
+
+      {sponsor && (
+        <div className="absolute right-[3cqw] top-[6cqh] flex items-center gap-2 rounded-full bg-paper py-1 pl-3 pr-1 shadow-lg">
+          <span className="text-xs font-semibold text-deep">Спонсор</span>
+          <span className="relative flex h-7 min-w-16 max-w-28 items-center justify-center overflow-hidden rounded-full px-2">
+            {sponsor.logoUrl ? (
+              <Image src={sponsor.logoUrl} alt="" fill sizes="112px" className="object-contain" />
+            ) : (
+              <span className="truncate text-xs font-bold text-deep">{sponsor.name}</span>
+            )}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
