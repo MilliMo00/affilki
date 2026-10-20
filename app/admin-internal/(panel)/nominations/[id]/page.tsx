@@ -7,7 +7,7 @@ import { NOMINATION_ICON_NAMES } from "@/components/awards/NominationIcon";
 import { requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
-import { saveNomination } from "../actions";
+import { saveNomination, setNomineePublished } from "../actions";
 
 export default async function NominationEditPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePermission("awards");
@@ -30,7 +30,7 @@ export default async function NominationEditPage({ params }: { params: Promise<{
         {nomination.nominees.length === 0 ? (
           <p className="text-muted">Пока никого. Нажми «Добавить участника».</p>
         ) : (
-          <Table head={["Название", "Адрес", "Статус"]}>
+          <Table head={["Название", "Адрес", "Статус", ""]}>
             {nomination.nominees.map((nominee) => {
               const visible = nominee.published && (!nomination.requiresLegalReview || nominee.legalChecked);
               return (
@@ -47,8 +47,17 @@ export default async function NominationEditPage({ params }: { params: Promise<{
                     ) : nominee.published ? (
                       <Badge tone="warn">ждёт проверки</Badge>
                     ) : (
-                      <Badge>черновик</Badge>
+                      <Badge>скрыт</Badge>
                     )}
+                  </td>
+                  <td>
+                    <ActionForm
+                      action={setNomineePublished.bind(null, nominee.id, !nominee.published)}
+                      submit={nominee.published ? "Скрыть с сайта" : "Показать на сайте"}
+                      danger={nominee.published}
+                    >
+                      <span />
+                    </ActionForm>
                   </td>
                 </tr>
               );

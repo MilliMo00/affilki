@@ -56,7 +56,7 @@ export default async function SponsorsPage() {
           ))}
           {Array.from({ length: freeGeneral }, (_, i) => (
             <li key={`free-${i}`}>
-              <FreeSponsorSlot className="h-full min-h-40" />
+              <FreeSponsorSlot className="h-full min-h-40" index={i} />
             </li>
           ))}
         </ul>
@@ -68,7 +68,7 @@ export default async function SponsorsPage() {
             Спонсоры номинаций
           </h2>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {nominations.map((nomination) => {
+            {nominations.map((nomination, index) => {
               const sponsor = byNomination.get(nomination.slug);
               return (
                 <li key={nomination.slug} className="flex flex-col gap-3 rounded-card border border-petal/60 bg-deep/40 p-4">
@@ -85,7 +85,7 @@ export default async function SponsorsPage() {
                       </Link>
                     </>
                   ) : (
-                    <FreeSponsorSlot className="!h-20" />
+                    <FreeSponsorSlot className="!h-20" index={index} />
                   )}
                 </li>
               );

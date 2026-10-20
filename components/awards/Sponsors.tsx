@@ -1,6 +1,8 @@
-import { ArrowRight, ArrowUpRight, Plus, Send } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Send, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type React from "react";
+import { Flower } from "@/components/brand/Flower";
 import { cn } from "@/lib/cn";
 import { GENERAL_SPONSOR_SLOTS } from "@/lib/entry-rules";
 import { PARTNERS_CONTACT_URL } from "@/lib/env";
@@ -43,27 +45,50 @@ export function SponsorLinks({ sponsor, className }: { sponsor: SponsorView; cla
   );
 }
 
-/** Свободное место: ведёт к контакту по сотрудничеству. */
-export function FreeSponsorSlot({ compact, className }: { compact?: boolean; className?: string }) {
+/**
+ * Свободное место: яркая плашка с бликом и цветком — «здесь может быть ваш логотип».
+ * Ведёт к контакту по сотрудничеству. index сдвигает блик, чтобы плашки рядом не мигали разом.
+ */
+export function FreeSponsorSlot({ compact, className, index = 0 }: { compact?: boolean; className?: string; index?: number }) {
   return (
     <a
       href={PARTNERS_CONTACT_URL}
       target="_blank"
       rel="noopener"
+      style={{ "--shine-delay": `${index * 0.6}s` } as React.CSSProperties}
       className={cn(
-        "flex w-full items-center justify-center gap-2 rounded-card border border-dashed border-muted-bright/70 px-4 text-center text-muted-bright hover:border-paper hover:text-paper",
-        compact ? "h-14" : "h-24 flex-col sm:h-28",
+        "sponsor-shine group relative flex w-full items-center overflow-hidden rounded-card border border-glow/60 text-paper transition-colors hover:border-paper",
+        compact ? "h-14 justify-center gap-2 px-3" : "h-24 flex-col justify-center gap-1 px-4 sm:h-28",
         className,
       )}
     >
-      <Plus size={compact ? 16 : 20} strokeWidth={1.75} aria-hidden />
-      <span className={cn("font-medium", compact && "text-sm")}>Спонсорское место</span>
+      <span aria-hidden className="absolute inset-0 bg-[linear-gradient(120deg,#30209D_0%,#4A33C0_55%,#7B62F0_100%)] opacity-80 transition-opacity group-hover:opacity-100" />
+      <span aria-hidden className={cn("absolute aspect-square text-paper/15 transition-transform duration-500 group-hover:rotate-[24deg]", compact ? "-right-3 -top-4 w-16" : "-right-6 -top-8 w-28")}>
+        <Flower size="100%" rays={false} rayColor="var(--indigo)" />
+      </span>
+      {compact ? (
+        <span className="relative flex items-center gap-2 text-sm font-semibold leading-tight">
+          <Sparkles size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-pollen" />
+          Ваш логотип здесь
+        </span>
+      ) : (
+        <>
+          <span className="relative flex items-center gap-2 whitespace-nowrap font-display text-sm font-bold sm:text-base">
+            <Sparkles size={18} strokeWidth={1.75} aria-hidden className="text-pollen" />
+            Ваш логотип здесь
+          </span>
+          <span className="relative inline-flex items-center gap-1 text-sm font-medium text-muted-bright group-hover:text-paper">
+            Стать спонсором
+            <ArrowRight size={14} strokeWidth={2} aria-hidden className="transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </>
+      )}
     </a>
   );
 }
 
-function SponsorTile({ sponsor, compact }: { sponsor: SponsorView | null; compact?: boolean }) {
-  if (!sponsor) return <FreeSponsorSlot compact={compact} />;
+function SponsorTile({ sponsor, compact, index }: { sponsor: SponsorView | null; compact?: boolean; index: number }) {
+  if (!sponsor) return <FreeSponsorSlot compact={compact} index={index} />;
   // Логотип ведёт на сайт спонсора — это главное, за что он платит.
   return (
     <a href={sponsor.url} target="_blank" rel="noopener sponsored" aria-label={`${sponsor.name} — спонсор премии`} className="block rounded-card ring-glow hover:ring-2">
@@ -89,7 +114,7 @@ export async function SponsorStrip({ compact, className }: { compact?: boolean; 
         <ul className={cn("grid flex-1 grid-cols-2 lg:grid-cols-4", compact ? "gap-2" : "gap-4")}>
           {slots.map((sponsor, i) => (
             <li key={sponsor?.id ?? i}>
-              <SponsorTile sponsor={sponsor} compact={compact} />
+              <SponsorTile sponsor={sponsor} compact={compact} index={i} />
             </li>
           ))}
         </ul>

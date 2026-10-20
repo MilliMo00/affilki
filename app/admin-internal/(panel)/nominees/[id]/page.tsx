@@ -8,7 +8,7 @@ import { adminUrl } from "@/lib/admin/path";
 import { CasesEditor, LinksEditor } from "@/components/submissions/ListEditors";
 import { db } from "@/lib/db";
 import { readProfile } from "@/lib/profile";
-import { deleteNominee, saveNominee } from "../../nominations/actions";
+import { deleteNominee, saveNominee, setNomineePublished } from "../../nominations/actions";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ nomination?: string }> };
 
@@ -35,6 +35,30 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
           К номинации
         </Link>
       </PageTitle>
+
+      {nominee && (
+        <Card className="mb-6 max-w-3xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-text">
+              {nominee.published ? (
+                <>
+                  Участник <b className="text-paper">на сайте</b>.{" "}
+                  <Link href={`/n/${nominee.slug}`} className="underline underline-offset-4">
+                    Открыть страницу
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Участник <b className="text-paper">скрыт</b> — на сайте его не видно.
+                </>
+              )}
+            </p>
+            <ActionForm action={setNomineePublished.bind(null, nominee.id, !nominee.published)} submit={nominee.published ? "Скрыть с сайта" : "Показать на сайте"} danger={nominee.published}>
+              <span />
+            </ActionForm>
+          </div>
+        </Card>
+      )}
 
       <Card className="max-w-3xl">
         <ActionForm action={saveNominee.bind(null, nomination.id, id)} submit={isNew ? "Создать" : "Сохранить"}>

@@ -287,6 +287,22 @@ html[data-intro] [data-header-logo] {
   animation: petal-pulse 1.25s ease-in-out infinite;
 }
 
+/* Свободное спонсорское место: блик пробегает по плашке, каждая плашка — со своим сдвигом. */
+@keyframes sponsor-shine {
+  0%, 70% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(320%) skewX(-18deg); }
+}
+.sponsor-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  animation: sponsor-shine 4.5s ease-in-out infinite;
+  animation-delay: var(--shine-delay, 0s);
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -302,8 +318,12 @@ html[data-intro] [data-header-logo] {
   /* Снег стоит на месте, гирлянда горит ровно. */
   .snow-column,
   .snow-flake,
-  .garland-bulb {
+  .garland-bulb,
+  .sponsor-shine::after {
     animation: none !important;
+  }
+  .sponsor-shine::after {
+    display: none;
   }
   .snow-column {
     transform: translateY(calc(var(--snow-rest, 40) * 1%));

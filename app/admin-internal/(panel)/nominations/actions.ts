@@ -166,3 +166,17 @@ export async function deleteNominee(id: string, _: ActionState, formData: FormDa
   revalidatePath("/", "layout");
   redirect(adminUrl(`/nominations/${nominee.nominationId}`));
 }
+
+/** Быстро скрыть участника с сайта или вернуть его — без правки остальных полей. */
+export async function setNomineePublished(id: string, published: boolean): Promise<ActionState> {
+  const context = await requirePermission("awards");
+  const nominee = await db.nominee.findUnique({ where: { id } });
+  if (!nominee) return failed("Участник не найден.");
+  if (published && (await nominationIsFull(nominee.nominationId, id))) {
+    return failed(`В номинации уже ${MAX_NOMINEES} участников на сайте — это максимум.`);
+  }
+  await db.nominee.update({ where: { id }, data: { published } });
+  await audit(context, published ? "nominee.show" : "nominee.hide", { type: "nominee", id }, { published: nominee.published }, { published });
+  revalidatePath("/", "layout");
+  return done(published ? "Участник снова на сайте." : "Участник скрыт с сайта. Данные и голоса сохранены.");
+}
