@@ -8,6 +8,7 @@ import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
 import { Watermark } from "@/components/brand/Watermark";
 import { ZoomImage } from "@/components/ui/ZoomImage";
 import { VoteButton } from "@/components/voting/VoteButton";
+import { cn } from "@/lib/cn";
 import { getNominee, isVotingOpen } from "@/lib/data";
 
 type Props = PageProps<"/n/[nominee]/cases/[n]">;
@@ -72,39 +73,88 @@ export default async function CasePage({ params }: Props) {
       </section>
 
       <div className="container-page py-10">
-        <article className="max-w-3xl">
-          {item.text ? (
-            <p className="whitespace-pre-line break-words text-lg leading-relaxed text-text">{item.text}</p>
-          ) : (
-            <p className="text-muted-bright">Описание кейса не добавлено.</p>
-          )}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <article className="flex flex-col rounded-petal border border-petal/60 bg-deep/40 p-6 sm:p-8 lg:min-h-[420px]">
+            <p className="font-display text-sm font-bold text-muted-bright">О кейсе</p>
+            {item.text ? (
+              <p className="mt-3 whitespace-pre-line break-words text-lg leading-relaxed text-text">{item.text}</p>
+            ) : (
+              <p className="mt-3 text-muted-bright">Описание кейса не добавлено.</p>
+            )}
             {item.url && (
-              <a href={item.url} target="_blank" rel="noopener nofollow" className="flex h-11 items-center gap-2 rounded-full bg-paper px-5 font-semibold text-deep hover:bg-text">
+              <a href={item.url} target="_blank" rel="noopener nofollow" className="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-paper px-5 font-semibold text-deep hover:bg-text">
                 Открыть кейс полностью
                 <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden />
               </a>
             )}
-            {isVotingOpen(season) && <VoteButton nominee={{ slug: nominee.slug, name: nominee.name }} nomination={{ slug: nomination.slug, title: nomination.title }} />}
-          </div>
-        </article>
+            {/* Распорка прижимает навигацию к низу карточки, когда текст короче боковой колонки. */}
+            <div aria-hidden className="min-h-8 flex-1" />
+            <nav aria-label="Другие кейсы" className="flex flex-wrap items-center justify-between gap-4 border-t border-petal/40 pt-6">
+              {prev ? (
+                <Link href={`${base}/cases/${prev}`} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
+                  <ArrowLeft size={18} strokeWidth={1.75} aria-hidden /> Предыдущий кейс
+                </Link>
+              ) : (
+                <Link href={base} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
+                  <ArrowLeft size={18} strokeWidth={1.75} aria-hidden /> К участнику
+                </Link>
+              )}
+              {next && (
+                <Link href={`${base}/cases/${next}`} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
+                  Следующий кейс <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
+                </Link>
+              )}
+            </nav>
+          </article>
 
-        <nav aria-label="Другие кейсы" className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-petal/40 pt-6">
-          {prev ? (
-            <Link href={`${base}/cases/${prev}`} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
-              <ArrowLeft size={18} strokeWidth={1.75} aria-hidden /> Предыдущий кейс
-            </Link>
-          ) : (
-            <Link href={base} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
-              <ArrowLeft size={18} strokeWidth={1.75} aria-hidden /> К участнику
-            </Link>
-          )}
-          {next && (
-            <Link href={`${base}/cases/${next}`} className="inline-flex items-center gap-2 font-semibold text-paper hover:underline">
-              Следующий кейс <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
-            </Link>
-          )}
-        </nav>
+          {/* Справа — кто сделал кейс и все кейсы команды: можно листать, не возвращаясь назад. */}
+          <aside aria-label="О команде и других кейсах" className="space-y-5 lg:sticky lg:top-24">
+            <div className="rounded-petal border border-petal bg-surface p-5">
+              <div className="flex items-center gap-4">
+                <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} size={56} />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-paper">{nominee.name}</p>
+                  <p className="text-sm text-muted-bright">{nomination.title}</p>
+                </div>
+              </div>
+              {nominee.tagline && <p className="mt-3 text-sm text-muted-bright">{nominee.tagline}</p>}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link href={base} className="flex h-11 items-center gap-2 rounded-full border border-petal px-4 font-semibold text-paper hover:border-glow hover:bg-glow/20">
+                  О команде
+                  <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
+                </Link>
+                {isVotingOpen(season) && <VoteButton nominee={{ slug: nominee.slug, name: nominee.name }} nomination={{ slug: nomination.slug, title: nomination.title }} />}
+              </div>
+            </div>
+
+            <nav aria-label="Все кейсы команды" className="rounded-petal border border-petal/60 bg-deep/40 p-3">
+              <p className="px-2 pb-2 pt-1 text-sm font-semibold text-muted-bright">Все кейсы · {cases.length}</p>
+              <ol className="space-y-1">
+                {cases.map((other, i) => {
+                  const current = i === index;
+                  return (
+                    <li key={i}>
+                      <Link
+                        href={`${base}/cases/${i + 1}`}
+                        aria-current={current ? "page" : undefined}
+                        className={cn(
+                          "flex items-center gap-3 rounded-card px-2 py-2 transition-colors",
+                          current ? "bg-paper text-deep" : "text-text hover:bg-paper/10 hover:text-paper",
+                        )}
+                      >
+                        <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold", current ? "bg-deep text-paper" : "bg-ink/50 text-paper")}>
+                          {i + 1}
+                        </span>
+                        <span className="line-clamp-2 text-sm font-medium leading-snug">{other.title}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          </aside>
+        </div>
+
 
         {others.length > 0 && (
           <section aria-labelledby="more-cases" className="mt-12">
