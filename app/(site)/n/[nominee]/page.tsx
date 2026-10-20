@@ -1,9 +1,11 @@
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/awards/Breadcrumbs";
 import { NomineeAvatar } from "@/components/awards/NomineeAvatar";
-import { NomineeLinks, NomineeMiniCard, RightOfReply } from "@/components/awards/NomineeCard";
+import { CaseCard } from "@/components/awards/CaseCard";
+import { NomineeLinks, NomineeMiniCard, RightOfReply, nomineeButtons } from "@/components/awards/NomineeCard";
 import { SponsorStrip } from "@/components/awards/Sponsors";
 import { PetalCard } from "@/components/awards/PetalCard";
 import { Watermark } from "@/components/brand/Watermark";
@@ -11,7 +13,6 @@ import { Snowfall } from "@/components/festive/Snowfall";
 import { LiveBoard } from "@/components/live/LiveBoard";
 import { LiveTickerSlot } from "@/components/live/LiveTickerSlot";
 import { getLiveSnapshot } from "@/lib/live/snapshot";
-import { ZoomImage } from "@/components/ui/ZoomImage";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { StoryShare } from "@/components/ui/StoryShare";
 import { VoteButton } from "@/components/voting/VoteButton";
@@ -22,7 +23,7 @@ import { yearsOnMarket } from "@/lib/profile";
 type Props = PageProps<"/n/[nominee]">;
 
 /** Сколько других участников видно сразу; остальные свёрнуты. */
-const OTHERS_SHOWN = 3;
+const OTHERS_SHOWN = 4;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getNominee((await params).nominee);
@@ -71,130 +72,117 @@ export default async function NomineePage({ params }: Props) {
             ]}
           />
 
-          <PetalCard className="mx-auto mt-8 max-w-4xl !bg-deep/80 backdrop-blur-sm sm:!p-10">
-            <div className="flex flex-col items-start gap-5 sm:flex-row sm:gap-7">
-              <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} size={112} />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-muted-bright">{nomination.title}</p>
-                <h1 className="mt-1 break-words text-2xl sm:text-3xl lg:text-4xl">{nominee.name}</h1>
-                {nominee.tagline && <p className="mt-3 text-lg text-paper">{nominee.tagline}</p>}
+          <PetalCard className="mt-8 !bg-deep/80 backdrop-blur-sm sm:!p-10">
+            <div className="flex flex-col gap-7">
+              <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-7">
+                <NomineeAvatar name={nominee.name} logoUrl={nominee.logoUrl} size={128} />
+                <div className="min-w-0">
+                  <Link href={`/awards/${nomination.slug}`} className="inline-flex rounded-full border border-petal/70 px-3 py-1 text-sm font-medium text-muted-bright hover:border-paper hover:text-paper">
+                    {nomination.title}
+                  </Link>
+                  <h1 className="mt-3 break-words text-2xl sm:text-4xl lg:text-5xl">{nominee.name}</h1>
+                  {nominee.tagline && <p className="mt-3 max-w-2xl text-lg text-paper">{nominee.tagline}</p>}
+                </div>
               </div>
-            </div>
-
-            {facts.length > 0 && (
-              <dl className="mt-7 grid gap-3 sm:grid-cols-3">
-                {facts.map((fact) => (
-                  <div key={fact.label} className="rounded-card border border-petal/60 bg-ink/30 p-4">
-                    <dt className="text-sm text-muted-bright">{fact.label}</dt>
-                    <dd className="mt-1 font-display text-2xl font-bold text-paper">{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-
-            <NomineeLinks nominee={nominee} className="mt-6" />
-
-            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4 border-t border-petal/40 pt-6">
-              {open ? (
-                <VoteButton
-                  nominee={{ slug: nominee.slug, name: nominee.name }}
-                  nomination={{ slug: nomination.slug, title: nomination.title }}
-                  large
-                />
-              ) : (
-                <p className="text-muted-bright">
-                  {new Date() < season.votingStartsAt
-                    ? `Голосование начнётся ${formatDate(season.votingStartsAt)}`
-                    : `Голосование закончилось ${formatDate(season.votingEndsAt)}`}
-                </p>
-              )}
-              <ShareButton path={voteLink} title={`${nominee.name} — ${season.title}`} label="Скопировать ссылку для голосования" copyOnly />
-              <StoryShare
-                path={`/n/${nominee.slug}`}
-                text={`${nominee.name} в номинации «${nomination.title}» — ${season.title}. ${open ? "Голосуй по ссылке" : "Смотри по ссылке"}`}
-              />
+              <div className="flex flex-wrap items-center gap-3 border-t border-petal/40 pt-6">
+                {open ? (
+                  <VoteButton nominee={{ slug: nominee.slug, name: nominee.name }} nomination={{ slug: nomination.slug, title: nomination.title }} large />
+                ) : (
+                  <p className="rounded-full border border-petal/60 px-4 py-2 text-muted-bright">
+                    {new Date() < season.votingStartsAt
+                      ? `Голосование начнётся ${formatDate(season.votingStartsAt)}`
+                      : `Голосование закончилось ${formatDate(season.votingEndsAt)}`}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3 sm:ml-auto">
+                  <ShareButton path={voteLink} title={`${nominee.name} — ${season.title}`} label="Скопировать ссылку" copyOnly />
+                  <StoryShare
+                    path={`/n/${nominee.slug}`}
+                    text={`${nominee.name} в номинации «${nomination.title}» — ${season.title}. ${open ? "Голосуй по ссылке" : "Смотри по ссылке"}`}
+                  />
+                </div>
+              </div>
             </div>
           </PetalCard>
         </div>
       </section>
 
-      {(blocks.length > 0 || cases.length > 0 || sources.length > 0 || nominee.rightOfReply) && (
-        <div className="container-page pt-12">
-          <div className="mx-auto max-w-4xl space-y-10">
-            {blocks.map((block) => (
-              <section key={block.title}>
-                <h2 className="text-2xl">{block.title}</h2>
-                <p className="mt-4 whitespace-pre-line break-words text-lg text-text">{block.text}</p>
-              </section>
-            ))}
-
-            {cases.length > 0 && (
-              <section aria-labelledby="cases-title">
-                <h2 id="cases-title" className="text-2xl">
-                  Кейсы
-                </h2>
-                <ul className="mt-5 grid gap-5 sm:grid-cols-2">
-                  {cases.map((item, index) => (
-                    <li key={index} className="flex flex-col overflow-hidden rounded-card border border-petal/60 bg-deep/50">
-                      {item.imageUrl && (
-                        <ZoomImage
-                          src={item.imageUrl}
-                          alt={`Кейс: ${item.title}`}
-                          sizes="(min-width: 640px) 440px, 100vw"
-                          className="relative block aspect-video w-full cursor-zoom-in bg-ink"
-                        />
-                      )}
-                      <div className="flex flex-1 flex-col gap-3 p-5">
-                        <h3 className="break-words font-sans text-lg font-semibold text-paper">{item.title}</h3>
-                        {item.text && <p className="whitespace-pre-line break-words text-text">{item.text}</p>}
-                        {item.url && (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener nofollow"
-                            className="mt-auto flex h-11 items-center gap-2 self-start rounded-full border border-petal px-4 font-semibold text-paper hover:border-glow hover:bg-glow/20"
-                          >
-                            Смотреть кейс
-                            <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden />
-                          </a>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {sources.length > 0 && (
-              <section>
-                <h2 className="text-2xl">Источники</h2>
-                <ul className="mt-4 space-y-1">
-                  {sources.map((source) => (
-                    <li key={source}>
-                      <a href={source} target="_blank" rel="noopener nofollow" className="break-all text-muted-bright underline underline-offset-4 hover:text-paper">
-                        {source}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            {nominee.rightOfReply && <RightOfReply text={nominee.rightOfReply} />}
-          </div>
+      <div className="container-page grid grid-cols-[minmax(0,1fr)] gap-8 pt-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="space-y-6">
+          {blocks.map((block, index) => (
+            <section key={block.title} className="rounded-petal border border-petal/60 bg-deep/40 p-6 sm:p-8">
+              <p className="font-display text-sm font-bold text-muted-bright">0{index + 1}</p>
+              <h2 className="mt-1 text-2xl">{block.title}</h2>
+              <p className="mt-4 whitespace-pre-line break-words text-lg leading-relaxed text-text">{block.text}</p>
+            </section>
+          ))}
+          {blocks.length === 0 && <p className="rounded-petal border border-petal/60 bg-deep/40 p-6 text-muted-bright">Участник пока не рассказал о себе.</p>}
+          {nominee.rightOfReply && <RightOfReply text={nominee.rightOfReply} />}
         </div>
-      )}
 
-      <div className="container-page empty:hidden [&:not(:empty)]:pt-12">
-        <LiveBoard nominationSlug={nomination.slug} initial={live} highlight={nominee.slug} quiet title="Позиция в номинации" />
+        {/* Коротко об участнике: факты, ссылки, позиция — всегда под рукой при прокрутке. */}
+        <aside aria-label="Коротко" className="space-y-6 lg:sticky lg:top-24">
+          {facts.length > 0 && (
+            <dl className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+              {facts.map((fact) => (
+                <div key={fact.label} className="rounded-card border border-petal/60 bg-ink/30 p-4">
+                  <dt className="text-sm text-muted-bright">{fact.label}</dt>
+                  <dd className="mt-1 font-display text-2xl font-bold text-paper">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {nomineeButtons(nominee).length > 0 && (
+            <div className="rounded-card border border-petal/60 bg-deep/40 p-4">
+              <p className="mb-3 text-sm font-semibold text-muted-bright">Ссылки</p>
+              <NomineeLinks nominee={nominee} />
+            </div>
+          )}
+          {sources.length > 0 && (
+            <div className="rounded-card border border-petal/60 bg-deep/40 p-4">
+              <p className="mb-2 text-sm font-semibold text-muted-bright">Источники</p>
+              <ul className="space-y-1">
+                {sources.map((source) => (
+                  <li key={source}>
+                    <a href={source} target="_blank" rel="noopener nofollow" className="break-all text-sm text-muted-bright underline underline-offset-4 hover:text-paper">
+                      {source}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <LiveBoard nominationSlug={nomination.slug} initial={live} highlight={nominee.slug} quiet title="Позиция в номинации" />
+        </aside>
       </div>
+
+      {cases.length > 0 && (
+        <section aria-labelledby="cases-title" className="container-page pt-12">
+          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 id="cases-title" className="text-2xl sm:text-3xl">
+              Кейсы
+            </h2>
+            <p className="text-muted-bright">
+              {cases.length} {plural(cases.length, ["кейс", "кейса", "кейсов"])}
+            </p>
+          </div>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {cases.map((item, index) => (
+              <li key={index}>
+                <CaseCard item={item} number={index + 1} href={`/n/${nominee.slug}/cases/${index + 1}`} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {others.length > 0 && (
         <section aria-labelledby="others-title" className="container-page py-12">
-          <div className="mx-auto max-w-4xl">
+          <div>
             <h2 id="others-title" className="mb-6 text-2xl">
               {nomination.isEvents ? "Другие события номинации" : "Другие участники номинации"}
             </h2>
-            <ul className="grid gap-4 sm:grid-cols-3">
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {others.slice(0, OTHERS_SHOWN).map((other) => (
                 <li key={other.slug}>
                   <NomineeMiniCard nominee={other} />
@@ -208,7 +196,7 @@ export default async function NomineePage({ params }: Props) {
                   <span className="hidden group-open:inline">Свернуть</span>
                   <ChevronDown size={18} strokeWidth={1.75} aria-hidden className="transition-transform group-open:rotate-180" />
                 </summary>
-                <ul className="mt-4 grid gap-4 sm:grid-cols-3">
+                <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {others.slice(OTHERS_SHOWN).map((other) => (
                     <li key={other.slug}>
                       <NomineeMiniCard nominee={other} />
