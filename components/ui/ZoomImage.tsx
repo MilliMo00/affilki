@@ -4,16 +4,17 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { useRef } from "react";
 
-type ZoomImageProps = { src: string; alt: string; sizes: string; className?: string };
+type ZoomImageProps = { src: string; alt: string; sizes: string; className?: string; /** contain — показать целиком, с размытым фоном по краям. */ fit?: "cover" | "contain" };
 
 /** Картинка, которая по клику открывается крупно поверх страницы, а не в новой вкладке. */
-export function ZoomImage({ src, alt, sizes, className }: ZoomImageProps) {
+export function ZoomImage({ src, alt, sizes, className, fit = "cover" }: ZoomImageProps) {
   const dialog = useRef<HTMLDialogElement>(null);
 
   return (
     <>
       <button type="button" aria-label={`Открыть крупно: ${alt}`} onClick={() => dialog.current?.showModal()} className={className}>
-        <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />
+        {fit === "contain" && <Image src={src} alt="" fill sizes="64px" aria-hidden className="scale-110 object-cover opacity-50 blur-xl" />}
+        <Image src={src} alt={alt} fill sizes={sizes} className={fit === "contain" ? "object-contain" : "object-cover"} />
       </button>
       {/* Клик по затемнению (сам dialog) закрывает окно; Esc закрывает его без нашего кода. */}
       <dialog

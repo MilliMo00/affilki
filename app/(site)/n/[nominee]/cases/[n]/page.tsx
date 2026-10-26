@@ -63,7 +63,7 @@ export default async function CasePage({ params }: Props) {
             </div>
             <div className="overflow-hidden rounded-petal border border-petal">
               {item.imageUrl ? (
-                <ZoomImage src={item.imageUrl} alt={`Кейс: ${item.title}`} sizes="(min-width: 1024px) 640px, 100vw" className="relative block aspect-video w-full cursor-zoom-in bg-ink" />
+                <ZoomImage src={item.imageUrl} alt={`Кейс: ${item.title}`} fit="contain" sizes="(min-width: 1024px) 640px, 100vw" className="relative block aspect-video w-full cursor-zoom-in overflow-hidden bg-ink" />
               ) : (
                 <CaseCover item={item} number={index + 1} sizes="(min-width: 1024px) 640px, 100vw" />
               )}

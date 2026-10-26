@@ -10,7 +10,11 @@ export function CaseCover({ item, number, sizes, className }: { item: CaseItem; 
   return (
     <div className={cn("relative aspect-video overflow-hidden bg-ink", className)}>
       {item.imageUrl ? (
-        <Image src={item.imageUrl} alt={`Кейс: ${item.title}`} fill sizes={sizes} className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+        <>
+          {/* Картинки кейсов бывают вертикальными (карусели из постов): показываем целиком, а фон заполняем размытой копией. */}
+          <Image src={item.imageUrl} alt="" fill sizes="64px" aria-hidden className="scale-110 object-cover opacity-50 blur-xl" />
+          <Image src={item.imageUrl} alt={`Кейс: ${item.title}`} fill sizes={sizes} className="object-contain transition-transform duration-300 group-hover:scale-[1.03]" />
+        </>
       ) : (
         <div aria-hidden className="grain absolute inset-0" style={{ background: "radial-gradient(ellipse at 80% 10%, #7B62F0 0%, #4A33C0 50%, #30209D 100%)" }}>
           <div className="absolute -right-10 -top-12 aspect-square w-2/3 text-paper/15">
