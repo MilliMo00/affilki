@@ -5,6 +5,8 @@ import { can, requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/cn";
+import { ActionForm } from "@/components/admin/ActionForm";
+import { publishAllInvited } from "./actions";
 
 const TABS = [
   { key: "PENDING", label: "Ждут проверки" },
@@ -56,6 +58,18 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
           </Link>
         ))}
       </nav>
+
+      {status === "INVITED" && rows.length > 0 && can(admin.role, "awards") && (
+        <div className="mb-6 rounded-card border border-petal/60 p-4">
+          <p className="mb-3 text-text">
+            Можно не ждать команды и опубликовать все подготовленные анкеты разом — участники сразу появятся на сайте. Пустые анкеты и
+            номинации без свободных мест пропускаются.
+          </p>
+          <ActionForm action={publishAllInvited} submit={`Опубликовать все (${rows.length})`}>
+            <span />
+          </ActionForm>
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <p className="rounded-card border border-petal/40 px-6 py-12 text-center text-muted">Здесь пусто.</p>

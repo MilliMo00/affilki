@@ -35,10 +35,18 @@ export function DecisionForm({ id, nominee, legal, invited, children }: Decision
       {invited ? (
         <Card title="Сохранить" className="max-w-3xl">
           <div className="space-y-4">
-            <p className="text-muted">Решение по заявке принимает команда по своей ссылке. Здесь — только сохранить анкету.</p>
-            <button type="button" disabled={pending} onClick={() => run("save")} className={cn(button, "focus-on-bright bg-paper text-deep hover:bg-text")}>
-              Сохранить анкету
-            </button>
+            <p className="text-muted">
+              Отправь команде ссылку — они проверят и подтвердят сами. Или опубликуй сразу, не дожидаясь их: участник появится на сайте с этой
+              анкетой.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" disabled={pending} onClick={() => run("save")} className={cn(button, "border border-petal text-paper hover:border-glow")}>
+                Сохранить анкету
+              </button>
+              <button type="button" disabled={pending} onClick={() => run("approve")} className={cn(button, "focus-on-bright bg-paper text-deep hover:bg-text")}>
+                Опубликовать на сайте
+              </button>
+            </div>
             {pending && <p className="text-muted">Сохраняем…</p>}
             {state && (
               <p role={state.ok ? "status" : "alert"} className={state.ok ? "text-paper" : "text-danger"}>

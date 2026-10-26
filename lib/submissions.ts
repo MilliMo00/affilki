@@ -247,7 +247,7 @@ export async function approve(submission: Submission, extra: { tagline: string; 
     publicUrl = `${SITE}/a/${article.slug}`;
   }
 
-  const updated = await db.submission.update({ where: { id: submission.id }, data: { status: "APPROVED", resultId, adminComment: null } });
+  const updated = await db.submission.update({ where: { id: submission.id }, data: { status: "APPROVED", resultId, adminComment: null, inviteToken: null } });
   await notifyAuthor(updated, `Заявка «${updated.title}» одобрена и опубликована.${note}`, publicUrl);
   return { submission: updated, resultId, publicUrl };
 }

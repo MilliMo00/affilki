@@ -8,6 +8,7 @@ import { audit } from "@/lib/admin/audit";
 import { can, requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
+import { plainText } from "@/lib/markup";
 import { randomToken } from "@/lib/voting/tokens";
 import { MAX_NOMINEES } from "@/lib/entry-rules";
 import { approve, caseImagesFrom, checkTarget, nominationIsFull, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
@@ -24,8 +25,9 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   // Заявки в номинации — тем, кто ведёт премию; статьи — тем, кто ведёт контент.
   if (!can(context.admin.role, submission.kind === "NOMINEE" ? "awards" : "content")) return failed("Нет прав на этот тип заявок.");
   if (submission.status === "APPROVED") return failed("Заявка уже опубликована. Правь участника или статью в их разделе.");
-  // Заявку, подготовленную редакцией, решает команда по своей ссылке: здесь её можно только править.
-  if (submission.status === "INVITED" && decision !== "save") return failed("Эта заявка ждёт подтверждения команды. Отправь им ссылку — решение за ними.");
+  // Заявку, подготовленную редакцией, можно править и опубликовать сразу, не дожидаясь команды.
+  // Вернуть или отклонить её некому — автора у неё нет.
+  if (submission.status === "INVITED" && decision !== "save" && decision !== "approve") return failed("У этой заявки ещё нет автора: её можно сохранить или опубликовать.");
 
   // Модератор может исправить любые поля перед решением — они сохраняются всегда.
   formData.set("kind", submission.kind);
@@ -62,7 +64,7 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
     });
     await audit(context, "submission.approve", { type: "submission", id }, { status: submission.status }, { status: "APPROVED", resultId: result.resultId });
     revalidatePath("/", "layout");
-    return done(`Опубликовано: ${result.publicUrl}. Автору ушло уведомление в бот.`);
+    return done(edited.tgUserId ? `Опубликовано: ${result.publicUrl}. Автору ушло уведомление в бот.` : `Опубликовано: ${result.publicUrl}.`);
   }
 
   const parsedComment = comment.safeParse(formData.get("adminComment"));
@@ -120,4 +122,26 @@ export async function deleteInvite(id: string): Promise<ActionState> {
   await db.submission.delete({ where: { id } });
   await audit(context, "submission.invite_delete", { type: "submission", id }, { title: submission.title }, null);
   redirect(adminUrl("/submissions?status=INVITED"));
+}
+
+/** Опубликовать все заявки, подготовленные редакцией, не дожидаясь подтверждения команд. */
+export async function publishAllInvited(): Promise<ActionState> {
+  const context = await requirePermission("awards");
+  const invited = await db.submission.findMany({ where: { status: "INVITED", kind: "NOMINEE" }, orderBy: { createdAt: "asc" } });
+  const published: string[] = [];
+  const skipped: string[] = [];
+  for (const submission of invited) {
+    // Пустая анкета или переполненная номинация — пропускаем, их нужно доделать вручную.
+    if (submission.text.trim().length < 30 || (await nominationIsFull(submission.nominationId!))) {
+      skipped.push(submission.title);
+      continue;
+    }
+    const tagline = plainText(submission.text).split(/(?<=[.!?])\s/)[0]?.slice(0, 160) ?? "";
+    const result = await approve(submission, { tagline, excerpt: "" });
+    await audit(context, "submission.approve", { type: "submission", id: submission.id }, { status: "INVITED" }, { status: "APPROVED", resultId: result.resultId });
+    published.push(submission.title);
+  }
+  revalidatePath("/", "layout");
+  if (published.length === 0) return failed(skipped.length ? `Ничего не опубликовано. Пропущены: ${skipped.join(", ")}.` : "Подготовленных заявок нет.");
+  return done(`Опубликовано: ${published.length}.${skipped.length ? ` Пропущены (пустая анкета или нет мест): ${skipped.join(", ")}.` : ""}`);
 }
