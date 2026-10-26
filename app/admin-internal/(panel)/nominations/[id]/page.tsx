@@ -106,6 +106,7 @@ export default async function NominationEditPage({ params }: { params: Promise<{
             <textarea name="eligibility" defaultValue={nomination.eligibility} rows={2} required className={adminInput} />
           </Label>
           <Check name="acceptingEntries" title="Приём участников открыт" defaultChecked={nomination.acceptingEntries} />
+          <Check name="requiresCases" title="Нужны кейсы" hint="Минимум 5 кейсов в заявке. Для каналов с вакансиями — выключено." defaultChecked={nomination.requiresCases} />
         </ActionForm>
       </Card>
     </>

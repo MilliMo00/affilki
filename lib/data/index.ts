@@ -134,6 +134,7 @@ function toNomination(row: NominationRow): Nomination {
     jury: row.jury,
     isEvents: row.isEvent,
     legalReview: row.requiresLegalReview,
+    requiresCases: row.requiresCases,
     // Там, где нужна юридическая проверка, непроверенные участники наружу не попадают вообще.
     nominees: row.nominees.filter((n) => !row.requiresLegalReview || n.legalChecked).map(toNominee),
   };
@@ -193,9 +194,9 @@ export async function getOpenNominations() {
   const rows = await db.nomination.findMany({
     where: { seasonId: season.id, acceptingEntries: true },
     orderBy: { order: "asc" },
-    select: { id: true, title: true, isEvent: true },
+    select: { id: true, title: true, isEvent: true, requiresCases: true },
   });
-  return rows.map((row) => ({ id: row.id, title: row.title, isEvents: row.isEvent }));
+  return rows.map((row) => ({ id: row.id, title: row.title, isEvents: row.isEvent, requiresCases: row.requiresCases }));
 }
 
 export async function seasonStats(season: Season, now = new Date()) {

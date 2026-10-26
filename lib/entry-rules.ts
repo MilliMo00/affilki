@@ -8,10 +8,13 @@ export const MIN_CASES = 5;
 /** Сколько мест у спонсоров премии. */
 export const GENERAL_SPONSOR_SLOTS = 4;
 
-export const ENTRY_REQUIREMENTS: { title: string; text: string }[] = [
+/** Требования к участнику. Без кейсов (withCases = false) — для номинаций, где кейсы не нужны. */
+export const entryRequirements = (withCases = true) => ENTRY_REQUIREMENTS.filter((item) => withCases || !item.cases);
+
+export const ENTRY_REQUIREMENTS: { title: string; text: string; cases?: boolean }[] = [
   { title: "Полгода на рынке", text: "Проекту или команде не меньше шести месяцев." },
   { title: "Активные соцсети", text: "Канал, сайт или соцсети ведутся регулярно. Оценивает редактор." },
-  { title: `Минимум ${MIN_CASES} кейсов`, text: "Их добавляют прямо в заявку — голосующие сравнивают участников по работам." },
+  { title: `Минимум ${MIN_CASES} кейсов`, text: "Их добавляют прямо в заявку — голосующие сравнивают участников по работам.", cases: true },
   { title: "Позитивная репутация", text: "Без подтверждённых историй с невыплатами и обманом партнёров." },
   { title: "Одна номинация", text: "Подать заявку можно только в одну номинацию." },
 ];

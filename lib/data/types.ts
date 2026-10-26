@@ -56,6 +56,8 @@ export type Nomination = {
   isEvents: boolean;
   /** Нужна юридическая проверка и право на ответ упомянутой стороны («Скандал года»). */
   legalReview: boolean;
+  /** Нужны ли кейсы в заявке. */
+  requiresCases: boolean;
   nominees: Nominee[];
 };
 

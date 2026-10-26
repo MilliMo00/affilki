@@ -74,7 +74,7 @@ export async function checkTarget(
       const errors: FieldErrors = {};
       if (data.achievements.length < 20) errors.achievements = "Расскажи, что сделали за год, — хотя бы пару предложений";
       if (data.whyVote.length < 20) errors.whyVote = "Напиши, почему голосовать стоит за вас, — хотя бы пару предложений";
-      if (data.cases.length < MIN_CASES) errors.cases = `Нужно минимум ${MIN_CASES} кейсов — сейчас ${data.cases.length}`;
+      if (nomination.requiresCases && data.cases.length < MIN_CASES) errors.cases = `Нужно минимум ${MIN_CASES} кейсов — сейчас ${data.cases.length}`;
       if (Object.keys(errors).length > 0) return errors;
     }
     if (author && !nomination.isEvent) {

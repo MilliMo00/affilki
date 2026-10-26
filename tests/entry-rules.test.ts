@@ -82,3 +82,9 @@ test("номинация событий: без кейсов и текстовы
   await submit(events.id);
   assert.equal(await checkTarget(form(a.id, MIN_CASES), true, author), null);
 });
+
+test("номинация без кейсов (каналы с вакансиями): заявка проходит без кейсов", async () => {
+  const { a } = await nominations();
+  await db.nomination.update({ where: { id: a.id }, data: { requiresCases: false } });
+  assert.equal(await checkTarget(form(a.id, 0), true, author), null);
+});

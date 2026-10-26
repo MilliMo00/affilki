@@ -128,6 +128,8 @@ model Nomination {
   /// Участник не публикуется, пока админ не отметит «Проверено» (номинация «Скандал года»).
   requiresLegalReview Boolean  @default(false)
   acceptingEntries    Boolean  @default(true)
+  /// Нужны ли в заявке кейсы (минимум MIN_CASES). У каналов с вакансиями — нет: их работа и так видна в канале.
+  requiresCases       Boolean  @default(true)
   nominees            Nominee[]
   votes               Vote[]
   sponsors            Sponsor[]

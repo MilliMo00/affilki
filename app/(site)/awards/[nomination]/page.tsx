@@ -88,7 +88,7 @@ function About({ season, nomination }: { season: Season; nomination: Nomination 
       </dl>
     </div>
     {/* У событий требований к участнику нет: там описывают событие, а не команду. */}
-    {!nomination.isEvents && <EntryRequirements taken={nomination.nominees.length} className="mt-10" />}
+    {!nomination.isEvents && <EntryRequirements taken={nomination.nominees.length} withCases={nomination.requiresCases} className="mt-10" />}
     </>
   );
 }

@@ -30,7 +30,7 @@ export type SubmissionDraft = {
 };
 
 /** isEvents — номинация-события: там описывают событие, а не команду. */
-export type NominationOption = { id: string; title: string; isEvents?: boolean };
+export type NominationOption = { id: string; title: string; isEvents?: boolean; requiresCases?: boolean };
 
 type SubmissionFormProps = {
   nominations: NominationOption[];
@@ -166,6 +166,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
   // Номинация-события: года основания, достижений и кейсов у события нет.
   const events = nominee && !!nominations.find((nomination) => nomination.id === nominationId)?.isEvents;
   const team = nominee && !events;
+  const casesRequired = nominations.find((nomination) => nomination.id === nominationId)?.requiresCases ?? true;
   const details = draft?.details;
   const thisYear = new Date().getFullYear();
 
@@ -318,7 +319,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
 
       {nominee ? (
         <>
-          {team && <EntryRequirements />}
+          {team && <EntryRequirements withCases={casesRequired} />}
           <Section title={events ? "Событие" : "Об участнике"} lead={events ? "Как событие будет называться на сайте. Только факты, без оценок." : "Как участник будет называться и выглядеть на сайте."}>
             <div className={cn("grid gap-6", team && "sm:grid-cols-[minmax(0,1fr)_17rem]")}>
               <Field id="title" label={events ? "Название события" : "Название"} hint="Так оно будет написано на сайте" error={errors.title}>
@@ -369,7 +370,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
           </Section>
 
           {team && (
-            <Section title="Кейсы" lead={`Нужно минимум ${MIN_CASES}: голосующий увидит твои работы рядом с работами других участников.`}>
+            <Section title="Кейсы" lead={casesRequired ? `Нужно минимум ${MIN_CASES}: голосующий увидит твои работы рядом с работами других участников.` : "Необязательно в этой номинации — но если есть чем похвастаться, добавь."}>
               <div data-field="cases">
                 <CasesEditor initial={details?.cases} inputClass={inputClass} />
                 {errors.cases && (
