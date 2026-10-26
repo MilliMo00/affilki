@@ -42,7 +42,7 @@ export async function audience(segment: Segment): Promise<bigint[]> {
   const ids = reachable.map((user) => user.tgUserId);
   if (segment === "all" || ids.length === 0) return ids;
 
-  const distinct = async (rows: Promise<{ tgUserId: bigint }[]>) => new Set((await rows).map((row) => row.tgUserId));
+  const distinct = async (rows: Promise<{ tgUserId: bigint | null }[]>) => new Set((await rows).map((row) => row.tgUserId));
   if (segment === "authors") {
     const authors = await distinct(db.submission.findMany({ where: { tgUserId: { in: ids } }, select: { tgUserId: true }, distinct: ["tgUserId"] }));
     return ids.filter((id) => authors.has(id));

@@ -40,6 +40,8 @@ type SubmissionFormProps = {
   defaultContact?: string;
   /** Правка существующей заявки: тип уже не меняется. */
   draft?: SubmissionDraft;
+  /** Заявка, подготовленная редакцией: команда подтверждает её по личной ссылке. */
+  claimToken?: string;
   onSaved?: () => void;
 };
 
@@ -66,12 +68,12 @@ const KINDS: { key: SubmissionKind; label: string; hint: string }[] = [
   { key: "ARTICLE", label: "Статья или кейс", hint: "Материал в ленту: кейс, новость, интервью, обзор" },
 ];
 
-export function SubmissionForm({ nominations, categories, defaultName, defaultContact, draft, onSaved }: SubmissionFormProps) {
+export function SubmissionForm({ nominations, categories, defaultName, defaultContact, draft, claimToken, onSaved }: SubmissionFormProps) {
   const [kind, setKind] = useState<SubmissionKind>(draft?.kind ?? "NOMINEE");
   const [nominationId, setNominationId] = useState(draft?.nominationId ?? "");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<false | { published: boolean; url?: string }>(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -95,7 +97,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
 
     setPending(true);
     try {
-      const res = await fetch(draft ? `/api/submissions/${draft.id}` : "/api/submissions", {
+      const res = await fetch(claimToken ? `/api/submissions/claim/${claimToken}` : draft ? `/api/submissions/${draft.id}` : "/api/submissions", {
         method: "POST",
         body: formData,
         // Медленный мобильный интернет и тяжёлые фото: не держим кнопку в «Отправляем…» бесконечно.
@@ -104,7 +106,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
         setErrors({});
-        setSent(true);
+        setSent({ published: !!body.published, url: body.url });
         onSaved?.();
         return;
       }
@@ -130,11 +132,28 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
         <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-indigo text-paper">
           <Check size={28} strokeWidth={1.75} aria-hidden />
         </span>
-        <h2 className="mt-5 text-2xl">{draft ? "Заявка отправлена заново" : "Заявка отправлена"}</h2>
-        <p className="mt-2 text-lg text-text">Редактор посмотрит её и ответит в боте. Статус виден в разделе «Мои заявки».</p>
-        <Button href="/my" className="mt-6">
-          Мои заявки
-        </Button>
+        {sent.published ? (
+          <>
+            <h2 className="mt-5 text-2xl">Готово — вы на сайте!</h2>
+            <p className="mt-2 text-lg text-text">Заявка подтверждена и опубликована. Ссылку на страницу команды мы прислали в бот.</p>
+            {sent.url && (
+              <Button href={sent.url} className="mt-6">
+                Открыть страницу команды
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="mt-5 text-2xl">{claimToken ? "Заявка подтверждена" : draft ? "Заявка отправлена заново" : "Заявка отправлена"}</h2>
+            <p className="mt-2 text-lg text-text">
+              {claimToken ? "Вы внесли правки — редактор быстро их посмотрит и опубликует. Ответ придёт в бот." : "Редактор посмотрит её и ответит в боте."} Статус
+              виден в разделе «Мои заявки».
+            </p>
+            <Button href="/my" className="mt-6">
+              Мои заявки
+            </Button>
+          </>
+        )}
       </div>
     );
   }
@@ -389,7 +408,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
 
       <div>
         <label className="flex items-start gap-3">
-          <input type="checkbox" name="consent" defaultChecked={!!draft} className="mt-1 size-5 shrink-0 accent-[#7B62F0]" {...aria("consent")} />
+          <input type="checkbox" name="consent" defaultChecked={!!draft && !claimToken} className="mt-1 size-5 shrink-0 accent-[#7B62F0]" {...aria("consent")} />
           <span>
             Согласен на обработку данных по{" "}
             <Link href="/privacy" className="text-paper underline decoration-glow underline-offset-4">
@@ -411,7 +430,7 @@ export function SubmissionForm({ nominations, categories, defaultName, defaultCo
       )}
 
       <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={pending}>
-        {pending ? "Отправляем…" : draft ? "Отправить заново" : "Отправить заявку"}
+        {pending ? "Отправляем…" : claimToken ? "Подтвердить заявку" : draft ? "Отправить заново" : "Отправить заявку"}
       </Button>
     </form>
   );

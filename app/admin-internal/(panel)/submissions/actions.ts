@@ -1,11 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { done, failed, type ActionState } from "@/lib/admin/action";
 import { audit } from "@/lib/admin/audit";
 import { can, requirePermission } from "@/lib/admin/auth";
+import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
+import { randomToken } from "@/lib/voting/tokens";
 import { MAX_NOMINEES } from "@/lib/entry-rules";
 import { approve, caseImagesFrom, checkTarget, nominationIsFull, fieldsOf, imageFrom, parseSubmission, reject, returnForChanges } from "@/lib/submissions";
 
@@ -21,6 +24,8 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   // Заявки в номинации — тем, кто ведёт премию; статьи — тем, кто ведёт контент.
   if (!can(context.admin.role, submission.kind === "NOMINEE" ? "awards" : "content")) return failed("Нет прав на этот тип заявок.");
   if (submission.status === "APPROVED") return failed("Заявка уже опубликована. Правь участника или статью в их разделе.");
+  // Заявку, подготовленную редакцией, решает команда по своей ссылке: здесь её можно только править.
+  if (submission.status === "INVITED" && decision !== "save") return failed("Эта заявка ждёт подтверждения команды. Отправь им ссылку — решение за ними.");
 
   // Модератор может исправить любые поля перед решением — они сохраняются всегда.
   formData.set("kind", submission.kind);
@@ -40,7 +45,11 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   if (decision === "save") {
     await audit(context, "submission.edit", { type: "submission", id }, { title: submission.title }, { title: edited.title });
     revalidatePath("/", "layout");
-    return done("Правки сохранены. Автор их пока не видит — заявка ждёт решения.");
+    return done(
+      edited.status === "INVITED"
+        ? "Анкета сохранена. Отправь команде ссылку — они увидят её такой."
+        : "Правки сохранены. Автор их пока не видит — заявка ждёт решения.",
+    );
   }
 
   if (decision === "approve") {
@@ -70,4 +79,45 @@ export async function decideSubmission(id: string, decision: Decision, _: Action
   await audit(context, "submission.reject", { type: "submission", id }, { status: submission.status }, { status: "REJECTED", comment: parsedComment.data });
   revalidatePath("/", "layout");
   return done("Заявка отклонена. Автору ушло уведомление в бот.");
+}
+
+const inviteSchema = z.object({
+  nominationId: z.string().min(1, "Выбери номинацию").max(40),
+  title: z.string().trim().min(2, "Укажи название команды").max(160),
+  contact: z.string().trim().max(120),
+});
+
+/** Редакция готовит заявку за команду: черновик со ссылкой, по которой команда его подтвердит. */
+export async function createInvite(_: ActionState, formData: FormData): Promise<ActionState> {
+  const context = await requirePermission("awards");
+  const parsed = inviteSchema.safeParse(Object.fromEntries([...formData].filter(([, value]) => typeof value === "string")));
+  if (!parsed.success) return failed(parsed.error.issues.map((issue) => issue.message).join("; "));
+  if (!(await db.nomination.findUnique({ where: { id: parsed.data.nominationId } }))) return failed("Номинация не найдена.");
+
+  const submission = await db.submission.create({
+    data: {
+      kind: "NOMINEE",
+      status: "INVITED",
+      authorName: parsed.data.title,
+      contact: parsed.data.contact || "—",
+      title: parsed.data.title,
+      text: "",
+      links: [],
+      nominationId: parsed.data.nominationId,
+      inviteToken: randomToken(),
+      ipHash: "editor",
+    },
+  });
+  await audit(context, "submission.invite", { type: "submission", id: submission.id }, null, { title: submission.title });
+  redirect(adminUrl(`/submissions/${submission.id}`));
+}
+
+/** Удалить черновик редакции, который команда ещё не подтвердила. */
+export async function deleteInvite(id: string): Promise<ActionState> {
+  const context = await requirePermission("awards");
+  const submission = await db.submission.findUnique({ where: { id } });
+  if (!submission || submission.status !== "INVITED") return failed("Удалить можно только неподтверждённую заявку редакции.");
+  await db.submission.delete({ where: { id } });
+  await audit(context, "submission.invite_delete", { type: "submission", id }, { title: submission.title }, null);
+  redirect(adminUrl("/submissions?status=INVITED"));
 }

@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 
 const TABS = [
   { key: "PENDING", label: "Ждут проверки" },
+  { key: "INVITED", label: "Ждут подтверждения команды" },
   { key: "CHANGES_REQUESTED", label: "У автора на правках" },
   { key: "APPROVED", label: "Опубликованы" },
   { key: "REJECTED", label: "Отклонены" },
@@ -33,7 +34,13 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <PageTitle title="Заявки" lead="Заявки на участие в номинациях и на публикацию материалов. Открой заявку, чтобы поправить и принять решение." />
+      <PageTitle title="Заявки" lead="Заявки на участие в номинациях и на публикацию материалов. Открой заявку, чтобы поправить и принять решение.">
+        {can(admin.role, "awards") && (
+          <Link href={adminUrl("/submissions/new")} className="focus-on-bright flex h-11 items-center rounded-full bg-paper px-5 font-semibold text-deep hover:bg-text">
+            Подготовить заявку за команду
+          </Link>
+        )}
+      </PageTitle>
       <nav aria-label="Статус заявок" className="mb-6 flex flex-wrap gap-2">
         {TABS.map((tab) => (
           <Link
@@ -67,6 +74,7 @@ export default async function SubmissionsPage({ searchParams }: { searchParams: 
               <td>
                 {row.authorName}
                 {row.tgUsername && <span className="text-muted"> · @{row.tgUsername}</span>}
+                {row.status === "INVITED" && <span className="text-muted"> · готовит редакция</span>}
               </td>
             </tr>
           ))}

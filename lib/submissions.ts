@@ -155,7 +155,29 @@ export async function notifyAdminAboutSubmission(submission: Submission, resubmi
 }
 
 async function notifyAuthor(submission: Submission, text: string, url = `${SITE}/my`) {
+  // У заявки, которую подготовила редакция и ещё никто не подтвердил, автора нет.
+  if (!submission.tgUserId) return;
   await telegram.sendMessage(Number(submission.tgUserId), text, [[{ text: "Открыть на сайте", url }]]).catch(() => {});
+}
+
+// ── Заявки, подготовленные редакцией ───────────────────────────────────────
+// Редакция заполняет анкету за команду и отправляет ей личную ссылку /claim/<token>.
+// Команда входит через бота, проверяет анкету и подтверждает: без изменений — участник сразу
+// на сайте, с правками — заявка уходит модератору как обычная.
+
+export const claimUrl = (token: string) => `${SITE}/claim/${token}`;
+
+/** Содержимое анкеты для сравнения: правила ли команда то, что подготовила редакция. */
+export const contentFingerprint = (s: { title: string; text: string; links: unknown; details?: unknown; imageUrl: string | null; nominationId: string | null }) =>
+  JSON.stringify([s.title, s.text, readLinks(s.links), readDetails(s.details), s.imageUrl, s.nominationId]);
+
+export async function notifyOwnerAboutClaim(submission: Submission, outcome: "published" | "edited" | "declined", comment?: string) {
+  const text = {
+    published: `Команда подтвердила заявку «${submission.title}» без правок — участник опубликован.`,
+    edited: `Команда подтвердила заявку «${submission.title}», но внесла правки — она ждёт проверки.`,
+    declined: `Команда отказалась от заявки «${submission.title}».${comment ? `\n\nКомментарий: ${comment}` : ""}`,
+  }[outcome];
+  await notifyOwner(`${text}\n${SITE}${adminUrl(`/submissions/${submission.id}`)}`);
 }
 
 // ── Решения модератора ─────────────────────────────────────────────────────

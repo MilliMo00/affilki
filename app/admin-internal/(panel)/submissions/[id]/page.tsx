@@ -9,9 +9,13 @@ import { db } from "@/lib/db";
 import { CasesEditor, LinksEditor } from "@/components/submissions/ListEditors";
 import { plainText } from "@/lib/markup";
 import { readDetails, readLinks } from "@/lib/profile";
+import { claimUrl } from "@/lib/submissions";
+import { ActionForm } from "@/components/admin/ActionForm";
+import { deleteInvite } from "../actions";
 import { DecisionForm } from "./DecisionForm";
 
 const STATUS = {
+  INVITED: { label: "ждёт подтверждения команды", tone: "warn" },
   PENDING: { label: "ждёт проверки", tone: "good" },
   CHANGES_REQUESTED: { label: "у автора на правках", tone: "warn" },
   APPROVED: { label: "опубликована", tone: "neutral" },
@@ -65,10 +69,25 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
               ) : (
                 "без username"
               )}{" "}
-              <span className="font-mono text-sm text-muted">{submission.tgUserId.toString()}</span>
+              {submission.tgUserId && <span className="font-mono text-sm text-muted">{submission.tgUserId.toString()}</span>}
             </dd>
           </div>
         </dl>
+        {submission.status === "INVITED" && submission.inviteToken && (
+          <div className="mt-4 rounded-card border border-glow p-4">
+            <p className="font-semibold text-paper">Ссылка для команды</p>
+            <p className="mt-1 text-sm text-muted">
+              Заполни анкету ниже и нажми «Сохранить». Потом отправь команде эту ссылку: они войдут через бота, проверят и подтвердят.
+              Без правок — участник сразу появится на сайте; с правками — заявка придёт сюда на проверку.
+            </p>
+            <input readOnly value={claimUrl(submission.inviteToken)} className={`${adminInput} mt-3 font-mono text-sm`} aria-label="Ссылка для команды" />
+            <div className="mt-3">
+              <Link href={claimUrl(submission.inviteToken)} target="_blank" className="text-sm font-medium text-paper underline underline-offset-4">
+                Открыть, как увидит команда
+              </Link>
+            </div>
+          </div>
+        )}
         {submission.adminComment && (
           <p className="mt-4 whitespace-pre-line rounded-card border border-petal/60 p-3 text-text">
             <span className="block text-sm font-semibold text-paper">Последний комментарий автору</span>
@@ -98,7 +117,7 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
           <p className="text-muted">Заявка уже опубликована. Дальнейшие правки делаются в карточке участника или в статье.</p>
         </Card>
       ) : (
-        <DecisionForm id={submission.id} nominee={nominee} legal={!!legal}>
+        <DecisionForm id={submission.id} nominee={nominee} legal={!!legal} invited={submission.status === "INVITED"}>
           <Card title="Содержание" className="max-w-3xl">
             <div className="space-y-4">
               {nominee ? (
@@ -182,6 +201,15 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
             </div>
           </Card>
         </DecisionForm>
+      )}
+
+      {submission.status === "INVITED" && (
+        <Card title="Удалить черновик" className="mt-6 max-w-3xl">
+          <p className="mb-4 text-muted">Ссылка перестанет работать, анкета удалится.</p>
+          <ActionForm action={deleteInvite.bind(null, submission.id)} submit="Удалить черновик" danger>
+            <span />
+          </ActionForm>
+        </Card>
       )}
     </>
   );

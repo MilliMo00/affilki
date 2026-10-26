@@ -391,7 +391,8 @@ model Submission {
   kind         SubmissionKind
   status       SubmissionStatus @default(PENDING)
   /// Автор: Telegram-аккаунт, вошедший через бота. Ему же уходят уведомления.
-  tgUserId     BigInt
+  /// Пусто у заявки, которую подготовила редакция (статус INVITED): автор появляется, когда команда её подтвердит.
+  tgUserId     BigInt?
   tgUsername   String?
   authorName   String
   contact      String
@@ -410,6 +411,8 @@ model Submission {
   adminComment String?
   /// Что получилось после одобрения: id участника или статьи.
   resultId     String?
+  /// Личная ссылка для команды на заявку, подготовленную редакцией: /claim/<token>. Сгорает после подтверждения.
+  inviteToken  String?          @unique
   ipHash       String
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
@@ -424,6 +427,8 @@ enum SubmissionKind {
 }
 
 enum SubmissionStatus {
+  /// Подготовлена редакцией и ждёт, когда команда подтвердит её по личной ссылке.
+  INVITED
   PENDING
   CHANGES_REQUESTED
   APPROVED
