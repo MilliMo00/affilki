@@ -38,7 +38,7 @@ export function teamMessage(nominee: { name: string; slug: string; nominationTit
 }
 
 // Telegram-контакты команды: @username и ссылки t.me/<username> из анкеты. Каналы и чаты (по названию кнопки) пропускаем.
-const NOT_PERSON = /канал|чат|channel|chat|блэклист|прайс|сайт|youtube|instagram/i;
+const NOT_PERSON = /канал|чат|channel|chat|блэклист|прайс|сайт|youtube|instagram|^гемблинг-креативы$|^вакансии/i;
 export function teamContacts(contact: string | null | undefined, buttons: { title: string; url: string }[]) {
   const names = new Set<string>();
   for (const match of (contact ?? "").matchAll(/(?:@|t\.me\/)([A-Za-z][A-Za-z0-9_]{3,31})/g)) names.add(match[1]);
