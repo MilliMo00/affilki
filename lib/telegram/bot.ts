@@ -1,6 +1,7 @@
 import type { TelegramApi, TgUser } from "./client";
 import { recordServerEvent } from "@/lib/analytics/record";
 import { rememberBotUser, setSubscribed } from "@/lib/broadcast";
+import { TEAM_START, claimTeam, sendTeamStats } from "@/lib/team";
 import { handleDecision, handleStart, revokeAllSessions } from "@/lib/voting/login";
 
 type Update = {
@@ -39,6 +40,13 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
       );
     }
 
+    // Голоса и место команды — для тех, кто подключился по ссылке команды.
+    if (/^\/stats\b/.test(message.text)) return sendTeamStats(message.from, tg);
+
+    // Ссылка команды: t.me/<бот>?start=t_<token> — привязывает аккаунт к участнику.
+    const team = /^\/start\s+(\S+)\s*$/.exec(message.text)?.[1].match(TEAM_START);
+    if (team) return claimTeam(team[1], message.from, tg);
+
     const start = /^\/start(?:\s+l_([A-Za-z0-9_-]{16,64}))?\s*$/.exec(message.text);
     if (start?.[1]) {
       recordServerEvent(null, { type: "bot_start" });
@@ -52,6 +60,10 @@ export async function handleUpdate(update: Update, tg: TelegramApi) {
   }
 
   const callback = update.callback_query;
+  if (callback?.data === "team:stats") {
+    await tg.answerCallback(callback.id);
+    return sendTeamStats(callback.from, tg);
+  }
   if (callback) {
     const match = /^(ok|no):([a-z0-9]{10,40})(?::(\d{2}))?$/.exec(callback.data ?? "");
     if (match) {

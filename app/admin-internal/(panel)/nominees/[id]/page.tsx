@@ -7,6 +7,9 @@ import { requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { CasesEditor, LinksEditor } from "@/components/submissions/ListEditors";
 import { db } from "@/lib/db";
+import { CopyButton } from "@/components/admin/CopyButton";
+import { teamLink } from "@/lib/team";
+import { makeTeamLink } from "../../team-links/actions";
 import { readProfile } from "@/lib/profile";
 import { deleteNominee, saveNominee, setNomineePublished } from "../../nominations/actions";
 
@@ -17,7 +20,7 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
   const { id } = await params;
   const isNew = id === "new";
 
-  const nominee = isNew ? null : await db.nominee.findUnique({ where: { id }, include: { _count: { select: { votes: true } } } });
+  const nominee = isNew ? null : await db.nominee.findUnique({ where: { id }, include: { _count: { select: { votes: true } }, owners: true } });
   if (!isNew && !nominee) notFound();
   const nomination = await db.nomination.findUnique({ where: { id: nominee?.nominationId ?? (await searchParams).nomination ?? "" } });
   if (!nomination) notFound();
@@ -57,6 +60,30 @@ export default async function NomineeEditPage({ params, searchParams }: Props) {
               <span />
             </ActionForm>
           </div>
+        </Card>
+      )}
+
+      {nominee && (
+        <Card title="Ссылка для команды" className="mb-6 max-w-3xl">
+          {nominee.teamToken ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted">
+                По ней бот привяжет Telegram человека к странице команды и покажет голоса и место. Подключились: {nominee.owners.length}. Готовое сообщение
+                для менеджера — в разделе «Ссылки для команд».
+              </p>
+              <input readOnly value={teamLink(nominee.teamToken)} aria-label="Ссылка для команды" className={`${adminInput} font-mono text-sm`} />
+              <div className="flex flex-wrap gap-3">
+                <CopyButton text={teamLink(nominee.teamToken)} label="Скопировать ссылку" />
+                <ActionForm action={makeTeamLink.bind(null, nominee.id, true)} submit="Заменить ссылку" danger>
+                  <span />
+                </ActionForm>
+              </div>
+            </div>
+          ) : (
+            <ActionForm action={makeTeamLink.bind(null, nominee.id, false)} submit="Создать ссылку">
+              <span />
+            </ActionForm>
+          )}
         </Card>
       )}
 

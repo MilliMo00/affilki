@@ -182,10 +182,25 @@ model Nominee {
   rightOfReply String?
   legalChecked Boolean    @default(false)
   published    Boolean    @default(false)
+  /// Ссылка команды на бота: t.me/<бот>?start=t_<teamToken>. Многоразовая — её можно переслать коллегам; новая отключает старую.
+  teamToken    String?    @unique
   createdAt    DateTime   @default(now())
   votes        Vote[]
+  owners       NomineeOwner[]
 
   @@index([nominationId])
+}
+
+/// Telegram-аккаунты команды, привязанные к участнику по ссылке на бота: им бот показывает голоса и место.
+model NomineeOwner {
+  nomineeId String
+  nominee   Nominee  @relation(fields: [nomineeId], references: [id], onDelete: Cascade)
+  tgUserId  BigInt
+  username  String?
+  createdAt DateTime @default(now())
+
+  @@id([nomineeId, tgUserId])
+  @@index([tgUserId])
 }
 
 // ── Вход и голосование ─────────────────────────────────────────────────────
