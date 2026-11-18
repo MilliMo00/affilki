@@ -8,9 +8,9 @@ import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
 import { ContactActions } from "@/components/admin/ContactActions";
 import { readProfile } from "@/lib/profile";
-import { shareToTelegram, teamContacts, teamLink, teamMessage } from "@/lib/team";
+import { shareToTelegram, teamContacts, teamLink, teamMessage, TEST_TEAM_SLUG } from "@/lib/team";
 import { ContactedToggle } from "@/components/admin/ContactedToggle";
-import { makeAllTeamLinks, makeTeamLink, setTeamContacted } from "./actions";
+import { createTestTeam, deleteTestTeam, makeAllTeamLinks, makeTeamLink, setTeamContacted } from "./actions";
 
 /** Ссылки команд на бота: создать, скопировать с готовым сообщением, заменить. */
 const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow" });
@@ -22,7 +22,7 @@ export default async function TeamLinksPage({ searchParams }: { searchParams: Pr
   const nominations = await db.nomination.findMany({
     where: { seasonId: season?.id },
     orderBy: { order: "asc" },
-    include: { nominees: { where: { published: true }, orderBy: { name: "asc" }, include: { owners: { orderBy: { createdAt: "asc" } } } } },
+    include: { nominees: { where: { published: true, NOT: { slug: { startsWith: TEST_TEAM_SLUG } } }, orderBy: { name: "asc" }, include: { owners: { orderBy: { createdAt: "asc" } } } } },
   });
   const all = nominations.flatMap((nomination) => nomination.nominees);
   // Контакт команды — из заявки, по которой участник появился на сайте.
@@ -39,6 +39,10 @@ export default async function TeamLinksPage({ searchParams }: { searchParams: Pr
   const contactedCount = all.filter((nominee) => contacted.get(nominee.id)).length;
   const withoutLink = all.filter((nominee) => !nominee.teamToken).length;
   const connected = all.filter((nominee) => nominee.owners.length > 0).length;
+  const testTeam = await db.nominee.findFirst({
+    where: { slug: { startsWith: TEST_TEAM_SLUG } },
+    include: { nomination: { select: { title: true } }, owners: { orderBy: { createdAt: "asc" } } },
+  });
 
   return (
     <>
@@ -69,6 +73,68 @@ export default async function TeamLinksPage({ searchParams }: { searchParams: Pr
         {withoutLink > 0 && (
           <ActionForm action={makeAllTeamLinks} submit={`Создать ссылки для всех (${withoutLink})`} className="mt-4">
             <span />
+          </ActionForm>
+        )}
+      </Card>
+
+
+      <Card title="Проверка на тестовом участнике" className="mb-6">
+        {testTeam?.teamToken ? (
+          <div className="space-y-3">
+            <p className="text-text">
+              <b className="text-paper">{testTeam.name}</b> в номинации «{testTeam.nomination.title}». На сайте не показывается.
+            </p>
+            <p className="text-text">
+              Открой ссылку в Telegram и нажми «Запустить» — бот привяжет твой аккаунт. Потом нажми «Мои голоса» или отправь /stats. Обнови эту страницу — здесь появится, кто подключился.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {testTeam.owners.length > 0 ? (
+                <Badge tone="good">подключились: {testTeam.owners.map((owner) => (owner.username ? `@${owner.username}` : "без username")).join(", ")}</Badge>
+              ) : (
+                <Badge>ещё никто не подключился</Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <a href={teamLink(testTeam.teamToken)} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center rounded-full bg-paper px-5 font-semibold text-deep">
+                Открыть в Telegram
+              </a>
+              <CopyButton text={teamLink(testTeam.teamToken)} label="Скопировать ссылку" />
+              {season && <CopyButton text={teamMessage({ name: testTeam.name, slug: testTeam.slug, nominationTitle: testTeam.nomination.title }, testTeam.teamToken, season.votingStartsAt)} label="Скопировать сообщение" />}
+            </div>
+            <p className="text-sm text-muted">
+              Голоса за скрытого участника отдать нельзя, поэтому бот покажет 0. Чтобы проверить счётчик, включи тестовое голосование в «Голосах» и на время нажми «Показать на сайте» в карточке участника — после проверки удали его: голоса за него удалятся вместе с ним.
+            </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <Link href={adminUrl(`/nominees/${testTeam.id}`)} className="inline-flex h-11 items-center rounded-full border border-petal px-5 font-semibold text-paper">
+                Карточка участника
+              </Link>
+              <ActionForm action={deleteTestTeam.bind(null, testTeam.id)} submit="Удалить тестового участника" danger>
+                <span />
+              </ActionForm>
+            </div>
+          </div>
+        ) : (
+          <ActionForm action={createTestTeam} submit="Создать тестового участника">
+            <p className="text-text">Создай скрытого участника со своей ссылкой — и сам пройди путь команды в боте, не трогая настоящие анкеты.</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-paper">Номинация</span>
+                <select name="nominationId" required className={adminInput} defaultValue="">
+                  <option value="" disabled>Выбери</option>
+                  {nominations.map((nomination) => (
+                    <option key={nomination.id} value={nomination.id}>{nomination.title}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-paper">Название</span>
+                <input name="name" placeholder="Тестовый канал" maxLength={80} className={adminInput} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-paper">Канал (необязательно)</span>
+                <input name="channel" placeholder="https://t.me/твой_канал" className={adminInput} />
+              </label>
+            </div>
           </ActionForm>
         )}
       </Card>

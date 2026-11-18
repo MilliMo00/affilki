@@ -13,6 +13,10 @@ import { countedVotes } from "@/lib/voting/test-mode";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://affilki.com";
 export const TEAM_START = /^t_([A-Za-z0-9_-]{20,40})$/;
 
+/** Тестовый участник для проверки ссылки: скрыт с сайта, адрес начинается с этого префикса. */
+export const TEST_TEAM_SLUG = "test-team-";
+export const isTestTeam = (slug: string) => slug.startsWith(TEST_TEAM_SLUG);
+
 export const teamLink = (token: string) => `https://t.me/${process.env.TELEGRAM_BOT_USERNAME ?? "affilki_bot"}?start=t_${token}`;
 
 /** Ссылка участника: существующая или новая (regenerate — заменить, старая перестанет работать). */
@@ -104,7 +108,8 @@ export async function teamStatsText(tgUserId: bigint, now = new Date()): Promise
     if (status === "frozen") place = "\nМесто скрыто до объявления итогов — последние часы голосования идут вслепую.";
     else if (status !== "off") {
       const rank = groups.filter((group) => group._count._all > votes).length + 1;
-      const total = await db.nominee.count({ where: { nominationId: nomination.id, published: true } });
+      // Скрытый (например, тестовый) участник в общем числе не учтён — добавляем его самого.
+      const total = (await db.nominee.count({ where: { nominationId: nomination.id, published: true } })) + (nominee.published ? 0 : 1);
       place = `\nМесто в номинации: ${rank} из ${total}.`;
     }
     parts.push(`${head}\nГолосов: ${votes}.${place}`);
