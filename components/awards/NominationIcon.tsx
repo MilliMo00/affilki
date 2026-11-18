@@ -10,7 +10,9 @@ import {
   Rocket,
   Sparkles,
   TrendingUp,
+  UserSearch,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,6 +21,8 @@ const ICONS: Record<string, LucideIcon> = {
   users: Users,
   sparkles: Sparkles,
   "pen-tool": PenTool,
+  "user-search": UserSearch,
+  wallet: Wallet,
   "credit-card": CreditCard,
   code: Code,
   rocket: Rocket,
