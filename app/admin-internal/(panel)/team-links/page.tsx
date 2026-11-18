@@ -6,7 +6,9 @@ import { Badge, Card, PageTitle } from "@/components/admin/ui";
 import { requirePermission } from "@/lib/admin/auth";
 import { adminUrl } from "@/lib/admin/path";
 import { db } from "@/lib/db";
-import { teamLink, teamMessage } from "@/lib/team";
+import { ContactActions } from "@/components/admin/ContactActions";
+import { readProfile } from "@/lib/profile";
+import { shareToTelegram, teamContacts, teamLink, teamMessage } from "@/lib/team";
 import { makeAllTeamLinks, makeTeamLink } from "./actions";
 
 /** Ссылки команд на бота: создать, скопировать с готовым сообщением, заменить. */
@@ -19,6 +21,9 @@ export default async function TeamLinksPage() {
     include: { nominees: { where: { published: true }, orderBy: { name: "asc" }, include: { owners: { orderBy: { createdAt: "asc" } } } } },
   });
   const all = nominations.flatMap((nomination) => nomination.nominees);
+  // Контакт команды — из заявки, по которой участник появился на сайте.
+  const submissions = await db.submission.findMany({ where: { resultId: { in: all.map((nominee) => nominee.id) } }, select: { resultId: true, contact: true } });
+  const contactOf = new Map(submissions.map((submission) => [submission.resultId, submission.contact]));
   const withoutLink = all.filter((nominee) => !nominee.teamToken).length;
   const connected = all.filter((nominee) => nominee.owners.length > 0).length;
 
@@ -52,6 +57,7 @@ export default async function TeamLinksPage() {
           <Card key={nomination.id} title={nomination.title} className="mb-6">
             <ul className="space-y-6">
               {nomination.nominees.map((nominee) => {
+                const contacts = teamContacts(contactOf.get(nominee.id), readProfile(nominee.profile).buttons);
                 const message = nominee.teamToken && season ? teamMessage({ name: nominee.name, slug: nominee.slug, nominationTitle: nomination.title }, nominee.teamToken, season.votingStartsAt) : null;
                 return (
                   <li key={nominee.id} className="border-b border-petal/20 pb-6 last:border-0 last:pb-0">
@@ -65,6 +71,13 @@ export default async function TeamLinksPage() {
                         <Badge>ещё не подключились</Badge>
                       )}
                     </div>
+
+                    {message && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <ContactActions contacts={contacts} message={message} shareUrl={shareToTelegram(message, nominee.teamToken!)} />
+                        {contacts.length === 0 && <span className="text-sm text-muted">Контакт в анкете не найден — отправь через Telegram и выбери чат.</span>}
+                      </div>
+                    )}
 
                     {message ? (
                       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">

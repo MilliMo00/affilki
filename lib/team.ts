@@ -37,6 +37,23 @@ export function teamMessage(nominee: { name: string; slug: string; nominationTit
   ].join("\n");
 }
 
+// Telegram-контакты команды: @username и ссылки t.me/<username> из анкеты. Каналы и чаты (по названию кнопки) пропускаем.
+const NOT_PERSON = /канал|чат|channel|chat|блэклист|прайс|сайт|youtube|instagram/i;
+export function teamContacts(contact: string | null | undefined, buttons: { title: string; url: string }[]) {
+  const names = new Set<string>();
+  for (const match of (contact ?? "").matchAll(/(?:@|t\.me\/)([A-Za-z][A-Za-z0-9_]{3,31})/g)) names.add(match[1]);
+  for (const button of buttons) {
+    const name = /^https:\/\/(?:www\.)?t\.me\/([A-Za-z][A-Za-z0-9_]{3,31})\/?$/.exec(button.url)?.[1];
+    if (name && !NOT_PERSON.test(button.title)) names.add(name);
+  }
+  // Ботам такое сообщение писать бессмысленно.
+  return [...names].filter((name) => !/bot$/i.test(name)).slice(0, 3);
+}
+
+/** Ссылка «поделиться» Telegram: открывает выбор чата с уже вписанным текстом. */
+export const shareToTelegram = (message: string, token: string) =>
+  `https://t.me/share/url?url=${encodeURIComponent(teamLink(token))}&text=${encodeURIComponent(message.replace(teamLink(token), "").replace(/\n{3,}/g, "\n\n").trim())}`;
+
 const STATS_BUTTON: InlineButton = { text: "Мои голоса", callback_data: "team:stats" };
 
 /** /start t_<token>: привязываем аккаунт к участнику. */
