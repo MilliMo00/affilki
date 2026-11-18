@@ -26,3 +26,12 @@ export async function makeAllTeamLinks(): Promise<ActionState> {
   revalidatePath("/", "layout");
   return done(missing.length ? `Создано ссылок: ${missing.length}.` : "У всех участников ссылки уже есть.");
 }
+
+/** Отметка «написал команде» — пишется в журнал действий: видно, кто и когда отметил. */
+export async function setTeamContacted(nomineeId: string, contacted: boolean): Promise<ActionState> {
+  const context = await requirePermission("awards");
+  if (!(await db.nominee.findUnique({ where: { id: nomineeId }, select: { id: true } }))) return failed("Участник не найден.");
+  await audit(context, contacted ? "team.contacted" : "team.uncontacted", { type: "nominee", id: nomineeId }, null, null);
+  revalidatePath("/", "layout");
+  return done(contacted ? "Отмечено: написал." : "Отметка снята.");
+}

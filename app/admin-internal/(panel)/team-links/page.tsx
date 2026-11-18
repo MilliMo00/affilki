@@ -9,11 +9,15 @@ import { db } from "@/lib/db";
 import { ContactActions } from "@/components/admin/ContactActions";
 import { readProfile } from "@/lib/profile";
 import { shareToTelegram, teamContacts, teamLink, teamMessage } from "@/lib/team";
-import { makeAllTeamLinks, makeTeamLink } from "./actions";
+import { ContactedToggle } from "@/components/admin/ContactedToggle";
+import { makeAllTeamLinks, makeTeamLink, setTeamContacted } from "./actions";
 
 /** Ссылки команд на бота: создать, скопировать с готовым сообщением, заменить. */
-export default async function TeamLinksPage() {
+const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow" });
+
+export default async function TeamLinksPage({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
   await requirePermission("awards");
+  const onlyTodo = (await searchParams).show === "todo";
   const season = await db.season.findFirst({ orderBy: { year: "desc" } });
   const nominations = await db.nomination.findMany({
     where: { seasonId: season?.id },
@@ -24,6 +28,15 @@ export default async function TeamLinksPage() {
   // Контакт команды — из заявки, по которой участник появился на сайте.
   const submissions = await db.submission.findMany({ where: { resultId: { in: all.map((nominee) => nominee.id) } }, select: { resultId: true, contact: true } });
   const contactOf = new Map(submissions.map((submission) => [submission.resultId, submission.contact]));
+  // «Написал»: последняя отметка в журнале действий по каждому участнику.
+  const marks = await db.auditLog.findMany({
+    where: { entityType: "nominee", entityId: { in: all.map((nominee) => nominee.id) }, action: { in: ["team.contacted", "team.uncontacted"] } },
+    orderBy: { ts: "desc" },
+    select: { entityId: true, action: true, ts: true, adminName: true },
+  });
+  const contacted = new Map<string, { at: Date; by: string } | null>();
+  for (const mark of marks) if (!contacted.has(mark.entityId!)) contacted.set(mark.entityId!, mark.action === "team.contacted" ? { at: mark.ts, by: mark.adminName } : null);
+  const contactedCount = all.filter((nominee) => contacted.get(nominee.id)).length;
   const withoutLink = all.filter((nominee) => !nominee.teamToken).length;
   const connected = all.filter((nominee) => nominee.owners.length > 0).length;
 
@@ -36,7 +49,8 @@ export default async function TeamLinksPage() {
 
       <Card className="mb-6">
         <p className="text-text">
-          Участников на сайте: <b className="text-paper">{all.length}</b> · команд подключилось к боту: <b className="text-paper">{connected}</b>
+          Участников на сайте: <b className="text-paper">{all.length}</b> · написал: <b className="text-paper">{contactedCount} из {all.length}</b> · команд подключилось к боту:{" "}
+          <b className="text-paper">{connected}</b>
           {withoutLink > 0 && (
             <>
               {" "}
@@ -44,6 +58,14 @@ export default async function TeamLinksPage() {
             </>
           )}
         </p>
+        <nav aria-label="Фильтр" className="mt-4 flex flex-wrap gap-2">
+          <Link href={adminUrl("/team-links")} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${onlyTodo ? "border-petal text-paper" : "border-paper bg-paper text-deep"}`}>
+            Все
+          </Link>
+          <Link href={adminUrl("/team-links?show=todo")} className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${onlyTodo ? "border-paper bg-paper text-deep" : "border-petal text-paper"}`}>
+            Кому ещё не писал ({all.length - contactedCount})
+          </Link>
+        </nav>
         {withoutLink > 0 && (
           <ActionForm action={makeAllTeamLinks} submit={`Создать ссылки для всех (${withoutLink})`} className="mt-4">
             <span />
@@ -52,6 +74,7 @@ export default async function TeamLinksPage() {
       </Card>
 
       {nominations
+        .map((nomination) => ({ ...nomination, nominees: nomination.nominees.filter((nominee) => !onlyTodo || !contacted.get(nominee.id)) }))
         .filter((nomination) => nomination.nominees.length > 0)
         .map((nomination) => (
           <Card key={nomination.id} title={nomination.title} className="mb-6">
@@ -62,6 +85,11 @@ export default async function TeamLinksPage() {
                 return (
                   <li key={nominee.id} className="border-b border-petal/20 pb-6 last:border-0 last:pb-0">
                     <div className="flex flex-wrap items-center gap-3">
+                      <ContactedToggle
+                        contacted={!!contacted.get(nominee.id)}
+                        note={contacted.get(nominee.id) ? dateFmt.format(contacted.get(nominee.id)!.at) : undefined}
+                        onChange={setTeamContacted.bind(null, nominee.id)}
+                      />
                       <Link href={adminUrl(`/nominees/${nominee.id}`)} className="font-semibold text-paper hover:underline">
                         {nominee.name}
                       </Link>
@@ -74,7 +102,7 @@ export default async function TeamLinksPage() {
 
                     {message && (
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <ContactActions contacts={contacts} message={message} shareUrl={shareToTelegram(message, nominee.teamToken!)} />
+                        <ContactActions contacts={contacts} message={message} shareUrl={shareToTelegram(message, nominee.teamToken!)} onContact={setTeamContacted.bind(null, nominee.id, true)} />
                         {contacts.length === 0 && <span className="text-sm text-muted">Контакт в анкете не найден — отправь через Telegram и выбери чат.</span>}
                       </div>
                     )}
